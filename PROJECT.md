@@ -1,7 +1,7 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.6**  
+> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.7**  
 > Last updated: 2026-11-04  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
 > This document records product needs only. No DESIGN or BUILD has been authorized by this update.
@@ -61,9 +61,11 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - A central persistent record, image support, and simultaneous multi-user operation.
 - Pilot-first rollout before opening use across the entire factory, starting with Cutting & Packing and 1–2 other departments.
 - Authorized access limited to internal factory personnel; sharing does not imply public access.
+- **Product delivery strategy (D-013):** Develop THE NODE OF PDCA as a purpose-built application for the factory's needs. **Do not purchase/adopt a new off-the-shelf PDCA/QMS/whiteboard product as the core solution.** Existing market products may inform benchmarking and UX/functional requirements, not replace the planned custom product.
 
 **Unknown**
 - Hosting/network policies, identification/login requirements, data retention, image/file size, supported devices/browsers, concurrent-user volume, cost constraints, availability, backup/recovery policy, and corporate security approval.
+- Development/maintenance ownership, engineering capacity, budget, and policy for open-source libraries, third-party components and paid infrastructure/services. D-013 excludes buying an off-the-shelf replacement product, but does **not** yet decide component licensing or infrastructure procurement.
 
 ## 5. Assumptions / Unknowns
 
@@ -77,6 +79,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - What proof is sufficient to declare pilot success and proceed to factory rollout.
 - Minimum search, history, deletion/restore, reporting, and image/document handling expectations.
 - Which access/identity and data-governance rules are required by the factory.
+- Who will build, operate and maintain the custom application; whether third-party open-source frameworks/components and paid hosting/infrastructure are permitted under factory policy.
 
 ## 6. Scope
 
@@ -113,6 +116,8 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 **Note:** Proposed scope is deliberately not converted into approved requirements until DEFINE decisions are completed.
 
 ## 7. Solution / Design
+
+**Confirmed delivery strategy (D-013):** Build a purpose-made THE NODE OF PDCA application; do not procure a new packaged PDCA, QMS or whiteboard platform as its replacement. Competitive research remains useful for requirements and benchmark comparisons, **not** for a build-versus-buy decision about the core product. This does not authorize implementation or predetermine whether existing open-source libraries, services or infrastructure may be used.
 
 **Current high-level concept only (Confirmed):** A visual PDCA knowledge network with individually linkable nodes, seven fixed categories, and common factory-wide access.
 
@@ -215,6 +220,8 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 - [x] Pilot participant **minimum** agreed: ≥5 first-time testers per department (D-011).
 - [ ] Pilot department identities, actual participants and representative cases agreed.
 - [ ] Pilot in-scope vs deferred capabilities approved.
+- [x] Custom-build product direction confirmed; no off-the-shelf replacement purchase (D-013).
+- [ ] Delivery ownership and policy on third-party components/infrastructure clarified.
 - [x] Pilot success **policy** approved: all mandatory functional gates plus practical usability; minor non-blocking issues can be accepted when documented.
 - [x] Usability thresholds approved: first-time task completion ≥80% without assistance and mean ease-of-use rating ≥4/5 (D-010).
 - [x] Task completion aggregation approved: both overall and every participating department must independently meet ≥80% (D-012).
@@ -226,11 +233,13 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 
 ## 12. Current Baseline
 
-**Baseline:** DEFINE draft v0.6  
+**Baseline:** DEFINE draft v0.7  
 **Status:** Draft — DEFINE in progress  
 **Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific pilot departments and participant identities, hard-gate acceptance details, and usability measurement procedure are not yet decided. Minimum sample size is confirmed: ≥5 first-time users per department (D-011). The two-level exit **policy** (D-009), usability **thresholds** (D-010), and overall-plus-each-department task-completion evaluation (D-012) are confirmed.
 
-This file records confirmed problem/outcome/access/rollout decisions and clearly labeled candidate scope/acceptance criteria. No app implementation, production integration, or deployment is authorized by this draft.
+**Delivery strategy:** Custom-build the application for the factory (D-013); existing market products are references, not purchase candidates for the core solution.
+
+This file records confirmed problem/outcome/access/rollout/delivery decisions and clearly labeled candidate scope/acceptance criteria. No app implementation, production integration, or deployment is authorized by this draft.
 
 ## 13. Important Decisions
 
@@ -248,6 +257,7 @@ This file records confirmed problem/outcome/access/rollout decisions and clearly
 | D-010 | Ease-of-use Pilot thresholds: ≥80% of first-time users complete agreed essential tasks without assistance; average ease-of-use rating ≥4/5 | Require demonstrable usability before broad factory rollout | 2026-11-04 |
 | D-011 | Pilot usability test population: at least 5 first-time users in each participating department (Cutting & Packing plus 1–2 others) | Include multiple perspectives from each department in the pilot | 2026-11-04 |
 | D-012 | Require independent task-completion rate ≥80% in the pooled overall pilot population AND separately in every participating department; mean ease-of-use rating ≥4/5 remains an overall criterion | Ensure one department's strong performance cannot mask another department's usability failure | 2026-11-04 |
+| D-013 | Custom-build THE NODE OF PDCA for factory-specific needs; do not buy/adopt a new packaged PDCA/QMS/whiteboard product as the core solution | Owner explicitly chose a purpose-built system over purchasing a new tool | 2026-11-04 |
 
 ## 14. Change History
 
@@ -259,6 +269,7 @@ This file records confirmed problem/outcome/access/rollout decisions and clearly
 | DEFINE draft v0.4 | Approved quantitative ease-of-use targets and separated confirmed thresholds from unapproved measurement procedure | Define measurable pilot exit requirements without prematurely specifying test protocol | 2026-11-04 |
 | DEFINE draft v0.5 | Confirmed ≥5 first-time usability testers per Pilot department; added a proposed task-based protocol and identified aggregation decision | Make usability testing actionable while retaining DEFINE-stage uncertainties | 2026-11-04 |
 | DEFINE draft v0.6 | Confirmed ≥80% task-completion criterion must pass both overall and separately for each pilot department | Avoid cross-department averages masking poor usability | 2026-11-04 |
+| DEFINE draft v0.7 | Confirmed custom-build delivery strategy; reframed market research as benchmarking, not procurement, and left component/infrastructure policy open | Honor owner direction without prematurely starting DESIGN or BUILD | 2026-11-04 |
 
 ---
 
