@@ -1,7 +1,7 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.1**  
+> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.2**  
 > Last updated: 2026-11-04  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
 > This document records product needs only. No DESIGN or BUILD has been authorized by this update.
@@ -42,10 +42,11 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 ## 3. Users / Stakeholders
 
 - **Confirmed — Eligible users:** Internal factory personnel only.
+- **Confirmed — Pilot group:** Cutting & Packing plus **1–2 additional factory departments** before wider rollout. The other departments, participants, and group size are not yet selected.
 - **Confirmed — Collaboration:** Any authorized user can view, create, and edit PDCA records of any department; no department-specific edit restriction.
 - **Confirmed — PIC / Owner field:** Indicates responsibility for an activity; does not grant exclusive editing rights.
 - **Intended future audience:** Personnel across the entire factory.
-- **Unknown:** Pilot department(s), user counts, definition of internal personnel for contractor cases, sponsoring owner/approver, and IT/security stakeholders.
+- **Unknown:** Which 1–2 additional departments participate in the pilot, pilot participants and user counts, definition of internal personnel for contractor cases, sponsoring owner/approver, and IT/security stakeholders.
 
 ## 4. Constraints
 
@@ -53,7 +54,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - Browser-based web usage; ease of use for staff accustomed to everyday web applications.
 - One common PDCA categorization and principle across departments.
 - A central persistent record, image support, and simultaneous multi-user operation.
-- Pilot-first rollout before opening use across the entire factory.
+- Pilot-first rollout before opening use across the entire factory, starting with Cutting & Packing and 1–2 other departments.
 - Authorized access limited to internal factory personnel; sharing does not imply public access.
 
 **Unknown**
@@ -67,7 +68,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - Pilot feedback will reveal usability issues before plant-wide rollout.
 
 ### Important unknowns
-- How Pilot users and representative PDCA cases will be selected.
+- Which additional 1–2 departments, pilot users, and representative PDCA cases will be selected; how to ensure cross-department representation.
 - What proof is sufficient to declare pilot success and proceed to factory rollout.
 - Minimum search, history, deletion/restore, reporting, and image/document handling expectations.
 - Which access/identity and data-governance rules are required by the factory.
@@ -85,6 +86,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - [x] Concurrent collaboration on the same PDCA.
 - [x] Common use across departments; open editing for authorized internal users.
 - [x] Rollout in **Pilot → evaluate → expand factory-wide**, not an all-factory first release.
+- [x] Pilot includes Cutting & Packing together with 1–2 additional departments; exact departments and participants pending.
 
 ### Proposed for pilot — not yet approved
 - [ ] Create, edit, and connect the seven categories in a representative real PDCA case.
@@ -146,7 +148,7 @@ Data ownership, history, retention, recovery, and deletion behavior require DEFI
 | AC-05 | An image and document reference can be associated with PDCA and retrieved later | NOT TESTED |
 | AC-06 | Separate authorized sessions can retrieve the same shared PDCA after saving | NOT TESTED |
 | AC-07 | Multiple authorized users can edit a shared PDCA; no edit is silently lost | NOT TESTED |
-| AC-08 | Pilot participants follow the same seven-category standard; broad-rollout exit threshold TBD | NOT TESTED |
+| AC-08 | Cutting & Packing and the selected 1–2 other departments can apply the same seven-category standard in representative cases; broad-rollout exit threshold TBD | NOT TESTED |
 
 ## 10. Important Risks
 
@@ -171,9 +173,9 @@ Data ownership, history, retention, recovery, and deletion behavior require DEFI
 
 ## 12. Current Baseline
 
-**Baseline:** DEFINE draft v0.1  
+**Baseline:** DEFINE draft v0.2  
 **Status:** Draft — DEFINE in progress  
-**Rollout decision:** Pilot-first; factory-wide use is the eventual end state.
+**Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific pilot departments/participants and exit thresholds are not yet decided.
 
 This file records confirmed problem/outcome/access/rollout decisions and clearly labeled candidate scope/acceptance criteria. No app implementation, production integration, or deployment is authorized by this draft.
 
@@ -188,12 +190,14 @@ This file records confirmed problem/outcome/access/rollout decisions and clearly
 | D-005 | Eligible users are internal factory personnel only | Intended organizational boundary | 2026-11-04 |
 | D-006 | Roll out to a pilot first; evaluate before factory-wide expansion | Validate adoption and effectiveness at lower risk | 2026-11-04 |
 | D-007 | Remain in DEFINE; hold implementation and technology decisions | Scope and success measures not yet approved | 2026-11-04 |
+| D-008 | Pilot with Cutting & Packing plus 1–2 additional departments, then evaluate before factory-wide expansion | Test the shared PDCA standard across departments while controlling rollout risk | 2026-11-04 |
 
 ## 14. Change History
 
 | Version | Change | Reason | Date |
 |---|---|---|---|
 | DEFINE draft v0.1 | Replaced template placeholders with confirmed user decisions and proposed pilot scope / criteria | Establish traceable requirements before DESIGN | 2026-11-04 |
+| DEFINE draft v0.2 | Confirmed pilot group spans Cutting & Packing plus 1–2 other departments; cross-department acceptance scenario updated | Test common standard before scaling | 2026-11-04 |
 
 ---
 
