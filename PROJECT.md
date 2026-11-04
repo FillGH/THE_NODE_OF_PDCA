@@ -1,7 +1,7 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.7**  
+> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.8**  
 > Last updated: 2026-11-04  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
 > This document records product needs only. No DESIGN or BUILD has been authorized by this update.
@@ -62,10 +62,15 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - Pilot-first rollout before opening use across the entire factory, starting with Cutting & Packing and 1–2 other departments.
 - Authorized access limited to internal factory personnel; sharing does not imply public access.
 - **Product delivery strategy (D-013):** Develop THE NODE OF PDCA as a purpose-built application for the factory's needs. **Do not purchase/adopt a new off-the-shelf PDCA/QMS/whiteboard product as the core solution.** Existing market products may inform benchmarking and UX/functional requirements, not replace the planned custom product.
+- **Open-source policy (D-014, confirmed):** Existing open-source libraries and frameworks may be used to develop the custom application, subject to license compliance and compatibility with private internal company use. No specific library, framework, architecture, or license is approved yet.
+- **Internal-only operation (D-014, confirmed):** The finished application is for authorized internal company use only, not public distribution or external customers. The deployment/access design must enforce that boundary; whether the system is hosted on-premises or in an approved private environment is not yet selected.
+- **Zero-spend constraint (D-014, confirmed):** Do not incur new software license fees, subscriptions, paid SaaS/API usage, paid hosting, or other new monetary charges for this project. Use no-fee components and existing company-approved resources only, subject to verification; a free tier with possible charges or restrictive limits must not be assumed to meet this requirement.
 
 **Unknown**
-- Hosting/network policies, identification/login requirements, data retention, image/file size, supported devices/browsers, concurrent-user volume, cost constraints, availability, backup/recovery policy, and corporate security approval.
-- Development/maintenance ownership, engineering capacity, budget, and policy for open-source libraries, third-party components and paid infrastructure/services. D-013 excludes buying an off-the-shelf replacement product, but does **not** yet decide component licensing or infrastructure procurement.
+- Hosting/network policies, identification/login requirements, data retention, image/file size, supported devices/browsers, concurrent-user volume, availability, backup/recovery policy, and corporate security approval.
+- Availability/capacity of existing company infrastructure and network, whether IT can provide and operate it with **no new spending**, and whether external connectivity is allowed. Exact hosting topology is not yet approved.
+- Development/maintenance ownership, engineering capacity, and internal time/operational resource use. **Zero new monetary spending** is confirmed, but internal labor, existing hardware, electricity, storage, maintenance and opportunity costs still exist and must not be represented as zero total cost.
+- Which open-source licenses satisfy company policy and any attribution, notice, redistribution or network-service obligations; license review is required before selecting dependencies.
 
 ## 5. Assumptions / Unknowns
 
@@ -79,7 +84,8 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - What proof is sufficient to declare pilot success and proceed to factory rollout.
 - Minimum search, history, deletion/restore, reporting, and image/document handling expectations.
 - Which access/identity and data-governance rules are required by the factory.
-- Who will build, operate and maintain the custom application; whether third-party open-source frameworks/components and paid hosting/infrastructure are permitted under factory policy.
+- Who will build, operate and maintain the custom application; which existing company resources can host it without new expenditure, and what internal labor/maintenance capacity is available.
+- Which open-source licenses are compatible with internal-only company use and zero-fee operation; no library or framework has yet been selected.
 
 ## 6. Scope
 
@@ -117,7 +123,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 
 ## 7. Solution / Design
 
-**Confirmed delivery strategy (D-013):** Build a purpose-made THE NODE OF PDCA application; do not procure a new packaged PDCA, QMS or whiteboard platform as its replacement. Competitive research remains useful for requirements and benchmark comparisons, **not** for a build-versus-buy decision about the core product. This does not authorize implementation or predetermine whether existing open-source libraries, services or infrastructure may be used.
+**Confirmed delivery strategy (D-013, D-014):** Build a purpose-made THE NODE OF PDCA application; do not procure a new packaged PDCA, QMS or whiteboard platform as its replacement. Existing **open-source libraries/frameworks are permitted** if license-compatible and no-fee. The completed system is **for authorized internal company use only** and must require **no new monetary spending** on licenses, subscriptions, hosted services or infrastructure. Competitive research remains useful for requirements and benchmarking, **not** for purchasing the core product. Specific dependencies, hosting and implementation choices remain deferred to DESIGN.
 
 **Current high-level concept only (Confirmed):** A visual PDCA knowledge network with individually linkable nodes, seven fixed categories, and common factory-wide access.
 
@@ -142,6 +148,8 @@ Data ownership, history, retention, recovery, and deletion behavior require DEFI
 - **R-06:** Allow simultaneous collaboration, with no department-specific edit ownership.
 - **R-07:** Operate through a familiar, easy-to-use web interface.
 - **R-08:** Pilot before plant-wide scale-up.
+- **R-09 (D-014):** Build with permitted no-fee open-source libraries/frameworks as appropriate; reject dependencies or services requiring new paid licenses, subscriptions, usage fees or other new spending. Review actual license obligations before adoption.
+- **R-10 (D-014):** Restrict deployment and use to authorized internal company personnel; no public-facing or external-customer release is intended.
 
 ### Requirements pending confirmation
 - Identity/accountability; edit history; conflict resolution behavior; deletion/recovery; search; non-functional performance and security thresholds.
@@ -165,6 +173,7 @@ Data ownership, history, retention, recovery, and deletion behavior require DEFI
 | G-05 | Multi-user editing with no silent loss of changes | Concurrent edit scenario and conflict inspection |
 | G-06 | Same seven-category method across Pilot departments | Real representative case in Cutting & Packing and each chosen department |
 | G-07 | Authorized internal access and no uncontrolled critical data-loss risk | Access checks and a documented data-safety scenario |
+| G-08 | Zero new monetary expenditure and license compliance for selected dependencies/deployment (D-014 constraint; verification method proposed) | Dependency/license inventory, zero-fee checks, and company IT confirmation of existing infrastructure |
 
 **Confirmed usability acceptance thresholds (D-010):** At least **80% of first-time pilot users** must complete the agreed essential tasks **without assistance**, and the **average ease-of-use score must be ≥4/5**. Both are required to pass. At least 5 first-time users per department are required (D-011). Task completion must pass **both** the overall pooled rate and **every department's** rate (D-012). The detailed participant-level scoring method, final sample count, essential-task checklist, and rating wording remain open DEFINE decisions.
 
@@ -221,7 +230,8 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 - [ ] Pilot department identities, actual participants and representative cases agreed.
 - [ ] Pilot in-scope vs deferred capabilities approved.
 - [x] Custom-build product direction confirmed; no off-the-shelf replacement purchase (D-013).
-- [ ] Delivery ownership and policy on third-party components/infrastructure clarified.
+- [x] Open-source frameworks/libraries permitted; internal-only operation and no-new-spending constraint confirmed (D-014).
+- [ ] Actual license-compliant dependency policy, existing no-new-cost hosting capacity, IT approval, and delivery/maintenance ownership verified.
 - [x] Pilot success **policy** approved: all mandatory functional gates plus practical usability; minor non-blocking issues can be accepted when documented.
 - [x] Usability thresholds approved: first-time task completion ≥80% without assistance and mean ease-of-use rating ≥4/5 (D-010).
 - [x] Task completion aggregation approved: both overall and every participating department must independently meet ≥80% (D-012).
@@ -233,11 +243,11 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 
 ## 12. Current Baseline
 
-**Baseline:** DEFINE draft v0.7  
+**Baseline:** DEFINE draft v0.8  
 **Status:** Draft — DEFINE in progress  
 **Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific pilot departments and participant identities, hard-gate acceptance details, and usability measurement procedure are not yet decided. Minimum sample size is confirmed: ≥5 first-time users per department (D-011). The two-level exit **policy** (D-009), usability **thresholds** (D-010), and overall-plus-each-department task-completion evaluation (D-012) are confirmed.
 
-**Delivery strategy:** Custom-build the application for the factory (D-013); existing market products are references, not purchase candidates for the core solution.
+**Delivery strategy:** Custom-build the application for the factory (D-013); existing market products are references, not purchase candidates for the core solution. Open-source libraries/frameworks are allowed, finished use is internal-only, and no new monetary spending is permitted (D-014). This is not a claim of zero internal labor or existing-infrastructure cost.
 
 This file records confirmed problem/outcome/access/rollout/delivery decisions and clearly labeled candidate scope/acceptance criteria. No app implementation, production integration, or deployment is authorized by this draft.
 
@@ -258,6 +268,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | D-011 | Pilot usability test population: at least 5 first-time users in each participating department (Cutting & Packing plus 1–2 others) | Include multiple perspectives from each department in the pilot | 2026-11-04 |
 | D-012 | Require independent task-completion rate ≥80% in the pooled overall pilot population AND separately in every participating department; mean ease-of-use rating ≥4/5 remains an overall criterion | Ensure one department's strong performance cannot mask another department's usability failure | 2026-11-04 |
 | D-013 | Custom-build THE NODE OF PDCA for factory-specific needs; do not buy/adopt a new packaged PDCA/QMS/whiteboard product as the core solution | Owner explicitly chose a purpose-built system over purchasing a new tool | 2026-11-04 |
+| D-014 | Open-source libraries/frameworks permitted; final product for authorized internal company use only; no new monetary spending on software, subscriptions, services or infrastructure | Owner confirmed internal-only, zero-spend custom-build constraint | 2026-11-04 |
 
 ## 14. Change History
 
@@ -270,6 +281,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | DEFINE draft v0.5 | Confirmed ≥5 first-time usability testers per Pilot department; added a proposed task-based protocol and identified aggregation decision | Make usability testing actionable while retaining DEFINE-stage uncertainties | 2026-11-04 |
 | DEFINE draft v0.6 | Confirmed ≥80% task-completion criterion must pass both overall and separately for each pilot department | Avoid cross-department averages masking poor usability | 2026-11-04 |
 | DEFINE draft v0.7 | Confirmed custom-build delivery strategy; reframed market research as benchmarking, not procurement, and left component/infrastructure policy open | Honor owner direction without prematurely starting DESIGN or BUILD | 2026-11-04 |
+| DEFINE draft v0.8 | Confirmed open-source permission, internal-only deployment/use and zero-new-spend constraint; identified license and existing-infrastructure verification | Establish delivery constraints before technology selection | 2026-11-04 |
 
 ---
 
