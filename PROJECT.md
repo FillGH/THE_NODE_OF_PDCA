@@ -1,7 +1,7 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.14**  
+> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.15**  
 > Last updated: 2026-11-04  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
 > This document records product needs only. No DESIGN or BUILD has been authorized by this update.
@@ -70,11 +70,13 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - **Host transition/data portability (D-019):** When moving THE NODE OF PDCA from the interim laptop to the planned local server, **all previously saved project data must move with it**, including text-based PDCA records, node/link relationships, attached images and references to supporting documents where applicable. Previously saved content and connections must remain accessible and intact after the move. Exact storage technology, transfer method, validation procedure, and handling of externally hosted document references are deferred to DESIGN; no migration has yet been performed.
 - **Visual evidence expectations (D-020):** Images are primarily staff screenshots/screen captures and real workplace photos. An operational estimate is around **50 images for a single Problem/PDCA case across its constituent nodes**, **not** 50 images per node; this is not a hard cap, and per-node attachment counts are unrestricted at the DEFINE stage. Automatic image compression is acceptable provided evidence remains legible and usable. Exact upload size, storage quota, image format, and compression settings remain unspecified.
 - **Node text expectations (D-021):** Text content within an individual Node is normally **a few short paragraphs**, not an essay or multi-page report. Approximately **10,000 characters per Node** is the owner's suggested upper guideline, **not yet a confirmed hard validation limit**; the final enforcement behavior, character-count definition, and treatment of larger records remain open for DESIGN/DEFINE clarification.
+- **External factory documents by hyperlink only (D-022):** Do **not** upload or store copies of non-image documents (e.g., PDF, Excel, Word) in THE NODE OF PDCA. A Node may save a hyperlink/reference to the **original file in existing factory storage**. When the authorized user clicks the hyperlink, the system should open/navigate to that source, subject to storage accessibility and the user's existing permission. Images remain in scope as embedded/stored evidence per D-020. Moving the host must preserve saved hyperlinks, **not migrate external source documents**. The actual factory storage type, browser support for link protocols, authorization and access limitations are still to be verified with IT; no technical implementation is selected.
 - **Operating window and shared-host intent (D-017):** THE NODE OF PDCA is expected to be available whenever its host computer is powered on; no fixed daily service schedule is required. The intended host is a **planned shared company LAN local server for Project Float Monitor and THE NODE OF PDCA**. This machine is **not yet confirmed set up or operational**. The owner plans to work with IT on its setup on 2026-11-05; feasibility, authorization, capacity, configuration compatibility, and impact on Float Monitor remain unverified. This is an operational constraint, not approval of a technology stack or deployment design.
 - **Zero-spend constraint (D-014, confirmed):** Do not incur new software license fees, subscriptions, paid SaaS/API usage, paid hosting, or other new monetary charges for this project. Use no-fee components and existing company-approved resources only, subject to verification; a free tier with possible charges or restrictive limits must not be assumed to meet this requirement.
 
 **Unknown**
-- Hosting/network policies, identification/login requirements, data retention, exact per-file upload limits and total storage capacity (despite the D-020 estimate), supported devices/browsers, concurrent-user volume, availability, backup/recovery policy, and corporate security approval.
+- Hosting/network policies, identification/login requirements, data retention, exact **image** upload limits and total storage capacity (despite the D-020 estimate), supported devices/browsers, concurrent-user volume, availability, backup/recovery policy, and corporate security approval.
+- Factory source-document storage type and supported hyperlink/path scheme (e.g., intranet HTTPS versus shared network folder), whether authorized client browsers can open those references, and how inaccessible/moved/deleted source files should be handled (D-022).
 - Whether the owner's laptop can serve authorized LAN users (network reachability, firewall/security policy, available resources, company IT approval) as an interim host. The requirement to preserve and transfer saved PDCA data when changing hosts is confirmed (D-019); exact transfer method, integrity validation, backup/rollback, and treatment of externally linked documents remain to be defined.
 - Whether the planned shared local-server computer for Project Float Monitor and THE NODE OF PDCA can be prepared with IT, without new spending, and whether external connectivity is allowed. A setup attempt with IT is planned for 2026-11-05; outcome, machine specifications, capacity, Float Monitor requirements, IT authorization, and deployment configuration remain unverified. No technical hosting design is approved.
 - Development/maintenance ownership, engineering capacity, and internal time/operational resource use. **Zero new monetary spending** is confirmed, but internal labor, existing hardware, electricity, storage, maintenance and opportunity costs still exist and must not be represented as zero total cost.
@@ -102,7 +104,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - [x] Free, many-to-many links between nodes across categories, including cross-stage and backward relationships.
 - [x] Separate, understandable items for reasons, actions, statuses/results, and measures.
 - [x] Action follow-up by individual action, including responsible PIC and relevant dates.
-- [x] Image inclusion as supporting visual information; document references.
+- [x] Stored image evidence as supporting visual information; hyperlinks to original factory-storage documents only (no uploads/copies of non-image files; D-022).
 - [x] Easy-to-use web interface for internal factory users.
 - [x] Central, persistent PDCA database/shared records.
 - [x] Concurrent collaboration on the same PDCA.
@@ -165,6 +167,7 @@ Data ownership, history, retention, recovery, and deletion behavior require DEFI
 - **R-15 (D-019):** Preserve and transfer all saved PDCA information when moving from the laptop host to the local server, including node text, links/relationships, stored images, and supporting document references; preserve the ability to retrieve the same content and relationships. Implementation and verification details remain undecided.
 - **R-16 (D-020):** Support screenshots and workplace photos as evidence; allow multiple images across nodes within a PDCA, with approximately 50 images per Problem/PDCA case as a non-binding workload estimate, no per-node image-count cap agreed, and acceptable compression without losing evidence readability.
 - **R-17 (D-021):** Support concise Node text (typically a few paragraphs); treat 10,000 characters per Node as an indicative maximum-content guideline, not yet an enforced technical limit.
+- **R-18 (D-022):** Allow clickable document hyperlinks on Nodes pointing to originals in factory storage; do not upload/duplicate PDF, Excel, Word or other non-image documents. Respect source-storage permissions. Persist document references when moving the PDCA host without transferring original factory documents. Exact hyperlink protocols and opening behavior remain for IT validation/DESIGN.
 
 ### Requirements pending confirmation
 - Identity/accountability; edit history; conflict resolution behavior; deletion/recovery; search; non-functional performance and security thresholds.
@@ -231,6 +234,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 | AC-10 | Proposed: during the host's powered-on period, THE NODE OF PDCA can be accessed over the authorized company LAN without disrupting Project Float Monitor; subject to verified capacity and IT approval (D-017) | NOT TESTED |
 | AC-11 | Proposed: authorized LAN clients can access THE NODE OF PDCA while the interim laptop host is on; stored records can be preserved for a future host transition (D-018). Exact transition procedure TBD | NOT TESTED |
 | AC-12 | Proposed: after moving from laptop host to local server, previously saved node texts, relationships, attached images, and document references are retrievable and intact, with no silent loss (D-019). Exact migration test and acceptance method TBD | NOT TESTED |
+| AC-13 | Proposed: a user can click a Node's stored hyperlink to an accessible original document in factory storage, without uploading a copy into the PDCA system; access obeys factory storage permissions (D-022). Actual link protocol and opening support TBD with IT | NOT TESTED |
 
 ## 10. Important Risks
 
@@ -268,7 +272,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 
 ## 12. Current Baseline
 
-**Baseline:** DEFINE draft v0.14  
+**Baseline:** DEFINE draft v0.15  
 **Status:** Draft — DEFINE in progress  
 **Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific pilot departments and participant identities, hard-gate acceptance details, and usability measurement procedure are not yet decided. Minimum sample size is confirmed: ≥5 first-time users per department (D-011). The two-level exit **policy** (D-009), usability **thresholds** (D-010), and overall-plus-each-department task-completion evaluation (D-012) are confirmed.
 
@@ -303,6 +307,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | D-019 | All previously saved PDCA information must transfer from the interim laptop to the planned local server, preserving node text, relationships, stored images and supporting document references | Prevent loss of work, evidence, and traceability when the host changes | 2026-11-04 |
 | D-020 | Support screenshot/workplace-photo evidence; estimate about 50 images per Problem/PDCA case across its nodes (not per Node), without imposing a hard image count limit; automatic image compression acceptable if legibility is retained | Reflect shop-floor evidence patterns without artificially restricting investigations | 2026-11-04 |
 | D-021 | Node text is normally a few short paragraphs; 10,000 characters per Node is a suggested upper guideline, not yet a hard validation limit | Capture actual writing needs without prematurely specifying UI or data storage | 2026-11-04 |
+| D-022 | Store images as evidence, but do not upload/duplicate other file types; attach only hyperlinks to original PDF/Excel/Word/other documents in existing factory storage. Host migration preserves links, not the external documents | Keep authoritative source files in factory storage while minimizing PDCA storage duplication; hyperlink/access compatibility pending IT check | 2026-11-04 |
 
 ## 14. Change History
 
@@ -322,6 +327,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | DEFINE draft v0.12 | Confirmed owner's laptop as intended interim host while powered on, pending LAN/IT/capacity verification and data-continuity planning | Record staged hosting intent without beginning DESIGN or BUILD | 2026-11-04 |
 | DEFINE draft v0.13 | Confirmed all saved PDCA data must survive host migration, including text, node relationships, images and document references (D-019) | Define data portability requirement before selecting database or file storage | 2026-11-04 |
 | DEFINE draft v0.14 | Recorded screenshot/photo evidence expectations, a non-binding estimate of ~50 images per Problem/PDCA case, compression acceptance, and concise Node text with a suggested 10,000-character guideline (D-020, D-021) | Establish realistic content-volume expectations without selecting storage technology or enforcing unapproved limits | 2026-11-04 |
+| DEFINE draft v0.15 | Confirmed hyperlink-only references to original factory-storage documents, with no non-image file uploads; identified storage-access validation questions (D-022) | Simplify data storage and preserve original document ownership without locking in a link protocol | 2026-11-04 |
 
 ---
 
