@@ -1,7 +1,7 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.8**  
+> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.9**  
 > Last updated: 2026-11-04  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
 > This document records product needs only. No DESIGN or BUILD has been authorized by this update.
@@ -64,6 +64,8 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - **Product delivery strategy (D-013):** Develop THE NODE OF PDCA as a purpose-built application for the factory's needs. **Do not purchase/adopt a new off-the-shelf PDCA/QMS/whiteboard product as the core solution.** Existing market products may inform benchmarking and UX/functional requirements, not replace the planned custom product.
 - **Open-source policy (D-014, confirmed):** Existing open-source libraries and frameworks may be used to develop the custom application, subject to license compliance and compatibility with private internal company use. No specific library, framework, architecture, or license is approved yet.
 - **Internal-only operation (D-014, confirmed):** The finished application is for authorized internal company use only, not public distribution or external customers. The deployment/access design must enforce that boundary; whether the system is hosted on-premises or in an approved private environment is not yet selected.
+- **Host availability (D-015):** Temporary downtime while the host computer is switched off is acceptable. No always-on availability or automatic failover is required. Previously saved PDCA data must remain accessible after service resumes. Offline editing has not been decided.
+- **Host restart (D-016):** When the host computer is powered on again, the application must become available automatically, without an operator manually starting the application. The mechanism is deferred to DESIGN.
 - **Zero-spend constraint (D-014, confirmed):** Do not incur new software license fees, subscriptions, paid SaaS/API usage, paid hosting, or other new monetary charges for this project. Use no-fee components and existing company-approved resources only, subject to verification; a free tier with possible charges or restrictive limits must not be assumed to meet this requirement.
 
 **Unknown**
@@ -150,6 +152,8 @@ Data ownership, history, retention, recovery, and deletion behavior require DEFI
 - **R-08:** Pilot before plant-wide scale-up.
 - **R-09 (D-014):** Build with permitted no-fee open-source libraries/frameworks as appropriate; reject dependencies or services requiring new paid licenses, subscriptions, usage fees or other new spending. Review actual license obligations before adoption.
 - **R-10 (D-014):** Restrict deployment and use to authorized internal company personnel; no public-facing or external-customer release is intended.
+- **R-11 (D-015):** Temporary downtime when the host is off is acceptable; saved records must persist across that outage.
+- **R-12 (D-016):** The shared application must automatically start serving users after the host computer is powered on, without manual application startup.
 
 ### Requirements pending confirmation
 - Identity/accountability; edit history; conflict resolution behavior; deletion/recovery; search; non-functional performance and security thresholds.
@@ -212,6 +216,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 | AC-06 | Separate authorized sessions can retrieve the same shared PDCA after saving | NOT TESTED |
 | AC-07 | Multiple authorized users can edit a shared PDCA; no edit is silently lost | NOT TESTED |
 | AC-08 | Cutting & Packing and the selected 1–2 other departments can apply the same seven-category standard in representative cases; broad-rollout exit threshold TBD | NOT TESTED |
+| AC-09 | Proposed: after host shutdown and power-on, the application becomes available automatically without manual application startup, and previously saved PDCA records remain accessible (D-015, D-016) | NOT TESTED |
 
 ## 10. Important Risks
 
@@ -243,7 +248,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 
 ## 12. Current Baseline
 
-**Baseline:** DEFINE draft v0.8  
+**Baseline:** DEFINE draft v0.9  
 **Status:** Draft — DEFINE in progress  
 **Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific pilot departments and participant identities, hard-gate acceptance details, and usability measurement procedure are not yet decided. Minimum sample size is confirmed: ≥5 first-time users per department (D-011). The two-level exit **policy** (D-009), usability **thresholds** (D-010), and overall-plus-each-department task-completion evaluation (D-012) are confirmed.
 
@@ -269,6 +274,8 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | D-012 | Require independent task-completion rate ≥80% in the pooled overall pilot population AND separately in every participating department; mean ease-of-use rating ≥4/5 remains an overall criterion | Ensure one department's strong performance cannot mask another department's usability failure | 2026-11-04 |
 | D-013 | Custom-build THE NODE OF PDCA for factory-specific needs; do not buy/adopt a new packaged PDCA/QMS/whiteboard product as the core solution | Owner explicitly chose a purpose-built system over purchasing a new tool | 2026-11-04 |
 | D-014 | Open-source libraries/frameworks permitted; final product for authorized internal company use only; no new monetary spending on software, subscriptions, services or infrastructure | Owner confirmed internal-only, zero-spend custom-build constraint | 2026-11-04 |
+| D-015 | Temporary unavailability while the host computer is off is acceptable; no always-on or automatic failover requirement | Keep availability expectations proportionate to existing resources | 2026-11-04 |
+| D-016 | Application must automatically become available after the host computer is powered on, without manually launching the application | Reduce operational steps for internal users | 2026-11-04 |
 
 ## 14. Change History
 
@@ -282,6 +289,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | DEFINE draft v0.6 | Confirmed ≥80% task-completion criterion must pass both overall and separately for each pilot department | Avoid cross-department averages masking poor usability | 2026-11-04 |
 | DEFINE draft v0.7 | Confirmed custom-build delivery strategy; reframed market research as benchmarking, not procurement, and left component/infrastructure policy open | Honor owner direction without prematurely starting DESIGN or BUILD | 2026-11-04 |
 | DEFINE draft v0.8 | Confirmed open-source permission, internal-only deployment/use and zero-new-spend constraint; identified license and existing-infrastructure verification | Establish delivery constraints before technology selection | 2026-11-04 |
+| DEFINE draft v0.9 | Confirmed host-off downtime tolerance and automatic service availability after host power-on (D-015, D-016) | Define operational behavior without choosing architecture | 2026-11-04 |
 
 ---
 
