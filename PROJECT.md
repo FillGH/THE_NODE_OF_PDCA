@@ -1,7 +1,7 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.22**  
+> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.23**  
 > Last updated: 2026-11-04  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
 > This document records product needs only. No DESIGN or BUILD has been authorized by this update.
@@ -50,6 +50,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - **Confirmed — Pilot usability sample (D-011):** At least **5 first-time users per department**. A two-department pilot therefore requires at least 10 testers; a three-department pilot at least 15. Testers should represent actual intended internal users. This is a minimum, not a maximum or a statistical representativeness claim.
 - **Confirmed — Collaboration:** Any authorized user can view, create, and edit PDCA records of any department; no department-specific edit restriction.
 - **Confirmed — PIC / Owner field:** Indicates responsibility for an activity; does not grant exclusive editing rights.
+- **Confirmed — Pilot display-name identification (D-032):** Participants type their own display name without a password or Microsoft Account. The name is displayed during collaboration and in revision history, but it is self-declared, not verified identity. Internal-only access must be enforced separately.
 - **Intended future audience:** Personnel across the entire factory.
 - **Unknown:** Which 1–2 additional departments participate, actual tester names/roles and any additional users beyond the 5-per-department minimum, definition of internal personnel for contractor cases, sponsoring owner/approver, and IT/security stakeholders.
 
@@ -78,11 +79,14 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - **LAN disconnection behavior (D-029):** During Pilot, show a clear connection-loss warning and **pause further editing** while factory LAN/host service cannot be reached. Existing successfully saved data stays intact. On reconnect, restore live access only after current state/permission and Node edit eligibility are checked; do not silently commit stale changes. This is an online-first requirement, not offline authoring.
 - **Local unsaved-draft protection (D-030):** If LAN disconnects or Auto-save has not completed, retain the text the user already typed as a **temporary local draft on that device/browser** rather than silently losing it. After reconnection, check the user's editing rights and current Node lock/state, then **present the pending draft for the user to review and explicitly confirm before submitting it**. Do not automatically overwrite newer shared data. Exact duration, local storage mechanism, security restrictions, and recovery after full browser/device failure remain DESIGN/IT or subsequent DEFINE concerns; no guarantee of recovery from hardware failure is implied.
 - **Multiple tabs on the same PDCA (D-031):** The same user may open one PDCA in multiple browser tabs for review; all tabs remain up to date automatically, but only **one tab per user per PDCA** is authorized to actively edit at a time. Other tabs remain view-only. The user can switch the designated editing tab after current Auto-save / unsaved-draft status is checked; if the editing tab closes/crashes, another tab can regain editing eligibility without losing successfully saved data. This is per-user/per-PDCA and does **not** reduce the 10-person Pilot collaboration target. Tab coordination details are deferred to DESIGN.
+- **Self-entered display name (D-032):** Pilot users enter a name with no password or Microsoft login. The entered name identifies who appears to be editing a Node and labels history entries, but is **not authenticated identity**. Authorized internal network/application access remains a separate prerequisite (D-005/D-014). Duplicate-name/session behavior and access enforcement remain for later definition.
+- **Saved Node version history (D-033):** Preserve previous saved Node text so users can inspect old versions together with the entered editor display name and change date/time. The name is self-reported and cannot serve as verified audit evidence. History retention and scope beyond Node text are open.
+- **Restore previous Node version (D-034):** Allow a user to restore an earlier saved Node version directly, without manual copying. A restore is recorded as a **new current version** and retains all prior history, including the formerly current version. Respect Node edit protection, Autosave, and live updates (D-027, D-028, D-026). Exact restoration interaction and non-text scope remain for later definition.
 - **Operating window and shared-host intent (D-017):** THE NODE OF PDCA is expected to be available whenever its host computer is powered on; no fixed daily service schedule is required. The intended host is a **planned shared company LAN local server for Project Float Monitor and THE NODE OF PDCA**. This machine is **not yet confirmed set up or operational**. The owner plans to work with IT on its setup on 2026-11-05; feasibility, authorization, capacity, configuration compatibility, and impact on Float Monitor remain unverified. This is an operational constraint, not approval of a technology stack or deployment design.
 - **Zero-spend constraint (D-014, confirmed):** Do not incur new software license fees, subscriptions, paid SaaS/API usage, paid hosting, or other new monetary charges for this project. Use no-fee components and existing company-approved resources only, subject to verification; a free tier with possible charges or restrictive limits must not be assumed to meet this requirement.
 
 **Unknown**
-- Hosting/network policies, identification/login requirements, data retention, exact **image** upload limits and total storage capacity (despite the D-020 estimate), supported devices/browsers, **Node-lock expiry, autosave failure/retry, local draft retention/security, cross-tab edit handoff and full-browser-crash behavior (D-027–D-031), total factory-wide concurrent-user load**, availability, backup/recovery policy, and corporate security approval.
+- Hosting/network policies, access control independent of self-declared names, duplicate-name and session policy (D-032), history retention and coverage (D-033/D-034), exact **image** upload limits and total storage capacity (despite the D-020 estimate), supported devices/browsers, **Node-lock expiry, autosave failure/retry, local draft retention/security, cross-tab edit handoff and full-browser-crash behavior (D-027–D-031), total factory-wide concurrent-user load**, availability, backup/recovery policy, and corporate security approval.
 - **Low-priority implementation check, not a DEFINE blocker (D-023):** Which pasted Microsoft service / LAN shared-folder / internet links browsers can launch, and how to present unsupported/unavailable destinations. User is responsible for link correctness; no automated verification or repair is required.
 - Whether the owner's laptop can serve authorized LAN users (network reachability, firewall/security policy, available resources, company IT approval) as an interim host. The requirement to preserve and transfer saved PDCA data when changing hosts is confirmed (D-019); exact transfer method, integrity validation, backup/rollback, and treatment of externally linked documents remain to be defined.
 - Whether the planned shared local-server computer for Project Float Monitor and THE NODE OF PDCA can be prepared with IT, without new spending, and whether external connectivity is allowed. A setup attempt with IT is planned for 2026-11-05; outcome, machine specifications, capacity, Float Monitor requirements, IT authorization, and deployment configuration remain unverified. No technical hosting design is approved.
@@ -152,7 +156,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - [ ] Record owner-accepted interaction baseline before substantive integration.
 
 ### Data lifecycle — unknown
-Data ownership, history, retention, recovery, and deletion behavior require DEFINE decisions because this is a collaborative system retaining operational records.
+Saved Node text history and restoration are confirmed (D-033/D-034); data ownership, history retention, additional versioned data, broader deletion/recovery and security still require decisions because operational records are retained.
 
 ## 8. Requirements
 
@@ -182,9 +186,12 @@ Data ownership, history, retention, recovery, and deletion behavior require DEFI
 - **R-23 (D-029):** On loss of factory LAN/host connectivity during Pilot, alert users and block further edits until reconnection; preserve previously saved data, and validate live session/state before resuming.
 - **R-24 (D-030):** Preserve text typed but not yet successfully saved as a temporary draft on the current client during disconnection; on reconnect re-check access and Node editing eligibility, show the draft to the user for review and explicit confirmation before saving, and never silently overwrite shared data.
 - **R-25 (D-031):** Permit multiple browser tabs for viewing the same PDCA, auto-updating each; only one tab per user per PDCA can actively edit, with safe handoff after checking saved/pending state and recovery of edit access from another tab if the first closes/fails.
+- **R-26 (D-032):** Let Pilot users supply a display name with no password or Microsoft sign-in; use it for visible editor/history labels, never as verified personal identity. Enforce internal-only access independently.
+- **R-27 (D-033):** Retain saved Node text revisions with prior content, the editor's self-entered name and modification timestamp. Exact retention and other versioned fields remain unknown.
+- **R-28 (D-034):** Restore an earlier saved Node revision as a new revision while retaining the previous current version/history; maintain Node editing protection and avoid silent loss.
 
 ### Requirements pending confirmation
-- Identity/accountability; edit history; conflict resolution behavior; deletion/recovery; search; non-functional performance and security thresholds.
+- Authentication-free naming risks and independent access control; revision retention and wider versioned content; deletion recovery outside saved Node versions; search; non-functional performance and security thresholds.
 
 ## 9. Acceptance Criteria
 
@@ -256,6 +263,9 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 | AC-18 | Proposed: disconnect one of the 10 Pilot clients while editing; the application clearly warns and prevents further edits until connected; successfully saved data remains intact and current shared state is checked on return (D-029) | NOT TESTED |
 | AC-19 | Proposed: type into a Node, interrupt connection before Auto-save completes; unsaved text is retained temporarily on that client; after reconnect the user sees and reviews it and must confirm before submission, with current access/Node eligibility revalidated and no silent overwrite (D-030) | NOT TESTED |
 | AC-20 | Proposed: same user opens one PDCA in multiple browser tabs; both remain current, but edits are permitted from one tab only. After confirming any pending save/draft, user can switch the editing tab; closing the former tab does not permanently block editing or lose saved data (D-031) | NOT TESTED |
+| AC-21 | Proposed: a Pilot user types a display name with no password/Microsoft login; other users see it as an unverified editor label, with internal access controlled separately (D-032) | NOT TESTED |
+| AC-22 | Proposed: after multiple Node revisions, users can read earlier saved text together with editor-entered names and timestamps (D-033) | NOT TESTED |
+| AC-23 | Proposed: restore an earlier saved Node version as a new revision, leaving the previously current version in history and respecting active edit protection (D-034) | NOT TESTED |
 
 ## 10. Important Risks
 
@@ -263,7 +273,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 |---|---|---|---|
 | Concurrent edits overwrite changes | Lost work or misleading PDCA | Restrict concurrent changes to one editor per Node (D-027) and one editing tab per user/PDCA (D-031) | Multi-user and multi-tab pilot test |
 | LAN disconnect during unsaved Auto-save | Lost work or accidental overwrite after reconnect | Stop editing, preserve local pending draft, verify lock/current Node, require review/confirmation (D-029, D-030) | Disconnect/reconnect with unsaved text; check no false saved status and no overwrite |
-| Open editing causes accidental deletion/change | Loss of records or reasoning trace | Agree on history/recovery expectations | Controlled edit/restore cases |
+| Open editing causes accidental deletion/change | Loss of records or reasoning trace | Saved Node revision history and restore (D-033/D-034); broader deletion/recovery remains open | Controlled edit/restore and deletion cases |
 | Inconsistent use between departments | Failure of common factory standard | Shared categories and pilot learning | Cross-department sample cases |
 | Usability too complex for casual users | Low adoption | Representative novice-user evaluation | Observed pilot tasks |
 | Sensitive factory information exposed | Confidentiality or compliance impact | Internal access and factory IT/security review | Access validation |
@@ -282,6 +292,8 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 - [x] Availability whenever host is powered on (no fixed daily window), and intent to share a planned local-server computer with Project Float Monitor confirmed (D-017). Server setup and co-hosting feasibility are NOT confirmed.
 - [x] Owner's laptop selected as intended interim host while powered on (D-018); actual network/IT feasibility remains unverified.
 - [x] All saved PDCA data, node relationships, images, and supporting document references must be preserved on host transition (D-019); migration method and test evidence remain open.
+- [x] Pilot self-entered name without password/Microsoft sign-in, Node edit history, and direct version restore approved (D-032–D-034).
+- [ ] Access restrictions independent of user-entered names, history retention and remaining data-governance risks approved.
 - [ ] Actual license-compliant dependency policy, shared-host capacity/compatibility, no-new-cost operation, IT approval, and delivery/maintenance ownership verified.
 - [x] Pilot success **policy** approved: all mandatory functional gates plus practical usability; minor non-blocking issues can be accepted when documented.
 - [x] Usability thresholds approved: first-time task completion ≥80% without assistance and mean ease-of-use rating ≥4/5 (D-010).
@@ -294,11 +306,13 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 
 ## 12. Current Baseline
 
-**Baseline:** DEFINE draft v0.22  
+**Baseline:** DEFINE draft v0.23  
 **Status:** Draft — DEFINE in progress  
 **Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific pilot departments and participant identities, hard-gate acceptance details, and usability measurement procedure are not yet decided. Minimum sample size is confirmed: ≥5 first-time users per department (D-011). The two-level exit **policy** (D-009), usability **thresholds** (D-010), and overall-plus-each-department task-completion evaluation (D-012) are confirmed.
 
 **Delivery strategy:** Custom-build the application for the factory (D-013); existing market products are references, not purchase candidates for the core solution. Open-source libraries/frameworks are allowed, finished use is internal-only, and no new monetary spending is permitted (D-014). This is not a claim of zero internal labor or existing-infrastructure cost.
+
+**Pilot identity and revision control:** The user enters an unverified name (no Microsoft account or password) for collaboration labels; saved Node text history and restore-as-new-version are required (D-032–D-034). Name entry does not replace internal access controls.
 
 **Host operating expectation:** Available whenever the host is on, with no fixed operating window. The owner's laptop is the intended interim host (D-018), subject to IT/LAN/capacity checks. The intended later host is a planned company LAN local-server computer for both Project Float Monitor and THE NODE OF PDCA (D-017), not yet confirmed set up. An IT-assisted setup attempt is planned for 2026-11-05; compatibility, capacity and IT authorization remain to be checked before any deployment. All saved PDCA data and relationships, including images and document references, must be preserved during the host transition (D-019).
 
@@ -339,6 +353,9 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | D-029 | During Pilot LAN/host disconnection, pause further editing and warn user; previously saved work remains preserved and editing resumes after validated reconnection, without full offline authoring | Avoid ambiguous stale writes and lost-update risk during unstable connectivity | 2026-11-04 |
 | D-030 | Preserve already-typed unsaved text temporarily on the local client; after reconnect, re-check Node/edit access and present recovered draft for explicit user review/confirmation before saving, never silently overwriting shared updates | Avoid losing partially entered PDCA evidence and prevent unexpected overwrites | 2026-11-04 |
 | D-031 | Allow multiple tabs showing the same PDCA and receiving automatic updates, but only one active editing tab per user per PDCA; switch editing tab after checking save status and permit safe recovery if the original tab closes | Keep multi-view review flexible without self-conflicting concurrent edits | 2026-11-04 |
+| D-032 | Pilot users enter a self-chosen display name with no password or Microsoft account; show it for editor/history labels but not as verified identity; secure internal access separately | Minimize friction for small Pilot group without pretending usernames authenticate people | 2026-11-04 |
+| D-033 | Store past saved Node text versions with editor-entered name and modification time | Allow review of changes and prior content | 2026-11-04 |
+| D-034 | Direct restore from an earlier saved Node version creates a new version while preserving the former current version and intervening history | Reverse mistakes without destroying audit trail | 2026-11-04 |
 
 ## 14. Change History
 
@@ -366,6 +383,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | DEFINE draft v0.20 | Approved Node-level temporary edit protection with visible editor, concurrent editing of separate Nodes, and eventual release after disconnect without silent loss of saved changes (D-027) | Clarify real-time collision handling without selecting a locking algorithm or starting DESIGN | 2026-11-04 |
 | DEFINE draft v0.21 | Confirmed automatic saving of Node edits like Excel for the web, without manual Save, with visible saved/saving/error states (D-028) | Establish a low-friction, loss-aware authoring requirement before DESIGN | 2026-11-04 |
 | DEFINE draft v0.22 | Batched three approved collaboration decisions: stop editing on LAN loss, protect/confirm unsaved local drafts on reconnect, and allow multi-tab viewing with one edit tab per user/PDCA (D-029–D-031) | Reduce GitHub update overhead while maintaining data integrity and preserving DEFINE-only stage | 2026-11-04 |
+| DEFINE draft v0.23 | Batched three confirmed DEFINE choices: self-entered display names without password/Microsoft login, saved Node edit history, and restore of old versions as new revisions (D-032–D-034) | Keep collaboration easy and errors reversible without equating labels with verified identities | 2026-11-04 |
 
 ---
 
