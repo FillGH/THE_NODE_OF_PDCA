@@ -1,7 +1,7 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.3**  
+> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.4**  
 > Last updated: 2026-11-04  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
 > This document records product needs only. No DESIGN or BUILD has been authorized by this update.
@@ -31,7 +31,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - **SC-01 — Traceability:** A user can follow a Result back through its related Action(s), Hypothesis/Hypotheses, Fact(s), and Problem where those links have been entered.
 - **SC-02 — Item-level tracking:** Users can distinguish individual Actions and their PIC, dates, and status/result without reading an entire Excel-style cell.
 - **SC-03 — Same standard:** Pilot users follow the same seven categories regardless of their department.
-- **SC-04 — Ease of use:** Personnel unfamiliar with node editors can complete core tasks using a standard web browser without specialized training.
+- **SC-04 — Ease of use (confirmed threshold, D-010):** At least **80% of first-time pilot users** complete the agreed essential tasks **without assistance**, and the **average ease-of-use rating is at least 4/5**, using a standard web browser.
 - **SC-05 — Visual evidence:** Users can associate images and document references with the applicable PDCA content.
 - **SC-06 — Central record:** Authorized factory personnel can retrieve the same saved PDCA from separate devices/sessions.
 - **SC-07 — Collaboration:** Multiple authorized users can view and edit the same PDCA, without unreported loss of one another's changes.
@@ -39,9 +39,9 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 
 **Confirmed — Pilot success policy: Functional Excellence + Practical Usability (Decision D-009).** Expansion requires every *agreed mandatory functional/data/safety gate* to PASS and the *agreed ease-of-use criteria* to be met. Minor non-blocking defects may be carried forward only when documented and explicitly accepted by the project owner; critical failures, silent loss of work, or unresolved issues that prevent core PDCA tasks cannot count as a PASS. A functional demo alone is insufficient.
 
-**Proposed — Numeric usability targets (not yet approved):** At least 80% of first-time pilot users complete representative essential tasks without assistance; average ease-of-use rating at least 4/5. Time compared to the Excel baseline should be measured before proposing any efficiency gain target. These figures are candidates, not confirmed acceptance thresholds.
+**Confirmed — Numeric usability thresholds (D-010):** Essential-task completion by first-time pilot users **≥80% without assistance**; mean ease-of-use rating **≥4/5**. Both thresholds must be met alongside the agreed mandatory Hard Gates. The exact essential-task checklist, scoring instructions, rating question/scale, and sample size remain to be defined before testing. Timing and efficiency improvements versus Excel are separate proposed measures; no time-savings target is approved.
 
-**Unknown:** Exact task scripts and scoring, numeric thresholds, pilot participant count and duration, categorization of mandatory gates, and the final exit criteria for the plant-wide rollout.
+**Unknown:** Exact essential tasks, how one participant is scored as completing them, survey wording/scale, pilot participant count and duration, categorization of mandatory Hard Gates, and the remaining exit criteria for plant-wide rollout. Usability thresholds are confirmed; their measurement procedure is not yet agreed.
 
 ## 3. Users / Stakeholders
 
@@ -159,7 +159,9 @@ Data ownership, history, retention, recovery, and deletion behavior require DEFI
 | G-06 | Same seven-category method across Pilot departments | Real representative case in Cutting & Packing and each chosen department |
 | G-07 | Authorized internal access and no uncontrolled critical data-loss risk | Access checks and a documented data-safety scenario |
 
-**Candidate practical-usability evaluation — Proposed:** essential-task completion by new users (suggested ≥80% without assistance), ease-of-use rating (suggested mean ≥4/5), and measured comparisons with Excel for finding/understanding/tracking actions. Targets and sample size must be agreed before the Pilot; do not assert improvement without a baseline.
+**Confirmed usability acceptance thresholds (D-010):** At least **80% of first-time pilot users** must complete the agreed essential tasks **without assistance**, and the **average ease-of-use score must be ≥4/5**. Both are required to pass. The evaluation procedure, number of participants, the essential-task checklist, and survey wording remain open DEFINE decisions.
+
+**Measurement proposal (not yet approved):** Completion rate = number of first-time pilot users who successfully complete all pre-agreed essential tasks without guidance / number of first-time pilot users tested × 100%. Ease-of-use score = arithmetic mean of one agreed 1–5 rating per participant. Record unsuccessful attempts as well as successes and compare representative task performance with Excel as optional diagnostic evidence. These definitions require owner confirmation before pilot execution.
 
 **Draft / Proposed functional scenarios:** No requirement is marked PASS; testing has not started.
 
@@ -168,7 +170,7 @@ Data ownership, history, retention, recovery, and deletion behavior require DEFI
 | AC-01 | A user links 1 Problem, multiple Facts and Hypotheses, multiple Actions and distinct Results with free many-to-many relationships | NOT TESTED |
 | AC-02 | Starting from a Result, a user can trace connected Actions, Hypotheses, Facts, and Problem | NOT TESTED |
 | AC-03 | A user can identify the PIC, relevant date, and status/result for a specific Action | NOT TESTED |
-| AC-04 | A pilot user unfamiliar with node editors can perform a representative case in the web UI; task/time/success threshold TBD | NOT TESTED |
+| AC-04 | Among first-time pilot users, ≥80% independently complete the agreed essential tasks and the mean ease-of-use rating is ≥4/5; tasks, sampling and scoring method to be defined | NOT TESTED |
 | AC-05 | An image and document reference can be associated with PDCA and retrieved later | NOT TESTED |
 | AC-06 | Separate authorized sessions can retrieve the same shared PDCA after saving | NOT TESTED |
 | AC-07 | Multiple authorized users can edit a shared PDCA; no edit is silently lost | NOT TESTED |
@@ -190,7 +192,8 @@ Data ownership, history, retention, recovery, and deletion behavior require DEFI
 - [ ] Pilot user group and representative cases agreed.
 - [ ] Pilot in-scope vs deferred capabilities approved.
 - [x] Pilot success **policy** approved: all mandatory functional gates plus practical usability; minor non-blocking issues can be accepted when documented.
-- [ ] Specific mandatory gates, measures, numeric thresholds, and expansion decision criteria approved.
+- [x] Usability thresholds approved: first-time task completion ≥80% without assistance and mean ease-of-use rating ≥4/5 (D-010).
+- [ ] Specific mandatory Hard Gates, usability measurement protocol, remaining metrics and expansion decision criteria approved.
 - [ ] Material operational and security constraints documented.
 - [ ] Owner agrees that the project may move to DESIGN.
 
@@ -198,9 +201,9 @@ Data ownership, history, retention, recovery, and deletion behavior require DEFI
 
 ## 12. Current Baseline
 
-**Baseline:** DEFINE draft v0.3  
+**Baseline:** DEFINE draft v0.4  
 **Status:** Draft — DEFINE in progress  
-**Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific pilot departments/participants and numeric pilot exit thresholds are not yet decided. The two-level exit **policy** is confirmed (D-009).
+**Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific pilot departments and participants, hard-gate acceptance details, and usability measurement procedure are not yet decided. The two-level exit **policy** (D-009) and usability **thresholds** (D-010) are confirmed.
 
 This file records confirmed problem/outcome/access/rollout decisions and clearly labeled candidate scope/acceptance criteria. No app implementation, production integration, or deployment is authorized by this draft.
 
@@ -217,6 +220,7 @@ This file records confirmed problem/outcome/access/rollout decisions and clearly
 | D-007 | Remain in DEFINE; hold implementation and technology decisions | Scope and success measures not yet approved | 2026-11-04 |
 | D-008 | Pilot with Cutting & Packing plus 1–2 additional departments, then evaluate before factory-wide expansion | Test the shared PDCA standard across departments while controlling rollout risk | 2026-11-04 |
 | D-009 | Pilot acceptance policy: Functional Excellence + Practical Usability; all agreed hard gates and usability threshold must pass, while documented and owner-accepted minor non-blocking defects may remain | Avoid declaring success solely on functional completion while retaining proportionate engineering rigor | 2026-11-04 |
+| D-010 | Ease-of-use Pilot thresholds: ≥80% of first-time users complete agreed essential tasks without assistance; average ease-of-use rating ≥4/5 | Require demonstrable usability before broad factory rollout | 2026-11-04 |
 
 ## 14. Change History
 
@@ -225,6 +229,7 @@ This file records confirmed problem/outcome/access/rollout decisions and clearly
 | DEFINE draft v0.1 | Replaced template placeholders with confirmed user decisions and proposed pilot scope / criteria | Establish traceable requirements before DESIGN | 2026-11-04 |
 | DEFINE draft v0.2 | Confirmed pilot group spans Cutting & Packing plus 1–2 other departments; cross-department acceptance scenario updated | Test common standard before scaling | 2026-11-04 |
 | DEFINE draft v0.3 | Confirmed the pilot evaluation policy, distinguished mandatory gates from proposed metrics, and documented GO/REFINE/NO-GO logic | Establish decision policy before selecting thresholds and test population | 2026-11-04 |
+| DEFINE draft v0.4 | Approved quantitative ease-of-use targets and separated confirmed thresholds from unapproved measurement procedure | Define measurable pilot exit requirements without prematurely specifying test protocol | 2026-11-04 |
 
 ---
 
