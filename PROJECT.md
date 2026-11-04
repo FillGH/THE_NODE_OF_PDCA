@@ -1,229 +1,217 @@
-# Project Definition
+# THE NODE OF PDCA — Project Definition
 
-> **Project Starter Development Kit template revision: v0.3**  
-> This file is the **engineering source of truth** for the project.  
-> Keep it concise. Add detail only when it improves decisions, implementation, verification, or operation.
+> **Project Starter Development Kit v0.3** · Engineering Source of Truth  
+> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.1**  
+> Last updated: 2026-11-04  
+> **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
+> This document records product needs only. No DESIGN or BUILD has been authorized by this update.
 
 ## 1. Problem
 
-Describe the real problem in operational terms.
+**Confirmed — Operational problem statement**
 
-- What is happening today?
-- Who is affected?
-- Why does it matter?
-- What happens if nothing is changed?
+Today, PDCA is primarily documented in Excel. One problem may contain many Facts, Assumptions/Hypotheses, Actions, Results, dates, and PICs, with numerous bullet points stored in single cells on the same row. For example, one problem can have 10 facts, 5 hypotheses, and 20 actions with different relationships. Excel's row/cell presentation makes the many-to-many reasoning and work relationships hard to see and maintain.
 
-**Problem statement:**
+Consequences:
+- Difficult to establish which fact supports which hypothesis, which action tests which hypothesis, and which result belongs to which action.
+- Difficult to trace reasoning **backward** from a result to the action, hypothesis, facts, and original problem.
+- Individual actions, PICs, dates, and outcomes are hard to follow when recorded inside long multi-item cells.
+- As PDCA cases grow, reading, communicating, tracking, and carrying learning forward becomes difficult.
 
-> [Write the problem here.]
+**Problem to solve:** Structure PDCA as individually traceable, freely linkable information rather than many unrelated bullet items inside a spreadsheet row.
 
 ## 2. Desired Outcome / Success Criteria
 
-Describe the improvement the project is expected to create. Prefer observable or measurable outcomes where practical.
+**Confirmed — Desired outcome**
 
-- [ ] [Success criterion 1]
-- [ ] [Success criterion 2]
+A single, easy-to-use **factory-wide web-based PDCA platform** with one common method across departments. Users can connect Problem → Fact → Assumption/Hypothesis → Action → Status & Result → Measures to be implemented freely (many-to-many), including backward reasoning, images, document links, action follow-up, centralized persistent records, and simultaneous collaboration.
+
+**Proposed — Success criteria to validate during pilot (numeric targets not yet agreed)**
+
+- **SC-01 — Traceability:** A user can follow a Result back through its related Action(s), Hypothesis/Hypotheses, Fact(s), and Problem where those links have been entered.
+- **SC-02 — Item-level tracking:** Users can distinguish individual Actions and their PIC, dates, and status/result without reading an entire Excel-style cell.
+- **SC-03 — Same standard:** Pilot users follow the same seven categories regardless of their department.
+- **SC-04 — Ease of use:** Personnel unfamiliar with node editors can complete core tasks using a standard web browser without specialized training.
+- **SC-05 — Visual evidence:** Users can associate images and document references with the applicable PDCA content.
+- **SC-06 — Central record:** Authorized factory personnel can retrieve the same saved PDCA from separate devices/sessions.
+- **SC-07 — Collaboration:** Multiple authorized users can view and edit the same PDCA, without unreported loss of one another's changes.
+- **SC-08 — Pilot-to-scale:** A pilot provides evidence of value and material issues before expansion to the wider factory.
+
+**Unknown:** Measurement method, numerical thresholds, pilot population, and exit criteria for the plant-wide rollout.
 
 ## 3. Users / Stakeholders
 
-Who uses, owns, depends on, approves, or maintains the solution?
-
-- **Primary user(s):** [ ]
-- **Owner:** [ ]
-- **Other stakeholders:** [ ]
+- **Confirmed — Eligible users:** Internal factory personnel only.
+- **Confirmed — Collaboration:** Any authorized user can view, create, and edit PDCA records of any department; no department-specific edit restriction.
+- **Confirmed — PIC / Owner field:** Indicates responsibility for an activity; does not grant exclusive editing rights.
+- **Intended future audience:** Personnel across the entire factory.
+- **Unknown:** Pilot department(s), user counts, definition of internal personnel for contractor cases, sponsoring owner/approver, and IT/security stakeholders.
 
 ## 4. Constraints
 
-Record constraints that materially affect the solution.
+**Confirmed**
+- Browser-based web usage; ease of use for staff accustomed to everyday web applications.
+- One common PDCA categorization and principle across departments.
+- A central persistent record, image support, and simultaneous multi-user operation.
+- Pilot-first rollout before opening use across the entire factory.
+- Authorized access limited to internal factory personnel; sharing does not imply public access.
 
-Examples: environment, network, device, security, platform, budget, time, regulations, available skills, external systems.
-
-- [Constraint 1]
-- [Constraint 2]
+**Unknown**
+- Hosting/network policies, identification/login requirements, data retention, image/file size, supported devices/browsers, concurrent-user volume, cost constraints, availability, backup/recovery policy, and corporate security approval.
 
 ## 5. Assumptions / Unknowns
 
-State assumptions explicitly. Unknowns that could materially change the design should be resolved before or during DESIGN.
-
-### Assumptions
-- [Assumption]
+### Assumptions (to validate)
+- Separating information into distinct linked nodes will improve comprehension and action tracking versus the current Excel row/cell format.
+- A common set of categories can cover PDCA use cases from different departments without forcing identical problem-solving paths.
+- Pilot feedback will reveal usability issues before plant-wide rollout.
 
 ### Important unknowns
-- [Unknown]
+- How Pilot users and representative PDCA cases will be selected.
+- What proof is sufficient to declare pilot success and proceed to factory rollout.
+- Minimum search, history, deletion/restore, reporting, and image/document handling expectations.
+- Which access/identity and data-governance rules are required by the factory.
 
 ## 6. Scope
 
-### In Scope
-- [ ] [Required capability]
+### Confirmed product capabilities — intended end state
+- [x] Seven categories only (no sub-types currently agreed): **Problem; Fact; Assumption / Hypothesis; Action; Status & Result; Measures to be implemented; Link to document**.
+- [x] Free, many-to-many links between nodes across categories, including cross-stage and backward relationships.
+- [x] Separate, understandable items for reasons, actions, statuses/results, and measures.
+- [x] Action follow-up by individual action, including responsible PIC and relevant dates.
+- [x] Image inclusion as supporting visual information; document references.
+- [x] Easy-to-use web interface for internal factory users.
+- [x] Central, persistent PDCA database/shared records.
+- [x] Concurrent collaboration on the same PDCA.
+- [x] Common use across departments; open editing for authorized internal users.
+- [x] Rollout in **Pilot → evaluate → expand factory-wide**, not an all-factory first release.
 
-### Out of Scope
-- [ ] [Explicitly excluded capability]
+### Proposed for pilot — not yet approved
+- [ ] Create, edit, and connect the seven categories in a representative real PDCA case.
+- [ ] View and update PIC, dates, action status, and results separately per action.
+- [ ] Add/view images and open document references.
+- [ ] Persist and re-open shared records; demonstrate access from different accounts/devices.
+- [ ] Perform a simultaneous editing test and identify data-loss/conflict behavior.
+- [ ] Find previously recorded PDCA projects (basic search/discovery).
+- [ ] Verify basic accountability and recovery needs proportionate to open-edit risks.
 
-Do not move an out-of-scope item into the current baseline without an explicit decision.
+### Proposed to defer, subject to owner confirmation
+- [ ] AI-generated root causes/actions.
+- [ ] ERP or plant-system integration.
+- [ ] Native mobile apps.
+- [ ] Multi-level approval workflow.
+- [ ] Advanced notifications and analytics dashboards.
+
+**Note:** Proposed scope is deliberately not converted into approved requirements until DEFINE decisions are completed.
 
 ## 7. Solution / Design
 
-Describe the chosen approach at the level needed to build it correctly.
+**Current high-level concept only (Confirmed):** A visual PDCA knowledge network with individually linkable nodes, seven fixed categories, and common factory-wide access.
 
-Include only what is useful, for example:
+**DESIGN NOT STARTED / NO UI BASELINE ACCEPTED.** Prior standalone prototypes and Blender-inspired visual discussion are exploratory inputs, not implementation authority. Selection of frameworks, database, hosting, conflict-resolution algorithm, exact canvas behaviors, and permissions implementation is deferred to DESIGN after DEFINE is sufficiently complete.
 
-- User/process flow
-- System components
-- Data flow
-- Trading logic
-- Interfaces/integrations
-- Key technical choices
-- Prototype or mock-up references
+### UI/UX interaction baseline — pending DESIGN
+- [ ] Review representative pilot tasks and realistic states.
+- [ ] Refine usability with pilot personnel.
+- [ ] Record owner-accepted interaction baseline before substantive integration.
 
-**Chosen approach:**
-
-> [Describe the solution here.]
-
-### UI/UX interaction baseline — when applicable
-
-Use this subsection for **user-facing web apps or other UI-heavy products** where late interface changes would create meaningful rework. Delete it when not applicable.
-
-Before substantial backend/database/authentication/infrastructure integration:
-
-- [ ] A lightweight working prototype/preview exists using representative mock data.
-- [ ] Important user flows and realistic states have been exercised (e.g., empty, keyboard open, long content, Back navigation when relevant).
-- [ ] Information hierarchy, layout, wording, actions, navigation, and responsive behavior have been refined on representative target devices/viewports.
-- [ ] Material UI/UX decisions have been accepted by the owner/user.
-- [ ] The accepted prototype/baseline is referenced below.
-
-**Accepted UI/UX baseline / prototype reference:**
-
-> [Link, branch, preview, screenshot set, or short description]
-
-This is not a requirement for pixel-perfect styling before coding. It is a checkpoint to avoid expensive integration while the fundamental interaction model is still changing.
-
-If integration is genuinely required to resolve a material UI/UX uncertainty, document that exception instead of forcing an artificial prototype-only decision.
-
-### Data lifecycle — only when persistent data matters
-
-Briefly capture the storage/ownership of important data, what happens on delete/uninstall/reset, and whether backup/restore or migration is required. Delete this subsection if data-loss risk is immaterial. No formal matrix is required.
-
-**Relevant data and lifecycle decisions:** [ ]
-
-### Alternatives / Trade-offs considered
-
-| Option | Benefit | Cost / Risk | Decision |
-|---|---|---|---|
-| [Option] | [ ] | [ ] | [Choose / Reject] |
-
-Use this table only when alternatives are material. Delete it if unnecessary.
+### Data lifecycle — unknown
+Data ownership, history, retention, recovery, and deletion behavior require DEFINE decisions because this is a collaborative system retaining operational records.
 
 ## 8. Requirements
 
-Write requirements that are necessary for the current baseline.
+### Confirmed needs (not yet technical specifications)
+- **R-01:** Seven shared categories with individually identifiable nodes.
+- **R-02:** Free, many-to-many relationships; reasoning and results can be traced in either direction where links exist.
+- **R-03:** Actions have individually trackable responsibility, dates, and status/result information.
+- **R-04:** Support relevant pictures and links to documents.
+- **R-05:** Persist and share PDCA across authorized internal factory personnel.
+- **R-06:** Allow simultaneous collaboration, with no department-specific edit ownership.
+- **R-07:** Operate through a familiar, easy-to-use web interface.
+- **R-08:** Pilot before plant-wide scale-up.
 
-### Functional
-- **R1:** [Requirement]
-
-### Non-functional
-Add only requirements that matter for this project, such as performance, reliability, security, usability, compatibility, maintainability, or operational constraints.
-
-- **N1:** [Requirement]
+### Requirements pending confirmation
+- Identity/accountability; edit history; conflict resolution behavior; deletion/recovery; search; non-functional performance and security thresholds.
 
 ## 9. Acceptance Criteria
 
-Acceptance criteria define what evidence is required to consider the baseline correct.
+**Draft / Proposed:** No requirement is marked PASS; testing has not started.
 
-- **AC1:** [Given/when/then or clear pass/fail criterion]
-- **AC2:** [Criterion]
-
-Verification may be manual or automated depending on risk and value. For material checks, distinguish **PASS / FAIL / NOT TESTED (including owner-deferred) / OUT OF SCOPE** and keep short evidence or rationale. A build pass does not substitute for target-environment verification.
+| ID | Pilot acceptance scenario (proposed) | Status |
+|---|---|---|
+| AC-01 | A user links 1 Problem, multiple Facts and Hypotheses, multiple Actions and distinct Results with free many-to-many relationships | NOT TESTED |
+| AC-02 | Starting from a Result, a user can trace connected Actions, Hypotheses, Facts, and Problem | NOT TESTED |
+| AC-03 | A user can identify the PIC, relevant date, and status/result for a specific Action | NOT TESTED |
+| AC-04 | A pilot user unfamiliar with node editors can perform a representative case in the web UI; task/time/success threshold TBD | NOT TESTED |
+| AC-05 | An image and document reference can be associated with PDCA and retrieved later | NOT TESTED |
+| AC-06 | Separate authorized sessions can retrieve the same shared PDCA after saving | NOT TESTED |
+| AC-07 | Multiple authorized users can edit a shared PDCA; no edit is silently lost | NOT TESTED |
+| AC-08 | Pilot participants follow the same seven-category standard; broad-rollout exit threshold TBD | NOT TESTED |
 
 ## 10. Important Risks
 
-Focus on consequences, not paperwork. Ask: **What happens if this is wrong?**
-
-| Risk | Consequence | Control / Mitigation | Verification |
+| Risk | Potential consequence | Proposed mitigation to define | Verification TBD |
 |---|---|---|---|
-| [Risk] | [Impact] | [Control] | [Evidence] |
-
-Delete the table if the project has no material risks worth tracking.
+| Concurrent edits overwrite changes | Lost work or misleading PDCA | Agree on conflict handling expectations | Multi-user pilot test |
+| Open editing causes accidental deletion/change | Loss of records or reasoning trace | Agree on history/recovery expectations | Controlled edit/restore cases |
+| Inconsistent use between departments | Failure of common factory standard | Shared categories and pilot learning | Cross-department sample cases |
+| Usability too complex for casual users | Low adoption | Representative novice-user evaluation | Observed pilot tasks |
+| Sensitive factory information exposed | Confidentiality or compliance impact | Internal access and factory IT/security review | Access validation |
 
 ## 11. Definition of Done
 
-The current baseline is done when:
+**DEFINE exit (not yet completed):**
+- [ ] Pilot user group and representative cases agreed.
+- [ ] Pilot in-scope vs deferred capabilities approved.
+- [ ] Pilot success measures and expansion decision criteria approved.
+- [ ] Material operational and security constraints documented.
+- [ ] Owner agrees that the project may move to DESIGN.
 
-- [ ] Acceptance criteria pass.
-- [ ] No known critical defect remains.
-- [ ] Material risks are handled to an appropriate level.
-- [ ] The solution works in its intended environment, with real-device or field evidence when relevant.
-- [ ] Material unverified/deferred checks are explicitly assessed rather than counted as passes.
-- [ ] Recovery/fallback is defined where the consequence of failure justifies it.
-- [ ] The owner/user accepts the result.
-
-Add or remove items when the project context justifies it.
+**Later release acceptance remains subject to the starter-kit Ready to Release gate; no release evidence exists yet.**
 
 ## 12. Current Baseline
 
-**Baseline:** v0.1  
-**Status:** Draft / Ready to Build / Building / Verifying / Ready to Release / Operating / Closed
+**Baseline:** DEFINE draft v0.1  
+**Status:** Draft — DEFINE in progress  
+**Rollout decision:** Pilot-first; factory-wide use is the eventual end state.
 
-Summarize exactly what this baseline intends to deliver:
-
-> [Baseline summary]
-
-A baseline may change. Changes must be visible and deliberate rather than silently changing requirements during implementation.
+This file records confirmed problem/outcome/access/rollout decisions and clearly labeled candidate scope/acceptance criteria. No app implementation, production integration, or deployment is authorized by this draft.
 
 ## 13. Important Decisions
 
-Record only decisions that would be costly or confusing to rediscover later.
-
 | ID | Decision | Reason | Date |
 |---|---|---|---|
-| D-001 | [Decision] | [Reason] | YYYY-MM-DD |
-
-Delete this section if there are no important decisions yet.
+| D-001 | Move from Excel row/cell-heavy PDCA toward individually linkable PDCA nodes | Existing format obscures relationships and action tracking | 2026-11-04 |
+| D-002 | Standardize on seven named categories; free many-to-many linkage; no sub-types yet | Common reasoning structure while retaining flexibility | 2026-11-04 |
+| D-003 | Target one browser-based central PDCA platform for all factory departments | Shared standard, ease of use, common knowledge | 2026-11-04 |
+| D-004 | All authorized users can view/create/edit across departments | Open collaboration rather than department ownership restrictions | 2026-11-04 |
+| D-005 | Eligible users are internal factory personnel only | Intended organizational boundary | 2026-11-04 |
+| D-006 | Roll out to a pilot first; evaluate before factory-wide expansion | Validate adoption and effectiveness at lower risk | 2026-11-04 |
+| D-007 | Remain in DEFINE; hold implementation and technology decisions | Scope and success measures not yet approved | 2026-11-04 |
 
 ## 14. Change History
 
 | Version | Change | Reason | Date |
 |---|---|---|---|
-| v0.1 | Initial baseline | Project start | YYYY-MM-DD |
+| DEFINE draft v0.1 | Replaced template placeholders with confirmed user decisions and proposed pilot scope / criteria | Establish traceable requirements before DESIGN | 2026-11-04 |
 
 ---
 
 # Decision Gates
 
-## Ready to Build
+## Ready to Build — NOT MET
+- [x] Problem and desired outcome described.
+- [ ] Scope, constraints, acceptance thresholds, and important unknowns sufficiently settled.
+- [ ] DESIGN and an accepted user-facing interaction baseline completed.
+- [ ] Material risks addressed proportionately.
 
-Implementation may start when there is enough clarity to avoid coding from guesses:
-
-- [ ] Problem and desired outcome are understood.
-- [ ] Scope and out of scope are clear enough.
-- [ ] Material constraints and assumptions are known.
-- [ ] Design direction is sufficient for implementation.
-- [ ] Acceptance criteria exist.
-- [ ] Material risks have been considered.
-- [ ] For UI-heavy products where interface decisions drive implementation, the important user flows have an accepted UI/UX interaction baseline from a representative prototype/preview.
-
-## Ready to Release
-
-Release may proceed when:
-
-- [ ] Acceptance criteria pass with appropriate evidence.
-- [ ] No known critical defect remains.
-- [ ] Material risks are controlled appropriately.
-- [ ] The target environment has been verified independently of compile/CI where runtime behavior matters.
-- [ ] Material deferred or unverified tests and residual risks are visible to the owner.
-- [ ] Recovery/fallback exists where justified by risk.
-- [ ] The owner/user accepts the result.
+## Ready to Release — NOT APPLICABLE YET
+No implementation, testing, pilot, or production release has been authorized or performed.
 
 ---
 
 # Lifecycle Reminder
 
-```text
-DEFINE → DESIGN → BUILD → VERIFY → OPERATE → LEARN
-```
+`DEFINE → DESIGN → BUILD → VERIFY → OPERATE → LEARN`
 
-**DEFINE:** Understand the problem and outcome.  
-**DESIGN:** Choose scope, trade-offs, solution, and evidence. For UI-heavy products, refine the important interaction/UI baseline before costly integration.  
-**BUILD:** Implement the simplest sufficient accepted baseline.  
-**VERIFY:** Prove correctness with evidence appropriate to risk.  
-**OPERATE:** Use, maintain, detect failure, and recover as needed.  
-**LEARN:** Check whether the original problem improved and retain useful lessons.
+Current stage: **DEFINE**.
