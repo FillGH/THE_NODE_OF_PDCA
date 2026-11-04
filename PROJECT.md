@@ -1,7 +1,7 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.26**  
+> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.27**  
 > Last updated: 2026-11-04  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
 > This document records product needs only. No DESIGN or BUILD has been authorized by this update.
@@ -39,9 +39,9 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 
 **Confirmed — Pilot success policy: Functional Excellence + Practical Usability (Decision D-009).** Expansion requires every *agreed mandatory functional/data/safety gate* to PASS and the *agreed ease-of-use criteria* to be met. Minor non-blocking defects may be carried forward only when documented and explicitly accepted by the project owner; critical failures, silent loss of work, or unresolved issues that prevent core PDCA tasks cannot count as a PASS. A functional demo alone is insufficient.
 
-**Confirmed — Usability thresholds and aggregation (D-010, D-011, D-012):** First-time users' independent essential-task completion must be **≥80% overall AND ≥80% within every participating department**. Mean ease-of-use rating must be **≥4/5 overall**; no separate department-level rating threshold has been approved. At least **5 first-time pilot testers per department** are required. Specific essential tasks, participant-level success rule, rating wording, and pilot protocol remain to be decided. Timing and efficiency improvements versus Excel are separate proposed measures; no time-savings target is approved.
+**Confirmed — Usability thresholds and aggregation (D-010, D-011, D-012):** First-time users' independent essential-task completion must be **≥80% overall AND ≥80% within every participating department**. Mean ease-of-use rating must be **≥4/5 overall**; no separate department-level rating threshold has been approved. At least **5 first-time pilot testers per department** are required. The per-person success rule is now confirmed (D-054): **100% of designated critical tasks plus ≥80% of all standard tasks**, without assistance. Exact task list, critical classification, survey wording and full Pilot protocol script remain to be decided. Timing and efficiency improvements versus Excel are separate proposed measures; no time-savings target is approved.
 
-**Unknown:** Exact essential tasks, how one participant is scored as completing them, survey wording/scale, final participant count (above the confirmed minimum), pilot duration, categorization of mandatory Hard Gates, and the remaining exit criteria for plant-wide rollout. Usability thresholds, minimum testers per department, and both overall and per-department completion aggregation are confirmed (D-010–D-012); participant-level scoring and remaining measurement procedure are not yet agreed.
+**Unknown:** Exact essential task list and which tasks are critical, survey wording/scale, final participant count (above the confirmed minimum), pilot duration, categorization of mandatory Hard Gates, and the remaining exit criteria for plant-wide rollout. The per-participant scoring *rule* is confirmed (D-054), but task selection and classification are not. Usability thresholds, minimum testers per department, and both overall and per-department completion aggregation are confirmed (D-010–D-012); participant-level scoring and remaining measurement procedure are not yet agreed.
 
 ## 3. Users / Stakeholders
 
@@ -52,6 +52,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - **Confirmed — PIC / Owner field:** Indicates responsibility for an activity; does not grant exclusive editing rights.
 - **Confirmed — Pilot display-name identification (D-032):** Participants type their own display name without a password or Microsoft Account. The name is displayed during collaboration and in revision history, but it is self-declared, not verified identity. Internal-only access must be enforced separately.
 - **Confirmed — Scope is one PDCA at a time for Node linking (D-041):** Users may connect Nodes freely only when both Nodes belong to the same PDCA. No direct links between separate PDCA projects in the initial scope.
+- **Confirmed — Pilot device baseline (D-052):** Desktop web browsers only, targeting Full HD **1920 × 1080** pixels at **16:9**; Mobile and Tablet interfaces are excluded from the initial Pilot scope.
 - **Intended future audience:** Personnel across the entire factory.
 - **Unknown:** Which 1–2 additional departments participate, actual tester names/roles and any additional users beyond the 5-per-department minimum, definition of internal personnel for contractor cases, sponsoring owner/approver, and IT/security stakeholders.
 
@@ -138,6 +139,11 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - [x] Rollout in **Pilot → evaluate → expand factory-wide**, not an all-factory first release.
 - [x] Pilot includes Cutting & Packing together with 1–2 additional departments; exact departments and participants pending.
 - [x] Pilot usability sample includes at least 5 first-time users per participating department (D-011).
+- [x] **Full-feature before official Pilot**: all agreed in-scope capabilities must be ready and preliminarily checked first; features explicitly excluded from scope remain excluded (D-050).
+- [x] No import of old PDCA Excel data (manual copy/re-entry is acceptable), no one-time or continuous Excel import (D-051).
+- [x] Desktop-only Pilot web application targeting **Full HD 1920 × 1080, 16:9**; Mobile and Tablet not required (D-052).
+- [x] **Hybrid Pilot:** common standardized task-based tests plus separate real-work PDCA trials in participating departments (D-053).
+- [x] Each individual passes standardized tasks only by completing **100% critical tasks and ≥80% total tasks** unassisted (D-054); overall and per-department pass rates remain ≥80% (D-010/D-012).
 
 **Confirmed Node deletion baseline (D-035–D-039):** Soft-delete Nodes into recoverable Trash for seven days, then purge automatically; any authorized internal user may soft-delete and restore; no earlier manual permanent purge; never cascade deletion to adjacent Nodes; preserve/restore eligible graph edges; confirm with Node name and relationship count.
 **Confirmed PDCA-level deletion (D-044):** A user may delete an entire PDCA project, which enters Trash as a unit together with its contained Nodes, images and internal relationships. It can be restored as a whole within seven days; after seven days the entire deleted PDCA is automatically permanently purged from application-accessible records. Purging from separately retained backups is subject to an independent retention policy, not assumed by this decision.
@@ -148,11 +154,17 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - **D-048:** Every new PDCA starts from an empty project, with **no Duplicate PDCA feature and no Template System** in Pilot.
 - **D-049:** The exported PDF is a **hybrid report** including both a visual network of PDCA Nodes/links and readable details of the relevant Nodes. Report formatting, page layout, scaling and precise fields remain for DESIGN.
 **Interaction policy:** Future DEFINE question sets should present **at least three clear choices per question** and prioritize material product decisions over standard UI/UX minutiae (owner direction; not a system capability).
+**Confirmed Pilot preparation and evaluation (D-050–D-054):**
+- **D-050 — Full-feature Pilot:** All previously agreed in-scope features must be available and have passed preliminary checks **before the official Pilot begins**. An internal readiness/dry-run check is permissible, but Pilot testing must not be used as a substitute for delivering accepted features. No previously agreed feature is deferred until after Pilot merely to accelerate launch; only explicitly out-of-scope items are excluded.
+- **D-051 — No Excel import:** New PDCA records are created in the application and any needed historical Excel content is re-entered or copied manually. No one-time or continuous Excel-import tool is required.
+- **D-052 — Desktop Full HD only:** Deliver the initial Pilot Web Application for desktop browser usage at **1920 × 1080, 16:9**. Do not require Mobile or Tablet support for the Pilot. Responsive behavior outside this target remains a later-scope question rather than a Pilot acceptance criterion.
+- **D-053 — Hybrid Pilot test:** Combine (1) a common standardized, independently performed task-based usability test, scored consistently for first-time users, **and** (2) trials with real PDCA problems from participating departments to demonstrate operational fit. Task scores are computed from the standardized portion; real-case suitability and agreed hard gates are evaluated separately.
+- **D-054 — Critical + Overall participant pass:** A first-time user's standardized task session **passes** only if they complete **all designated critical tasks (100%) and at least 80% of the entire agreed standard-task checklist**, without assistance. Failing any critical task means that participant does not pass even when overall task success is ≥80%. The resulting count of passing users must meet the prior **≥80% overall AND ≥80% for each Pilot department** criterion (D-010/D-012), plus average ease-of-use ≥4/5 overall. Exact task list and critical designation remain to be approved before testing.
 ### Proposed for pilot — not yet approved
 - [ ] Create, edit, and connect the seven categories in a representative real PDCA case.
 - [ ] View and update PIC, dates, action status, and results separately per action.
 - [ ] Add/view images and open document references.
-- [ ] Persist and re-open shared records; demonstrate access from different accounts/devices.
+- [ ] Persist and re-open shared records; demonstrate access from separate **desktop browser sessions/computers** (no Microsoft account requirement).
 - [ ] Perform a simultaneous editing test and identify data-loss/conflict behavior.
 - [x] Find previously recorded PDCA projects via a simple, familiar search (D-040); advanced search controls are not required.
 - [ ] Verify basic accountability and recovery needs proportionate to open-edit risks.
@@ -160,7 +172,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 ### Proposed to defer, subject to owner confirmation
 - [ ] AI-generated root causes/actions.
 - [ ] ERP or plant-system integration.
-- [ ] Native mobile apps.
+- [ ] Native mobile apps and any Mobile/Tablet interface (excluded from initial Desktop-only Pilot by D-052).
 - [ ] Multi-level approval workflow.
 - [ ] Advanced notifications and analytics dashboards.
 
@@ -229,6 +241,11 @@ Saved Node history and restoration are confirmed (D-033/D-034). Node Trash and s
 - **R-41 (D-047):** Export a saved PDCA project into a PDF report in addition to viewing it through the Web Application, suitable for meeting and management communication.
 - **R-42 (D-048):** Creating a new PDCA always starts from an empty project; do not include Duplicate PDCA or reusable template features in Pilot.
 - **R-43 (D-049):** PDF export must include both a visual Node-link network and the supporting readable Node details in one hybrid report. Defer exact report design to DESIGN.
+- **R-44 (D-050):** Make every already-confirmed *in-scope* product capability available and preliminarily validated before starting the official Pilot; do not rely on feature development during or after the Pilot to satisfy agreed scope. Internal smoke/dry-run checks are permitted ahead of the official Pilot.
+- **R-45 (D-051):** Do not implement one-time or recurring Excel PDCA data import. Start PDCA data in this app; copy old Excel content manually when needed.
+- **R-46 (D-052):** Target desktop browser interaction at 1920 × 1080 (Full HD), 16:9 in the Pilot; no Mobile/Tablet support obligation for Pilot.
+- **R-47 (D-053):** Conduct a Hybrid Pilot that includes a common unassisted standardized task test for each first-time participant and use of real PDCA cases from each participating department; evaluate standardized task scores and real-work evidence distinctly.
+- **R-48 (D-054):** Count each eligible Pilot tester as passing the standardized test only when all explicitly tagged critical tasks **AND at least 80% of the total standardized tasks** are completed without assistance. Overall and per-department user-pass thresholds remain ≥80% (D-012); ease-of-use mean remains ≥4/5 overall (D-010). Define exact tasks/critical tagging before tests.
 ### Requirements pending confirmation
 - Authentication-free naming risks and independent access control; automatic-backup cadence, retention and test procedure, backup purge interaction, recovery objectives, and wider versioned content; limits of Host-only backups and recovery outside valid available backups; non-functional performance and security thresholds. Advanced search is not a Pilot requirement (D-040).
 
@@ -253,18 +270,18 @@ Saved Node history and restoration are confirmed (D-033/D-034). Node Trash and s
 | G-07 | Authorized internal access and no uncontrolled critical data-loss risk | Access checks and a documented data-safety scenario |
 | G-08 | Zero new monetary expenditure and license compliance for selected dependencies/deployment (D-014 constraint; verification method proposed) | Dependency/license inventory, zero-fee checks, and company IT confirmation of existing infrastructure |
 
-**Confirmed usability acceptance thresholds (D-010):** At least **80% of first-time pilot users** must complete the agreed essential tasks **without assistance**, and the **average ease-of-use score must be ≥4/5**. Both are required to pass. At least 5 first-time users per department are required (D-011). Task completion must pass **both** the overall pooled rate and **every department's** rate (D-012). The detailed participant-level scoring method, final sample count, essential-task checklist, and rating wording remain open DEFINE decisions.
+**Confirmed usability acceptance thresholds (D-010, D-012, D-054):** At least **80% of first-time Pilot users overall AND 80% within each department** must pass the standardized tasks without assistance; each individual passes by completing **every designated critical task and ≥80% of total tasks** (D-054). Overall average ease-of-use remains **≥4/5**. At least five first-time testers per department are required (D-011). The exact checklist, critical-task tagging, final sample, survey wording and scripts are pending.
 
 **Confirmed aggregation (D-012):** Calculate completion percentages using **the actual number of eligible first-time participants in each denominator**. Overall completion uses all participants pooled across participating departments; department completion uses only participants in that department. Each must be **≥80%**, with participant pass counts interpreted using exact fractions (e.g., 4 out of 5 passes). Do **not** substitute an average of departmental percentages for the pooled overall rate.
 
-**Measurement proposal (not yet approved):** Define participant success as completing **all** pre-agreed essential tasks without task-specific guidance; successful participants / tested eligible participants × 100 is then computed overall and for each department. Ease-of-use score = arithmetic mean of one agreed 1–5 rating per participant, currently judged **overall**. Record failures and compare representative performance with Excel as optional diagnostic evidence. These participant-level success rules, survey wording, missing-data handling, and exact task scripts need owner confirmation before testing.
+**Confirmed participant scoring (D-054):** For each eligible first-time user, mark a PASS only when **all critical tasks pass** and **at least 80% of all standard tasks pass**, without task-specific guidance. Calculate successful participants / tested eligible participants × 100, both pooled and by department (D-012). For example, with five tasks where two are designated critical, both critical and at least four of five tasks must pass. This arithmetic example **does not establish the task checklist or critical-task designations**. **Measurement details still proposed:** ease-of-use score = arithmetic mean of a consistent 1–5 rating per participant, judged overall. Final task checklist/classification, survey wording, missing-data handling and exact scripts require owner confirmation.
 
-### Proposed Pilot Test Protocol v0.1 — not yet approved
+### Proposed Pilot Test Protocol v0.1 — task list/operational details not yet approved
 
-The following is a **DEFINE-stage test protocol candidate**, not a UI/design instruction or a completed test.
+The following is a **DEFINE-stage test protocol candidate**, not a UI/design instruction or a completed test. The **Hybrid approach** (standardized tasks plus real departmental PDCA trials) and **participant pass rule** are owner-confirmed D-053/D-054; the candidate task identities, which are critical, facilitator script and other procedures still require approval.
 
 - **Participants:** At least 5 first-time users from Cutting & Packing and at least 5 from each of the 1–2 other participating departments (D-011); choose actual intended users with varied familiarity with PDCA and web tools.
-- **Materials:** Same agreed scenario complexity and essential-task checklist for all novice testers, supplemented by department-specific real PDCA cases for cross-department fit. A facilitator may give a brief standardized starting explanation but not teach or hint during scored tasks.
+- **Materials/method (D-053):** Use the same agreed standardized task set and evaluation method for all novice testers, then separately test suitability with each department's real PDCA problem(s). A facilitator may provide the same opening explanation but may not guide participants during scored standard tasks. Capture real-work feedback and hard-gate results independently of the user task-completion rate.
 - **Candidate essential task E-01:** Create a PDCA with a Problem, separate Facts and Assumptions/Hypotheses, and connect them meaningfully.
 - **Candidate essential task E-02:** Add Action(s), create intended many-to-many links, and identify which assumption each action addresses.
 - **Candidate essential task E-03:** Set and later locate an Action PIC, relevant due date, and its current status.
@@ -272,11 +289,11 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 - **Candidate essential task E-05:** Include a visual image and a document reference, then open or locate that evidence.
 - **Candidate essential task E-06:** Return to a previously saved PDCA and retrieve its connected information.
 - **Confirmed aggregation (D-012):** The independent task-completion success rate must meet **≥80% pooled overall and ≥80% within EACH pilot department**. For a department testing the minimum of 5 users, at least 4 must pass. Overall uses the number of successful unique eligible participants divided by all eligible participants (not an unweighted average of department rates).
-- **Proposed participant scoring method:** Mark each essential task PASS/FAIL per first-time participant without in-task coaching. Count one participant as successful only if **all** approved essential tasks pass; the specific success rule remains pending owner agreement.
+- **Confirmed participant scoring method (D-054):** Mark every standardized task PASS/FAIL for each unassisted first-time user and predesignate which tasks are **critical**. Count that participant as successful only if **every critical task passes** and **at least 80% of the complete standard checklist passes**; count a participant who fails even one critical task as FAIL regardless of total task percentage. Critical-task list and actual checklist still require approval.
 - **Candidate usability survey:** Each participant answers one agreed ease-of-use question on an anchored 1–5 scale after the tasks; calculate the arithmetic mean and compare to the confirmed ≥4/5 threshold. Agree on question wording and missing-response handling beforehand.
 - **Separate Hard Gate evidence:** Data safety, internal-only access, simultaneous edits, persistence and data integrity must also be tested; do not infer them from novice task completion.
 - **Recording:** Preserve participant department, task outcomes, failure observations, ease-of-use rating, and noteworthy barriers without collecting unnecessary personal data. Provide aggregated results and issues for the GO / REFINE & RETEST / NO-GO decision.
-- **Still undecided:** Exact essential tasks and participant-level success rule, scoring script, pilot session duration, survey details, how to handle incomplete/missing observations, and minimum number of representative real cases. Do not claim generalizable factory-wide adoption from this small pilot sample.
+- **Still undecided:** Exact standard/critical task checklist, detailed scoring script, pilot session duration, survey details, incomplete/missing observations and minimum number of representative real departmental cases. The hybrid test approach and per-user pass rule are **not** undecided (D-053/D-054). Do not claim generalizable factory-wide adoption from this small sample.
 
 **Draft / Proposed functional scenarios:** No requirement is marked PASS; testing has not started.
 
@@ -320,6 +337,11 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 | AC-36 | Proposed: users can generate a PDF of an existing PDCA while continuing to view it in the Web Application (D-047) | NOT TESTED |
 | AC-37 | Proposed: creating a new PDCA starts blank; no Duplicate or Template workflow is offered in Pilot (D-048) | NOT TESTED |
 | AC-38 | Proposed: an exported PDF displays both the PDCA Node-link visual network and readable Node information; exact layout is subject to later DESIGN acceptance (D-049) | NOT TESTED |
+| AC-39 | Proposed: official Pilot starts only after all confirmed in-scope functions are delivered and passed preliminary readiness checks; explicitly excluded functions need not be built (D-050) | NOT TESTED |
+| AC-40 | Proposed: users create PDCA from scratch or manually copy needed old Excel details; no Excel-import function is provided (D-051) | NOT TESTED |
+| AC-41 | Proposed: agreed Pilot functional tasks are operable on a desktop browser at Full HD 1920 × 1080, 16:9; mobile/tablet operation is not a Pilot gate (D-052) | NOT TESTED |
+| AC-42 | Proposed: each participating department completes both identical standardized novice task tests and a real department PDCA scenario; report their distinct evidence (D-053) | NOT TESTED |
+| AC-43 | Proposed: for each novice, all designated critical tasks and at least 80% of standard tasks must pass unassisted; the count of passing users must be ≥80% pooled and ≥80% in each department, with ease-of-use ≥4/5 pooled (D-010, D-012, D-054) | NOT TESTED |
 
 ## 10. Important Risks
 
@@ -329,7 +351,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 | LAN disconnect during unsaved Auto-save | Lost work or accidental overwrite after reconnect | Stop editing, preserve local pending draft, verify lock/current Node, require review/confirmation (D-029, D-030) | Disconnect/reconnect with unsaved text; check no false saved status and no overwrite |
 | Open editing causes accidental deletion/change | Loss of records or reasoning trace | Saved Node version restore (D-033/D-034), soft-delete Trash and seven-day recovery (D-035–D-039); external backup retention TBD | Controlled history, Trash, restore, expiry and linked-Node tests |
 | Inconsistent use between departments | Failure of common factory standard | Shared categories and pilot learning | Cross-department sample cases |
-| Usability too complex for casual users | Low adoption | Representative novice-user evaluation | Observed pilot tasks |
+| Usability too complex for casual users | Low adoption | Full-feature desktop Pilot readiness; common novice tasks and real operational scenarios (D-050, D-052, D-053), with all critical tasks and ≥80% of standard tasks required per passing participant (D-054) | Pilot scored tasks, real departmental case observations and user feedback |
 | Sensitive factory information exposed | Confidentiality or compliance impact | Internal access and factory IT/security review | Access validation |
 | Shared local host affects Project Float Monitor | Resource contention, port/configuration conflicts or correlated downtime | Check existing host capacity and Float Monitor dependencies with IT before DESIGN | Co-hosting feasibility and non-disruption test (proposed) |
 | Interim laptop is unavailable or later replaced | Temporary service outage or risk to locally stored PDCA records | Define laptop security/availability and data preservation for host transition | Proposed interim-host access and data-continuity checks |
@@ -345,7 +367,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 - [ ] Pilot department identities, actual participants and representative cases agreed.
 - [x] High-level PDCA scope choices: basic search, within-PDCA links, multiple Problem Nodes per PDCA, no closure-based edit lock, and seven-day recoverable whole-PDCA delete (D-040–D-044).
 - [ ] Remaining Pilot in-scope vs deferred capabilities approved.
-- [ ] Pilot in-scope vs deferred capabilities approved.
+- [x] Pilot readiness scope confirmed: all previously agreed in-scope capabilities ready before official Pilot, no Excel import, Desktop Full HD 16:9 only (D-050–D-052). Exact complete feature inventory and Pilot readiness checklist still require validation.
 - [x] Custom-build product direction confirmed; no off-the-shelf replacement purchase (D-013).
 - [x] Open-source frameworks/libraries permitted; internal-only operation and no-new-spending constraint confirmed (D-014).
 - [x] Availability whenever host is powered on (no fixed daily window), and intent to share a planned local-server computer with Project Float Monitor confirmed (D-017). Server setup and co-hosting feasibility are NOT confirmed.
@@ -360,7 +382,9 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 - [x] Pilot success **policy** approved: all mandatory functional gates plus practical usability; minor non-blocking issues can be accepted when documented.
 - [x] Usability thresholds approved: first-time task completion ≥80% without assistance and mean ease-of-use rating ≥4/5 (D-010).
 - [x] Task completion aggregation approved: both overall and every participating department must independently meet ≥80% (D-012).
-- [ ] Specific mandatory Hard Gates, usability measurement protocol, remaining metrics and expansion decision criteria approved.
+- [x] Hybrid Pilot approach (standard task test plus real department cases) and per-person scoring rule (all critical tasks + ≥80% of all tasks) approved (D-053/D-054).
+- [ ] Exact standardized and critical task checklists, Pilot scripts and Hard Gates finalized before test.
+- [ ] Specific mandatory Hard Gates, remaining usability test administration details (task list, critical classifications, scripts, rating wording), additional metrics and expansion decision criteria approved. Hybrid format and participant success formula already confirmed (D-053/D-054).
 - [ ] Material operational and security constraints documented.
 - [ ] Owner agrees that the project may move to DESIGN.
 
@@ -368,9 +392,9 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 
 ## 12. Current Baseline
 
-**Baseline:** DEFINE draft v0.26  
+**Baseline:** DEFINE draft v0.27  
 **Status:** Draft — DEFINE in progress  
-**Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific pilot departments and participant identities, hard-gate acceptance details, and usability measurement procedure are not yet decided. Minimum sample size is confirmed: ≥5 first-time users per department (D-011). The two-level exit **policy** (D-009), usability **thresholds** (D-010), and overall-plus-each-department task-completion evaluation (D-012) are confirmed.
+**Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific Pilot departments and participant identities, hard-gate acceptance details and remaining test scripts/critical task list are not yet decided. The Hybrid Pilot and participant scoring rule are confirmed (D-053/D-054). Minimum sample size is confirmed: ≥5 first-time users per department (D-011). The two-level exit **policy** (D-009), usability **thresholds** (D-010), and overall-plus-each-department task-completion evaluation (D-012) are confirmed.
 
 **Delivery strategy:** Custom-build the application for the factory (D-013); existing market products are references, not purchase candidates for the core solution. Open-source libraries/frameworks are allowed, finished use is internal-only, and no new monetary spending is permitted (D-014). This is not a claim of zero internal labor or existing-infrastructure cost.
 
@@ -383,6 +407,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 **Node deletion:** D-035–D-039 establish recoverable Trash for seven days, automated final removal thereafter, authorized-user delete/restore, no cascade to other Nodes, and explicit confirmation identifying Node and relationship count. No DESIGN or BUILD is authorized.
 **Core PDCA boundary (D-040–D-044):** Keep discovery/search simple; links stay within one PDCA; each PDCA can contain multiple Problem Nodes; there is no project-level closure-based edit lock; whole-PDCA deletion uses seven-day recoverable Trash followed by automatic permanent removal. Fine UI/UX decisions follow modern web conventions during DESIGN. No DESIGN or BUILD is authorized.
 **Data protection/reporting (D-045–D-049):** Full-dataset automatic backups with restore capability are required, but their location is restricted to the Host; complete Host storage failure may destroy all recovery copies. Web viewing plus PDF hybrid visual-network-and-Node-detail export is required. New PDCA projects start blank; no duplicate/template feature in Pilot. Frequency, report layout and the residual-risk control details remain open. No DESIGN/BUILD authorization is implied.
+**Pilot scope/testing (D-050–D-054):** All confirmed in-scope features must be present before the official Pilot; no Excel import; initial testing on Desktop Full HD 1920×1080 at 16:9 only. Use standardized novice tasks plus real departmental PDCA cases. Each tester passes only by completing all predesignated critical tasks and ≥80% of all tasks, without assistance; ≥80% of users overall and in each department must pass, and mean ease-of-use ≥4/5 overall. Critical task list and test scripts remain pending. DEFINE only; DESIGN/BUILD not authorized.
 ## 13. Important Decisions
 
 | ID | Decision | Reason | Date |
@@ -436,6 +461,11 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | D-047 | Support exporting a PDCA project to PDF as well as viewing it in the Web Application | Facilitate meetings and management reports | 2026-11-04 |
 | D-048 | All new PDCA projects begin blank; no Duplicate PDCA or Template System in Pilot | Keep initial creation workflow simple and scope controlled | 2026-11-04 |
 | D-049 | Use a Hybrid PDF Report containing both the visual Node-link network and detailed Node information | Make reports suitable for high-level explanation and later reference | 2026-11-04 |
+| D-050 | Begin the official Full-feature Pilot only when every agreed in-scope capability is implemented and preliminarily checked; no agreed capability intentionally left for after Pilot | Evaluate the complete intended solution rather than a partial core prototype | 2026-11-04 |
+| D-051 | No one-time or ongoing Excel PDCA import. Start new PDCA records in the application; users may manually re-enter/copy Excel data when needed | Avoid unreliable mapping of old spreadsheet records to new node relationships | 2026-11-04 |
+| D-052 | Target Desktop Web Browser only at Full HD 1920×1080, aspect ratio 16:9 during Pilot; no Mobile or Tablet support required | Focus usability and layout for actual desktop workstations | 2026-11-04 |
+| D-053 | Pilot assessment combines standardized independent task tests across all departments with real PDCA work trials specific to each department | Measure comparable ease of use and actual operational fitness separately | 2026-11-04 |
+| D-054 | A first-time tester passes only after finishing 100% of predesignated critical tasks plus ≥80% of every standardized task without help; overall and per-department eligible participant pass rates still ≥80%, mean ease rating ≥4/5 overall | Prevent poor performance on essential functions from being obscured by noncritical task scores | 2026-11-04 |
 
 ## 14. Change History
 
@@ -467,6 +497,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | DEFINE draft v0.24 | Batched five confirmed Node deletion decisions: Trash soft delete, seven-day auto purge, open delete/restore, preserve neighboring Nodes and links, and explicit confirmation (D-035–D-039) | Set recoverability and graph deletion rules before DESIGN | 2026-11-04 |
 | DEFINE draft v0.25 | Batched five confirmed DEFINE decisions: simple search/modern UX defaults, within-PDCA link scope, multiple Problems per PDCA, no closure-based edit lock, and seven-day whole-PDCA Trash (D-040–D-044) | Prioritize material product scope and minimize unnecessary UI-detail decisions | 2026-11-04 |
 | DEFINE draft v0.26 | Batched automatic backup, Host-only storage, PDF export, blank-only PDCA creation, and hybrid PDF visualization plus details (D-045–D-049); future questions require three or more choices | Focus important DEFINE decisions and make accepted data-loss tradeoffs explicit before DESIGN | 2026-11-04 |
+| DEFINE draft v0.27 | Batched five confirmed decisions: Full-feature Pilot readiness, no Excel import, Desktop-only Full HD 16:9, Hybrid standardized/real-case Pilot, and per-user critical-plus-80% task success (D-050–D-054) | Firm up meaningful Pilot scope and interpretation of existing usability thresholds without prematurely entering DESIGN or BUILD | 2026-11-04 |
 
 ---
 
