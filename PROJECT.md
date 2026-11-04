@@ -1,7 +1,7 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.13**  
+> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.14**  
 > Last updated: 2026-11-04  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
 > This document records product needs only. No DESIGN or BUILD has been authorized by this update.
@@ -68,11 +68,13 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - **Host restart (D-016):** When the host computer is powered on again, the application must become available automatically, without an operator manually starting the application. The mechanism is deferred to DESIGN.
 - **Interim host (D-018):** The owner intends to use their currently available laptop as a temporary host for initial use/testing while it is powered on, before the planned shared local server is ready. This is an approved host preference/operating requirement, **not** evidence that the application is installed or running, that LAN reachability or company IT authorization has been verified, or permission to begin DESIGN/BUILD.
 - **Host transition/data portability (D-019):** When moving THE NODE OF PDCA from the interim laptop to the planned local server, **all previously saved project data must move with it**, including text-based PDCA records, node/link relationships, attached images and references to supporting documents where applicable. Previously saved content and connections must remain accessible and intact after the move. Exact storage technology, transfer method, validation procedure, and handling of externally hosted document references are deferred to DESIGN; no migration has yet been performed.
+- **Visual evidence expectations (D-020):** Images are primarily staff screenshots/screen captures and real workplace photos. An operational estimate is around **50 images for a single Problem/PDCA case across its constituent nodes**, **not** 50 images per node; this is not a hard cap, and per-node attachment counts are unrestricted at the DEFINE stage. Automatic image compression is acceptable provided evidence remains legible and usable. Exact upload size, storage quota, image format, and compression settings remain unspecified.
+- **Node text expectations (D-021):** Text content within an individual Node is normally **a few short paragraphs**, not an essay or multi-page report. Approximately **10,000 characters per Node** is the owner's suggested upper guideline, **not yet a confirmed hard validation limit**; the final enforcement behavior, character-count definition, and treatment of larger records remain open for DESIGN/DEFINE clarification.
 - **Operating window and shared-host intent (D-017):** THE NODE OF PDCA is expected to be available whenever its host computer is powered on; no fixed daily service schedule is required. The intended host is a **planned shared company LAN local server for Project Float Monitor and THE NODE OF PDCA**. This machine is **not yet confirmed set up or operational**. The owner plans to work with IT on its setup on 2026-11-05; feasibility, authorization, capacity, configuration compatibility, and impact on Float Monitor remain unverified. This is an operational constraint, not approval of a technology stack or deployment design.
 - **Zero-spend constraint (D-014, confirmed):** Do not incur new software license fees, subscriptions, paid SaaS/API usage, paid hosting, or other new monetary charges for this project. Use no-fee components and existing company-approved resources only, subject to verification; a free tier with possible charges or restrictive limits must not be assumed to meet this requirement.
 
 **Unknown**
-- Hosting/network policies, identification/login requirements, data retention, image/file size, supported devices/browsers, concurrent-user volume, availability, backup/recovery policy, and corporate security approval.
+- Hosting/network policies, identification/login requirements, data retention, exact per-file upload limits and total storage capacity (despite the D-020 estimate), supported devices/browsers, concurrent-user volume, availability, backup/recovery policy, and corporate security approval.
 - Whether the owner's laptop can serve authorized LAN users (network reachability, firewall/security policy, available resources, company IT approval) as an interim host. The requirement to preserve and transfer saved PDCA data when changing hosts is confirmed (D-019); exact transfer method, integrity validation, backup/rollback, and treatment of externally linked documents remain to be defined.
 - Whether the planned shared local-server computer for Project Float Monitor and THE NODE OF PDCA can be prepared with IT, without new spending, and whether external connectivity is allowed. A setup attempt with IT is planned for 2026-11-05; outcome, machine specifications, capacity, Float Monitor requirements, IT authorization, and deployment configuration remain unverified. No technical hosting design is approved.
 - Development/maintenance ownership, engineering capacity, and internal time/operational resource use. **Zero new monetary spending** is confirmed, but internal labor, existing hardware, electricity, storage, maintenance and opportunity costs still exist and must not be represented as zero total cost.
@@ -161,6 +163,8 @@ Data ownership, history, retention, recovery, and deletion behavior require DEFI
 - **R-13 (D-017):** No fixed daily availability window; provide service while the host computer is on. Target a planned shared company LAN local-server computer for Project Float Monitor and THE NODE OF PDCA, subject to setup, feasibility, IT approval, and non-disruptive co-hosting.
 - **R-14 (D-018):** Allow the owner's laptop to be the interim host while powered on, before moving to the planned shared local server, subject to security/IT approval, LAN reachability, and capacity checks.
 - **R-15 (D-019):** Preserve and transfer all saved PDCA information when moving from the laptop host to the local server, including node text, links/relationships, stored images, and supporting document references; preserve the ability to retrieve the same content and relationships. Implementation and verification details remain undecided.
+- **R-16 (D-020):** Support screenshots and workplace photos as evidence; allow multiple images across nodes within a PDCA, with approximately 50 images per Problem/PDCA case as a non-binding workload estimate, no per-node image-count cap agreed, and acceptable compression without losing evidence readability.
+- **R-17 (D-021):** Support concise Node text (typically a few paragraphs); treat 10,000 characters per Node as an indicative maximum-content guideline, not yet an enforced technical limit.
 
 ### Requirements pending confirmation
 - Identity/accountability; edit history; conflict resolution behavior; deletion/recovery; search; non-functional performance and security thresholds.
@@ -264,7 +268,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 
 ## 12. Current Baseline
 
-**Baseline:** DEFINE draft v0.13  
+**Baseline:** DEFINE draft v0.14  
 **Status:** Draft — DEFINE in progress  
 **Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific pilot departments and participant identities, hard-gate acceptance details, and usability measurement procedure are not yet decided. Minimum sample size is confirmed: ≥5 first-time users per department (D-011). The two-level exit **policy** (D-009), usability **thresholds** (D-010), and overall-plus-each-department task-completion evaluation (D-012) are confirmed.
 
@@ -297,6 +301,8 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | D-017 | No fixed operating hours: THE NODE OF PDCA should be available whenever its host is on. Intended host is a planned shared company LAN local server for Project Float Monitor and THE NODE OF PDCA, not yet set up or verified; pending IT and capacity checks | Reuse existing internal resources without new spending; avoid prescribing implementation prematurely | 2026-11-04 |
 | D-018 | Owner's currently available laptop is the intended interim host while powered on, before the planned shared LAN local server is ready; feasibility remains unverified | Enable initial testing using existing equipment without assuming infrastructure is already operational | 2026-11-04 |
 | D-019 | All previously saved PDCA information must transfer from the interim laptop to the planned local server, preserving node text, relationships, stored images and supporting document references | Prevent loss of work, evidence, and traceability when the host changes | 2026-11-04 |
+| D-020 | Support screenshot/workplace-photo evidence; estimate about 50 images per Problem/PDCA case across its nodes (not per Node), without imposing a hard image count limit; automatic image compression acceptable if legibility is retained | Reflect shop-floor evidence patterns without artificially restricting investigations | 2026-11-04 |
+| D-021 | Node text is normally a few short paragraphs; 10,000 characters per Node is a suggested upper guideline, not yet a hard validation limit | Capture actual writing needs without prematurely specifying UI or data storage | 2026-11-04 |
 
 ## 14. Change History
 
@@ -315,6 +321,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | DEFINE draft v0.11 | Clarified that the shared local server for Float Monitor and THE NODE OF PDCA is planned, not yet operational; owner intends IT-assisted setup attempt on 2026-11-05 | Avoid treating planned infrastructure as available or IT-approved | 2026-11-04 |
 | DEFINE draft v0.12 | Confirmed owner's laptop as intended interim host while powered on, pending LAN/IT/capacity verification and data-continuity planning | Record staged hosting intent without beginning DESIGN or BUILD | 2026-11-04 |
 | DEFINE draft v0.13 | Confirmed all saved PDCA data must survive host migration, including text, node relationships, images and document references (D-019) | Define data portability requirement before selecting database or file storage | 2026-11-04 |
+| DEFINE draft v0.14 | Recorded screenshot/photo evidence expectations, a non-binding estimate of ~50 images per Problem/PDCA case, compression acceptance, and concise Node text with a suggested 10,000-character guideline (D-020, D-021) | Establish realistic content-volume expectations without selecting storage technology or enforcing unapproved limits | 2026-11-04 |
 
 ---
 
