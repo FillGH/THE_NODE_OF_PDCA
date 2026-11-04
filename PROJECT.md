@@ -1,7 +1,7 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.24**  
+> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.25**  
 > Last updated: 2026-11-04  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
 > This document records product needs only. No DESIGN or BUILD has been authorized by this update.
@@ -51,6 +51,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - **Confirmed — Collaboration:** Any authorized user can view, create, and edit PDCA records of any department; no department-specific edit restriction.
 - **Confirmed — PIC / Owner field:** Indicates responsibility for an activity; does not grant exclusive editing rights.
 - **Confirmed — Pilot display-name identification (D-032):** Participants type their own display name without a password or Microsoft Account. The name is displayed during collaboration and in revision history, but it is self-declared, not verified identity. Internal-only access must be enforced separately.
+- **Confirmed — Scope is one PDCA at a time for Node linking (D-041):** Users may connect Nodes freely only when both Nodes belong to the same PDCA. No direct links between separate PDCA projects in the initial scope.
 - **Intended future audience:** Personnel across the entire factory.
 - **Unknown:** Which 1–2 additional departments participate, actual tester names/roles and any additional users beyond the 5-per-department minimum, definition of internal personnel for contractor cases, sponsoring owner/approver, and IT/security stakeholders.
 
@@ -98,6 +99,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - Development/maintenance ownership, engineering capacity, and internal time/operational resource use. **Zero new monetary spending** is confirmed, but internal labor, existing hardware, electricity, storage, maintenance and opportunity costs still exist and must not be represented as zero total cost.
 - Which open-source licenses satisfy company policy and any attribution, notice, redistribution or network-service obligations; license review is required before selecting dependencies.
 
+**Confirmed focus for DEFINE (D-040):** Prioritize high-impact product/domain decisions. Standard, straightforward modern web-app UI/UX conventions and simple common interactions do not each require a separate owner decision; specifics are to be made and tested in DESIGN rather than treating them as already approved UI mockups.
 ## 5. Assumptions / Unknowns
 
 ### Assumptions (to validate)
@@ -108,7 +110,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 ### Important unknowns
 - Which additional 1–2 departments, pilot users (minimum 5 first-time testers per department, confirmed D-011), and representative PDCA cases will be selected; how to ensure cross-department representation.
 - What proof is sufficient to declare pilot success and proceed to factory rollout.
-- Minimum search, history, deletion/restore, reporting, and image/document handling expectations.
+- Pilot reporting expectations, agreed usability task protocol and any additional image/document handling constraints. Basic PDCA search, Node history/restoration, and Node/PDCA deletion rules are already confirmed (D-040, D-033–D-039, D-044).
 - Which access/identity and data-governance rules are required by the factory.
 - Who will build, operate and maintain the custom application; which existing company resources can host it without new expenditure, and what internal labor/maintenance capacity is available.
 - Which open-source licenses are compatible with internal-only company use and zero-fee operation; no library or framework has yet been selected.
@@ -118,11 +120,16 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 ### Confirmed product capabilities — intended end state
 - [x] Seven categories only (no sub-types currently agreed): **Problem; Fact; Assumption / Hypothesis; Action; Status & Result; Measures to be implemented; Link to document**.
 - [x] Free, many-to-many links between nodes across categories, including cross-stage and backward relationships.
+- [x] **Within a single PDCA only**: nodes can link freely inside the same PDCA, including multiple Problem nodes. Direct cross-PDCA Node links are out of initial scope (D-041, D-042).
 - [x] Separate, understandable items for reasons, actions, statuses/results, and measures.
 - [x] Action follow-up by individual action, including responsible PIC and relevant dates.
 - [x] Stored image evidence as supporting visual information; optional pasted hyperlinks to Microsoft services, LAN shared folders, other original factory documents, or external internet sources (no uploads/copies of non-image files; D-022, D-023).
 - [x] Easy-to-use web interface for internal factory users.
 - [x] Central, persistent PDCA database/shared records.
+- [x] Simple retrieval/search for previously saved PDCA projects, following familiar modern web-app usability patterns; no advanced search mode required for initial scope (D-040).
+- [x] A PDCA may contain multiple Problem nodes; a single-Problem-per-PDCA rule is not required (D-042).
+- [x] All PDCA projects remain editable without a mandatory project-level closure or Completed lock (D-043).
+- [x] Whole-PDCA soft delete and recovery within seven days; thereafter automatic permanent purge including contained Nodes and relationships (D-044).
 - [x] Concurrent collaboration on the same PDCA.
 - [x] Common use across departments; open editing for authorized internal users.
 - [x] Rollout in **Pilot → evaluate → expand factory-wide**, not an all-factory first release.
@@ -130,13 +137,14 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - [x] Pilot usability sample includes at least 5 first-time users per participating department (D-011).
 
 **Confirmed Node deletion baseline (D-035–D-039):** Soft-delete Nodes into recoverable Trash for seven days, then purge automatically; any authorized internal user may soft-delete and restore; no earlier manual permanent purge; never cascade deletion to adjacent Nodes; preserve/restore eligible graph edges; confirm with Node name and relationship count.
+**Confirmed PDCA-level deletion (D-044):** A user may delete an entire PDCA project, which enters Trash as a unit together with its contained Nodes, images and internal relationships. It can be restored as a whole within seven days; after seven days the entire deleted PDCA is automatically permanently purged from application-accessible records. Purging from separately retained backups is subject to an independent retention policy, not assumed by this decision.
 ### Proposed for pilot — not yet approved
 - [ ] Create, edit, and connect the seven categories in a representative real PDCA case.
 - [ ] View and update PIC, dates, action status, and results separately per action.
 - [ ] Add/view images and open document references.
 - [ ] Persist and re-open shared records; demonstrate access from different accounts/devices.
 - [ ] Perform a simultaneous editing test and identify data-loss/conflict behavior.
-- [ ] Find previously recorded PDCA projects (basic search/discovery).
+- [x] Find previously recorded PDCA projects via a simple, familiar search (D-040); advanced search controls are not required.
 - [ ] Verify basic accountability and recovery needs proportionate to open-edit risks.
 
 ### Proposed to defer, subject to owner confirmation
@@ -161,8 +169,8 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - [ ] Refine usability with pilot personnel.
 - [ ] Record owner-accepted interaction baseline before substantive integration.
 
-### Data lifecycle — unknown
-Saved Node text history and restoration are confirmed (D-033/D-034); data ownership, history retention, additional versioned data, broader deletion/recovery and security still require decisions because operational records are retained.
+### Data lifecycle — partly confirmed
+Saved Node history and restoration are confirmed (D-033/D-034). Node Trash and seven-day purge are confirmed (D-035–D-039); entire-PDCA Trash and seven-day purge are confirmed (D-044). Data ownership, history and backup retention, additional versioned data, recovery outside Trash and security still require decisions because operational records are retained.
 
 ## 8. Requirements
 
@@ -201,8 +209,13 @@ Saved Node text history and restoration are confirmed (D-033/D-034); data owners
 - **R-31 (D-037):** Any authorized internal user can soft-delete and restore Nodes; no manually forced permanent deletion before expiry.
 - **R-32 (D-038):** No cascading deletion of connected Nodes. Hide links of trashed Nodes; restore saved links where both endpoints are active; remove a Node's links after final purge.
 - **R-33 (D-039):** Require confirmation with Node name, relationship count and seven-day recovery notice before soft delete.
+- **R-34 (D-040):** Provide straightforward searching/discovery of saved PDCA projects with standard modern web-app UX; no advanced filtering modes or bespoke search complexity required for Pilot.
+- **R-35 (D-041):** Only allow links between Nodes belonging to the same PDCA. Cross-PDCA Node linking is excluded from the initial scope and may be reconsidered in a future phase.
+- **R-36 (D-042):** Permit multiple Problem Nodes in one PDCA with free internal links to relevant other Node categories. Do not enforce one Problem Node per PDCA.
+- **R-37 (D-043):** Do not require a PDCA project-level Completed/Closure state that makes the PDCA read-only; all non-deleted PDCA projects remain editable by authorized users. This does not remove the existing 'Status & Result' Node category or temporary Node editing locks.
+- **R-38 (D-044):** Support deletion of an entire PDCA project through seven-day recoverable Trash as a single unit, preserving all contained Nodes and internal links during the recovery window. Allow restoration of the entire project within seven days; automatically permanently remove the PDCA and its application-held contents and links after expiry. Keep host-backup retention a separate unresolved policy.
 ### Requirements pending confirmation
-- Authentication-free naming risks and independent access control; revision retention and wider versioned content; deletion recovery outside saved Node versions; search; non-functional performance and security thresholds.
+- Authentication-free naming risks and independent access control; revision/backup retention and wider versioned content; recovery outside the confirmed seven-day Node/PDCA Trash; non-functional performance and security thresholds. Advanced search is not a Pilot requirement (D-040).
 
 ## 9. Acceptance Criteria
 
@@ -282,6 +295,11 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 | AC-26 | Proposed: authorized internal users can soft-delete and restore while they cannot manually purge before seven days (D-037) | NOT TESTED |
 | AC-27 | Proposed: deleting a Node does not delete neighboring Nodes, retains its relationships hidden while in Trash, reactivates eligible links on restore and removes links at purge (D-038) | NOT TESTED |
 | AC-28 | Proposed: deletion always requires explicit confirmation presenting the selected Node name, relationship count and seven-day recovery notice; Cancel leaves data unchanged (D-039) | NOT TESTED |
+| AC-29 | Proposed: a user finds a previously saved PDCA by straightforward search without needing an advanced query/filter interface (D-040) | NOT TESTED |
+| AC-30 | Proposed: the same two Nodes can be linked if they belong to one PDCA; links between two different PDCA projects cannot be created (D-041) | NOT TESTED |
+| AC-31 | Proposed: a single PDCA stores and displays more than one Problem Node linked to different Facts, Actions and Results (D-042) | NOT TESTED |
+| AC-32 | Proposed: users can continue editing an existing non-deleted PDCA without a project Completed/Closure lock; Status & Result nodes still work and simultaneous same-Node edits are still protected (D-043) | NOT TESTED |
+| AC-33 | Proposed: soft-delete an entire PDCA including Nodes and links, recover all within seven days, then observe automated removal and no Trash restoration after expiry; verify other PDCA projects are unaffected (D-044) | NOT TESTED |
 
 ## 10. Important Risks
 
@@ -297,11 +315,14 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 | Interim laptop is unavailable or later replaced | Temporary service outage or risk to locally stored PDCA records | Define laptop security/availability and data preservation for host transition | Proposed interim-host access and data-continuity checks |
 | Host migration misses images or graph relationships | Lost evidence or broken reasoning trace after moving from laptop to local server | Define complete migration scope, backup, and integrity verification | Proposed before/after text, relationship, and image retrieval checks |
 
+**PDCA-level deletion risk (D-044):** Deleting the whole project affects its contained Nodes and internal links; show clear project-level warning using standard safe-delete UX, preserve as a recoverable unit for seven days, and keep backup-retention policy and final purge validation explicit.
 ## 11. Definition of Done
 
 **DEFINE exit (not yet completed):**
 - [x] Pilot participant **minimum** agreed: ≥5 first-time testers per department (D-011).
 - [ ] Pilot department identities, actual participants and representative cases agreed.
+- [x] High-level PDCA scope choices: basic search, within-PDCA links, multiple Problem Nodes per PDCA, no closure-based edit lock, and seven-day recoverable whole-PDCA delete (D-040–D-044).
+- [ ] Remaining Pilot in-scope vs deferred capabilities approved.
 - [ ] Pilot in-scope vs deferred capabilities approved.
 - [x] Custom-build product direction confirmed; no off-the-shelf replacement purchase (D-013).
 - [x] Open-source frameworks/libraries permitted; internal-only operation and no-new-spending constraint confirmed (D-014).
@@ -323,7 +344,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 
 ## 12. Current Baseline
 
-**Baseline:** DEFINE draft v0.24  
+**Baseline:** DEFINE draft v0.25  
 **Status:** Draft — DEFINE in progress  
 **Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific pilot departments and participant identities, hard-gate acceptance details, and usability measurement procedure are not yet decided. Minimum sample size is confirmed: ≥5 first-time users per department (D-011). The two-level exit **policy** (D-009), usability **thresholds** (D-010), and overall-plus-each-department task-completion evaluation (D-012) are confirmed.
 
@@ -336,6 +357,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 This file records confirmed problem/outcome/access/rollout/delivery decisions and clearly labeled candidate scope/acceptance criteria. No app implementation, production integration, or deployment is authorized by this draft.
 
 **Node deletion:** D-035–D-039 establish recoverable Trash for seven days, automated final removal thereafter, authorized-user delete/restore, no cascade to other Nodes, and explicit confirmation identifying Node and relationship count. No DESIGN or BUILD is authorized.
+**Core PDCA boundary (D-040–D-044):** Keep discovery/search simple; links stay within one PDCA; each PDCA can contain multiple Problem Nodes; there is no project-level closure-based edit lock; whole-PDCA deletion uses seven-day recoverable Trash followed by automatic permanent removal. Fine UI/UX decisions follow modern web conventions during DESIGN. No DESIGN or BUILD is authorized.
 ## 13. Important Decisions
 
 | ID | Decision | Reason | Date |
@@ -379,6 +401,11 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | D-037 | All authorized internal users may soft-delete and restore Nodes; no manual permanent deletion before expiry | Preserve open collaboration without premature irreversible action | 2026-11-04 |
 | D-038 | Deleting a Node never deletes connected other Nodes; preserve hidden links during Trash, restore eligible links, and remove those links when the Node is finally purged | Protect PDCA relationships and prevent cascading deletions | 2026-11-04 |
 | D-039 | Require delete confirmation showing Node name, relationship count and seven-day restore period | Reduce accidental deletion of connected Node information | 2026-11-04 |
+| D-040 | Implement simple, familiar PDCA project search/discovery, without advanced search UI; defer ordinary modern UI/UX minutiae to DESIGN and focus DEFINE questions on high-impact product decisions | Keep Pilot usable without spending DEFINE time on low-impact interface choices | 2026-11-04 |
+| D-041 | Initially allow Node relationships only within the same PDCA; do not allow links across different PDCA projects | Keep initial graph scope manageable | 2026-11-04 |
+| D-042 | One PDCA can contain multiple Problem Nodes, with free links to other applicable Node categories within that PDCA | Support real operational cases involving several interrelated problems | 2026-11-04 |
+| D-043 | No PDCA-level Completed/Closure status that locks editing; existing non-deleted PDCA projects remain editable | Avoid unnecessary lifecycle complexity in Pilot | 2026-11-04 |
+| D-044 | Permit whole-PDCA soft delete with all contained Nodes/links, seven-day recoverability, then automatic permanent deletion; backup retention remains a separate unresolved policy | Allow safe removal of obsolete/mistaken projects without immediate loss | 2026-11-04 |
 
 ## 14. Change History
 
@@ -408,6 +435,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | DEFINE draft v0.22 | Batched three approved collaboration decisions: stop editing on LAN loss, protect/confirm unsaved local drafts on reconnect, and allow multi-tab viewing with one edit tab per user/PDCA (D-029–D-031) | Reduce GitHub update overhead while maintaining data integrity and preserving DEFINE-only stage | 2026-11-04 |
 | DEFINE draft v0.23 | Batched three confirmed DEFINE choices: self-entered display names without password/Microsoft login, saved Node edit history, and restore of old versions as new revisions (D-032–D-034) | Keep collaboration easy and errors reversible without equating labels with verified identities | 2026-11-04 |
 | DEFINE draft v0.24 | Batched five confirmed Node deletion decisions: Trash soft delete, seven-day auto purge, open delete/restore, preserve neighboring Nodes and links, and explicit confirmation (D-035–D-039) | Set recoverability and graph deletion rules before DESIGN | 2026-11-04 |
+| DEFINE draft v0.25 | Batched five confirmed DEFINE decisions: simple search/modern UX defaults, within-PDCA link scope, multiple Problems per PDCA, no closure-based edit lock, and seven-day whole-PDCA Trash (D-040–D-044) | Prioritize material product scope and minimize unnecessary UI-detail decisions | 2026-11-04 |
 
 ---
 
