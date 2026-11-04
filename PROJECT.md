@@ -1,7 +1,7 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.23**  
+> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.24**  
 > Last updated: 2026-11-04  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
 > This document records product needs only. No DESIGN or BUILD has been authorized by this update.
@@ -85,6 +85,11 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - **Operating window and shared-host intent (D-017):** THE NODE OF PDCA is expected to be available whenever its host computer is powered on; no fixed daily service schedule is required. The intended host is a **planned shared company LAN local server for Project Float Monitor and THE NODE OF PDCA**. This machine is **not yet confirmed set up or operational**. The owner plans to work with IT on its setup on 2026-11-05; feasibility, authorization, capacity, configuration compatibility, and impact on Float Monitor remain unverified. This is an operational constraint, not approval of a technology stack or deployment design.
 - **Zero-spend constraint (D-014, confirmed):** Do not incur new software license fees, subscriptions, paid SaaS/API usage, paid hosting, or other new monetary charges for this project. Use no-fee components and existing company-approved resources only, subject to verification; a free tier with possible charges or restrictive limits must not be assumed to meet this requirement.
 
+- **Recoverable Node deletion (D-035):** Deleting a Node moves it into **Trash (soft delete)** and hides it from the active PDCA, preserving its content and relationships for restoration during the recovery window.
+- **Seven-day Trash retention (D-036):** A Node may be restored within **seven days of deletion**. **After seven days**, the system automatically deletes the Node permanently; restoration via Trash is no longer possible. Implementation schedule and separate backup retention/erasure are not yet defined.
+- **Delete/restore permissions (D-037):** Every authorized internal user may soft-delete and restore eligible Nodes, consistent with open cross-department editing. Users cannot permanently delete before the seven-day period; expiry is automatic.
+- **Non-cascading graph deletion (D-038):** Deleting a Node does not delete any other connected Node. Its edges are hidden in the active graph but preserved while in Trash; restoring the Node restores retained edges where their other endpoints are also active. Once the deleted Node is purged permanently, remove edges belonging to it while other Nodes and unrelated edges remain. Links to other trashed Nodes remain hidden until those endpoints return.
+- **Mandatory delete confirmation (D-039):** Before soft delete, display the selected Node's name and the number of its relationships; provide Cancel and explicit Confirm, and state the seven-day restore window. Delete only after confirmation.
 **Unknown**
 - Hosting/network policies, access control independent of self-declared names, duplicate-name and session policy (D-032), history retention and coverage (D-033/D-034), exact **image** upload limits and total storage capacity (despite the D-020 estimate), supported devices/browsers, **Node-lock expiry, autosave failure/retry, local draft retention/security, cross-tab edit handoff and full-browser-crash behavior (D-027–D-031), total factory-wide concurrent-user load**, availability, backup/recovery policy, and corporate security approval.
 - **Low-priority implementation check, not a DEFINE blocker (D-023):** Which pasted Microsoft service / LAN shared-folder / internet links browsers can launch, and how to present unsupported/unavailable destinations. User is responsible for link correctness; no automated verification or repair is required.
@@ -124,6 +129,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - [x] Pilot includes Cutting & Packing together with 1–2 additional departments; exact departments and participants pending.
 - [x] Pilot usability sample includes at least 5 first-time users per participating department (D-011).
 
+**Confirmed Node deletion baseline (D-035–D-039):** Soft-delete Nodes into recoverable Trash for seven days, then purge automatically; any authorized internal user may soft-delete and restore; no earlier manual permanent purge; never cascade deletion to adjacent Nodes; preserve/restore eligible graph edges; confirm with Node name and relationship count.
 ### Proposed for pilot — not yet approved
 - [ ] Create, edit, and connect the seven categories in a representative real PDCA case.
 - [ ] View and update PIC, dates, action status, and results separately per action.
@@ -190,6 +196,11 @@ Saved Node text history and restoration are confirmed (D-033/D-034); data owners
 - **R-27 (D-033):** Retain saved Node text revisions with prior content, the editor's self-entered name and modification timestamp. Exact retention and other versioned fields remain unknown.
 - **R-28 (D-034):** Restore an earlier saved Node revision as a new revision while retaining the previous current version/history; maintain Node editing protection and avoid silent loss.
 
+- **R-29 (D-035):** Soft-delete Node into Trash, hiding it from ordinary active PDCA while retaining recovery data.
+- **R-30 (D-036):** Restore from Trash within seven days; after the period, permanently purge automatically. Backup retention is a separate policy not yet decided.
+- **R-31 (D-037):** Any authorized internal user can soft-delete and restore Nodes; no manually forced permanent deletion before expiry.
+- **R-32 (D-038):** No cascading deletion of connected Nodes. Hide links of trashed Nodes; restore saved links where both endpoints are active; remove a Node's links after final purge.
+- **R-33 (D-039):** Require confirmation with Node name, relationship count and seven-day recovery notice before soft delete.
 ### Requirements pending confirmation
 - Authentication-free naming risks and independent access control; revision retention and wider versioned content; deletion recovery outside saved Node versions; search; non-functional performance and security thresholds.
 
@@ -266,6 +277,11 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 | AC-21 | Proposed: a Pilot user types a display name with no password/Microsoft login; other users see it as an unverified editor label, with internal access controlled separately (D-032) | NOT TESTED |
 | AC-22 | Proposed: after multiple Node revisions, users can read earlier saved text together with editor-entered names and timestamps (D-033) | NOT TESTED |
 | AC-23 | Proposed: restore an earlier saved Node version as a new revision, leaving the previously current version in history and respecting active edit protection (D-034) | NOT TESTED |
+| AC-24 | Proposed: soft-delete sends a selected Node to Trash, hides it from active PDCA, and Restore recovers its contents during retention (D-035) | NOT TESTED |
+| AC-25 | Proposed: a soft-deleted Node is restorable within seven days; after expiry the system automatically permanently deletes it and Trash recovery is unavailable (D-036) | NOT TESTED |
+| AC-26 | Proposed: authorized internal users can soft-delete and restore while they cannot manually purge before seven days (D-037) | NOT TESTED |
+| AC-27 | Proposed: deleting a Node does not delete neighboring Nodes, retains its relationships hidden while in Trash, reactivates eligible links on restore and removes links at purge (D-038) | NOT TESTED |
+| AC-28 | Proposed: deletion always requires explicit confirmation presenting the selected Node name, relationship count and seven-day recovery notice; Cancel leaves data unchanged (D-039) | NOT TESTED |
 
 ## 10. Important Risks
 
@@ -273,7 +289,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 |---|---|---|---|
 | Concurrent edits overwrite changes | Lost work or misleading PDCA | Restrict concurrent changes to one editor per Node (D-027) and one editing tab per user/PDCA (D-031) | Multi-user and multi-tab pilot test |
 | LAN disconnect during unsaved Auto-save | Lost work or accidental overwrite after reconnect | Stop editing, preserve local pending draft, verify lock/current Node, require review/confirmation (D-029, D-030) | Disconnect/reconnect with unsaved text; check no false saved status and no overwrite |
-| Open editing causes accidental deletion/change | Loss of records or reasoning trace | Saved Node revision history and restore (D-033/D-034); broader deletion/recovery remains open | Controlled edit/restore and deletion cases |
+| Open editing causes accidental deletion/change | Loss of records or reasoning trace | Saved Node version restore (D-033/D-034), soft-delete Trash and seven-day recovery (D-035–D-039); external backup retention TBD | Controlled history, Trash, restore, expiry and linked-Node tests |
 | Inconsistent use between departments | Failure of common factory standard | Shared categories and pilot learning | Cross-department sample cases |
 | Usability too complex for casual users | Low adoption | Representative novice-user evaluation | Observed pilot tasks |
 | Sensitive factory information exposed | Confidentiality or compliance impact | Internal access and factory IT/security review | Access validation |
@@ -293,6 +309,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 - [x] Owner's laptop selected as intended interim host while powered on (D-018); actual network/IT feasibility remains unverified.
 - [x] All saved PDCA data, node relationships, images, and supporting document references must be preserved on host transition (D-019); migration method and test evidence remain open.
 - [x] Pilot self-entered name without password/Microsoft sign-in, Node edit history, and direct version restore approved (D-032–D-034).
+- [x] Five Node deletion decisions confirmed: soft delete, seven-day auto purge, open delete/restore permissions, non-cascading link behavior and mandatory confirmation (D-035–D-039).
 - [ ] Access restrictions independent of user-entered names, history retention and remaining data-governance risks approved.
 - [ ] Actual license-compliant dependency policy, shared-host capacity/compatibility, no-new-cost operation, IT approval, and delivery/maintenance ownership verified.
 - [x] Pilot success **policy** approved: all mandatory functional gates plus practical usability; minor non-blocking issues can be accepted when documented.
@@ -306,7 +323,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 
 ## 12. Current Baseline
 
-**Baseline:** DEFINE draft v0.23  
+**Baseline:** DEFINE draft v0.24  
 **Status:** Draft — DEFINE in progress  
 **Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific pilot departments and participant identities, hard-gate acceptance details, and usability measurement procedure are not yet decided. Minimum sample size is confirmed: ≥5 first-time users per department (D-011). The two-level exit **policy** (D-009), usability **thresholds** (D-010), and overall-plus-each-department task-completion evaluation (D-012) are confirmed.
 
@@ -318,6 +335,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 
 This file records confirmed problem/outcome/access/rollout/delivery decisions and clearly labeled candidate scope/acceptance criteria. No app implementation, production integration, or deployment is authorized by this draft.
 
+**Node deletion:** D-035–D-039 establish recoverable Trash for seven days, automated final removal thereafter, authorized-user delete/restore, no cascade to other Nodes, and explicit confirmation identifying Node and relationship count. No DESIGN or BUILD is authorized.
 ## 13. Important Decisions
 
 | ID | Decision | Reason | Date |
@@ -356,6 +374,11 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | D-032 | Pilot users enter a self-chosen display name with no password or Microsoft account; show it for editor/history labels but not as verified identity; secure internal access separately | Minimize friction for small Pilot group without pretending usernames authenticate people | 2026-11-04 |
 | D-033 | Store past saved Node text versions with editor-entered name and modification time | Allow review of changes and prior content | 2026-11-04 |
 | D-034 | Direct restore from an earlier saved Node version creates a new version while preserving the former current version and intervening history | Reverse mistakes without destroying audit trail | 2026-11-04 |
+| D-035 | Soft-delete Node into recoverable Trash instead of immediate permanent deletion | Allow recovery from mistaken removal | 2026-11-04 |
+| D-036 | Restore soft-deleted Nodes within seven days; automatically permanently delete them after that period | Limit Trash retention while protecting recent work | 2026-11-04 |
+| D-037 | All authorized internal users may soft-delete and restore Nodes; no manual permanent deletion before expiry | Preserve open collaboration without premature irreversible action | 2026-11-04 |
+| D-038 | Deleting a Node never deletes connected other Nodes; preserve hidden links during Trash, restore eligible links, and remove those links when the Node is finally purged | Protect PDCA relationships and prevent cascading deletions | 2026-11-04 |
+| D-039 | Require delete confirmation showing Node name, relationship count and seven-day restore period | Reduce accidental deletion of connected Node information | 2026-11-04 |
 
 ## 14. Change History
 
@@ -384,6 +407,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | DEFINE draft v0.21 | Confirmed automatic saving of Node edits like Excel for the web, without manual Save, with visible saved/saving/error states (D-028) | Establish a low-friction, loss-aware authoring requirement before DESIGN | 2026-11-04 |
 | DEFINE draft v0.22 | Batched three approved collaboration decisions: stop editing on LAN loss, protect/confirm unsaved local drafts on reconnect, and allow multi-tab viewing with one edit tab per user/PDCA (D-029–D-031) | Reduce GitHub update overhead while maintaining data integrity and preserving DEFINE-only stage | 2026-11-04 |
 | DEFINE draft v0.23 | Batched three confirmed DEFINE choices: self-entered display names without password/Microsoft login, saved Node edit history, and restore of old versions as new revisions (D-032–D-034) | Keep collaboration easy and errors reversible without equating labels with verified identities | 2026-11-04 |
+| DEFINE draft v0.24 | Batched five confirmed Node deletion decisions: Trash soft delete, seven-day auto purge, open delete/restore, preserve neighboring Nodes and links, and explicit confirmation (D-035–D-039) | Set recoverability and graph deletion rules before DESIGN | 2026-11-04 |
 
 ---
 
