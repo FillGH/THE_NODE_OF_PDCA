@@ -1,7 +1,7 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.28**  
+> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.29**  
 > Last updated: 2026-11-04  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
 > This document records product needs only. No DESIGN or BUILD has been authorized by this update.
@@ -54,6 +54,11 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - **Confirmed — Scope is one PDCA at a time for Node linking (D-041):** Users may connect Nodes freely only when both Nodes belong to the same PDCA. No direct links between separate PDCA projects in the initial scope.
 - **Confirmed — Pilot device baseline (D-052):** Desktop web browsers only, targeting Full HD **1920 × 1080** pixels at **16:9**; Mobile and Tablet interfaces are excluded from the initial Pilot scope.
 - **Confirmed — Performance case (D-058):** Validate approximately 200 Nodes per PDCA (not a hard product maximum), including their relationships, while roughly ten users can work on the same PDCA concurrently (D-024/D-025).
+- **Confirmed — Directed PDCA links (D-060):** Within one PDCA, each Node link has a source and target. An arrow indicates direction, and users can inspect/traverse links in either direction for reasoning. Link-type taxonomy is not required for Pilot.
+- **Confirmed — Link change history (D-061):** Track creation/removal of links, with the participant's entered display name and timestamp, and allow restoration of mistakenly removed links, respecting currently existing Node endpoints and current graph rules. Names are self-declared, not authenticated (D-032).
+- **Confirmed — Circular relationships (D-062):** Link cycles are permitted without a special warning, and graph traversal must avoid infinite looping.
+- **Confirmed — Concurrent link editing (D-063):** Multiple users can add/remove links in the same PDCA simultaneously; conflicts must not silently discard another user's link changes, and completed updates propagate automatically to collaborators.
+- **Confirmed — Unique directed links (D-064):** At most one active directed link from a given source Node A to target Node B (A → B); the reverse link (B → A) is a distinct allowed relationship. Creating duplicate A → B must not produce a second active link, including on concurrent creation.
 - **Intended future audience:** Personnel across the entire factory.
 - **Unknown:** Which 1–2 additional departments participate, actual tester names/roles and any additional users beyond the 5-per-department minimum, definition of internal personnel for contractor cases, sponsoring owner/approver, and IT/security stakeholders.
 
@@ -150,6 +155,11 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - [x] Use **one genuine PDCA project per participating department** during the real-case segment: two or three real projects across the already agreed two or three Pilot departments (D-057).
 - [x] Target a **~200 Node/PDCA test workload** with approximately ten concurrent same-PDCA users; 200 is **not a maximum Node limit** (D-058).
 - [x] Hybrid network layout: automatic graph arrangement and manual drag/position changes, with saved positions visible consistently across collaborating desktop users (D-059).
+- [x] **Directed, untyped edges (D-060):** Show arrows representing source → target; support backward tracing and free within-PDCA directed connections.
+- [x] **Link creation/deletion history and restore (D-061):** Show who (self-entered name) changed a link and when; allow mistakenly removed links to be restored if graph rules permit.
+- [x] **Circular links allowed (D-062):** Nodes may participate in directed cycles; prevent endless traversal but do not warn or block solely for forming a cycle.
+- [x] **Concurrent link modifications (D-063):** Multiple users can create/remove relationships in the same PDCA in parallel, without silent loss; broadcast saved changes.
+- [x] **No duplicate same-direction edges (D-064):** One active A → B relationship per ordered Node pair, while B → A is allowed.
 
 **Confirmed Node deletion baseline (D-035–D-039):** Soft-delete Nodes into recoverable Trash for seven days, then purge automatically; any authorized internal user may soft-delete and restore; no earlier manual permanent purge; never cascade deletion to adjacent Nodes; preserve/restore eligible graph edges; confirm with Node name and relationship count.
 **Confirmed PDCA-level deletion (D-044):** A user may delete an entire PDCA project, which enters Trash as a unit together with its contained Nodes, images and internal relationships. It can be restored as a whole within seven days; after seven days the entire deleted PDCA is automatically permanently purged from application-accessible records. Purging from separately retained backups is subject to an independent retention policy, not assumed by this decision.
@@ -172,6 +182,12 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - **D-057 — Real-work cases:** Each participating department tests **one real PDCA project** during the three-day Pilot. With Cutting & Packing plus 1–2 other departments (D-008), this means **2–3 distinct real PDCA projects** in total. The separate standardized novice usability tests still apply (D-053).
 - **D-058 — Test graph scale:** Support a **representative approximately 200-Node PDCA** with its saved links and approximately **ten concurrent active editors** on the same PDCA (D-025). This is a **performance/usability test target, not an enforced maximum**; exact latency/frame-rate benchmarks remain unconfirmed.
 - **D-059 — Hybrid graph layout:** Allow automatic positioning/arranging of Nodes and free manual movement by dragging Nodes on the visual canvas. Save user-arranged Node positions as shared PDCA layout state so collaborators viewing the same PDCA see the updated arrangement without Refresh (D-026). Position changes must not silently overwrite another user's edits; automatic layout must be explicit or otherwise avoid unexpected destructive rearrangements. The concrete algorithm and interaction design are deferred to DESIGN.
+**Confirmed directed graph and collaborative relationship rules (D-060–D-064):**
+- **D-060 — Directed edges:** Connections between Nodes are **arrows (source → target)**. Users can follow links in either direction for investigation; initial links require **no per-link category/relationship type**, and all linked Nodes must belong to the same PDCA (D-041). A reverse-direction edge is semantically a separate directed edge.
+- **D-061 — Link history and recovery:** Maintain a history of link creation and removal, with the self-entered display name of the participant who performed each operation and a timestamp (names are not verified identity, D-032). Users can reinstate a link that was removed mistakenly, without restoring an entire PDCA snapshot. Restoration must respect whether both endpoint Nodes are active and the unique-edge rule (D-064). The deletion-history retention period, interaction of manually removed links with Node Trash, and precise conflict messaging remain to be defined; do not assume link history is identical to Node content version history.
+- **D-062 — Circular relations:** Permit relationships creating directed cycles (for example Problem → Action → Result → Problem) freely, with **no mandatory circular-link warning**. Visualization, search, reverse trace and related graph traversals must handle cycles safely rather than recurse forever. A separate decision on self-links (A → A) has not been made.
+- **D-063 — Parallel relationship operations:** Users can create or remove links in the same PDCA **at the same time**, without requiring an exclusive project-wide link lock. Committed changes appear automatically on other clients (D-026). Concurrent operations on the same ordered pair must resolve without silent loss/false success and notify the affected user of a relevant conflict; exact transaction policy and collision UX remain DESIGN concerns. This does not abolish the distinct **per-Node content edit lock** already agreed (D-027).
+- **D-064 — Directed duplicate prevention:** Only one **active** relationship may exist for each ordered pair (source Node, target Node) in a PDCA; if A → B already exists, another A → B is rejected/no-op with clear feedback. B → A remains a separate allowed link. Enforce consistently when users simultaneously add links or restore prior links. Relationship-type taxonomy is absent for Pilot (D-060).
 ### Proposed for pilot — not yet approved
 - [ ] Create, edit, and connect the seven categories in a representative real PDCA case.
 - [ ] View and update PIC, dates, action status, and results separately per action.
@@ -263,8 +279,14 @@ Saved Node history and restoration are confirmed (D-033/D-034). Node Trash and s
 - **R-51 (D-057):** Test one real PDCA from each participating department (Cutting & Packing plus 1–2 other departments), therefore two or three real PDCA projects total, separate from the standard tasks.
 - **R-52 (D-058):** Include a ~200-Node/PDCA representative workload with internal links and approximately ten concurrently active editors on that PDCA, without enforcing a 200-Node creation limit. Leave measurable performance thresholds for an agreed Pilot checklist.
 - **R-53 (D-059):** Support both automatic graph layout and manual repositioning by dragging individual Nodes. Persist and automatically synchronize saved layout positions for concurrent viewers; protect against silent concurrent changes and unrequested loss of manual positioning.
+- **R-54 (D-060):** Represent each link within a PDCA as a directed arrow with source and target. Allow navigation/tracing both ways along stored links; no mandatory relationship type or cross-PDCA links.
+- **R-55 (D-061):** Retain link creation/deletion events showing the participant's self-entered display name and modification time; allow restoration of an accidentally deleted link subject to active endpoints and uniqueness. Exact historical retention and deleted-Node interplay remain open.
+- **R-56 (D-062):** Permit directed cycles without warning or blocking merely due to a cycle; ensure traversal/rendering avoids infinite loops. Self-referential A → A remains unresolved.
+- **R-57 (D-063):** Support simultaneous link creation/removal by multiple authorized users in one PDCA, with saved updates appearing without Refresh and conflicts not causing silent lost changes; retain the separate Node content edit lock policy.
+- **R-58 (D-064):** Guarantee uniqueness of active links for an ordered (source, target) Node pair in the same PDCA, while supporting the distinct opposite direction and safe conflict handling during concurrent creation/restore.
 ### Requirements pending confirmation
 - Authentication-free naming risks and independent access control; automatic-backup cadence, retention and test procedure, backup purge interaction, recovery objectives, and wider versioned content; limits of Host-only backups and recovery outside valid available backups; quantitative 200-Node graph performance and security thresholds (D-058), layout conflict handling (D-059), and task execution scripts (D-055). Advanced search is not a Pilot requirement (D-040).
+- Link event-history retention and restoration after Node Trash/expiry; whether A → A self-links are permitted; same-edge concurrent create/delete conflict outcomes; accessible bidirectional traversal UX and graph performance with cycles. Directed links, cycles, parallel edits and duplicate prevention are confirmed (D-060–D-064).
 
 ## 9. Acceptance Criteria
 
@@ -367,6 +389,11 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 | AC-46 | Proposed: Cutting & Packing and each additional participating department completes one real PDCA case during Pilot, making two to three genuine cases overall (D-057) | NOT TESTED |
 | AC-47 | Proposed: a graph of roughly 200 Nodes with links remains functionally usable while roughly ten users operate on the same PDCA; no hard cap at 200 Nodes; specific performance SLA still TBD (D-058) | NOT TESTED |
 | AC-48 | Proposed: users can request Auto Layout, drag Nodes to chosen locations, retain saved positions across reopen, and see layout updates automatically on other collaborating desktops without lost edits (D-059) | NOT TESTED |
+| AC-49 | Proposed: create A → B and observe directional arrow; reverse-trace from B to A; no link-type input is required and no cross-PDCA edge is allowed (D-060) | NOT TESTED |
+| AC-50 | Proposed: create and delete an edge, inspect change records with self-entered name and timestamp, restore the deleted edge when both endpoints are valid; preserve history (D-061) | NOT TESTED |
+| AC-51 | Proposed: create a cycle A → B → C → A without warning, then trace and display the cycle without hanging or infinite traversal (D-062) | NOT TESTED |
+| AC-52 | Proposed: two or more concurrent users independently create/remove links in one PDCA; saved changes synchronize and same-link conflicts do not silently discard updates (D-063) | NOT TESTED |
+| AC-53 | Proposed: after A → B exists, a second A → B cannot create another active edge, while B → A is allowed; same rule holds during simultaneous creation/restoration (D-064) | NOT TESTED |
 
 ## 10. Important Risks
 
@@ -378,6 +405,8 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 | Inconsistent use between departments | Failure of common factory standard | Shared categories and pilot learning | Cross-department sample cases |
 | Usability too complex for casual users | Low adoption | Full-feature desktop Pilot readiness; common novice tasks and real operational scenarios (D-050, D-052, D-053), with all critical tasks and ≥80% of standard tasks required per passing participant (D-054) | Pilot scored tasks, real departmental case observations and user feedback |
 | Large PDCA graph becomes unreadable or slow with simultaneous edits | Core reasoning and collaboration become impractical | Exercise a ~200-Node case with ~10 concurrent editors and test shared Hybrid Auto/Manual Layout (D-058/D-059); quantitative latency targets pending | Scenario-based load, link traceability and graph-position persistence checks |
+| Concurrent add/delete of the same relationship or duplicate edges | Lost graph meaning, contradictory results or duplicate arrows | Enforce unique ordered-pair links and conflict-safe concurrent operations (D-063/D-064); preserve change history and link restoration (D-061) | Multi-user same-edge races, reverse-edge case and deletion/restore tests |
+| Cyclic links cause infinite traversal or unusable traces | Frozen UI and misleading PDCA reasoning | Allow cycles but make traversal cycle-safe without blocking valid links (D-062) | Large connected cyclic graph backward/forward trace checks |
 | Three-day Pilot misses intermittent reliability failures | Overestimate stability and readiness for factory rollout | Keep all mandatory hard gates and explicit limitations; 3 working days is a bounded Pilot, not proof of long-term reliability (D-056) | Record test coverage and residual risks in GO/REFINE/NO-GO decision |
 | Sensitive factory information exposed | Confidentiality or compliance impact | Internal access and factory IT/security review | Access validation |
 | Shared local host affects Project Float Monitor | Resource contention, port/configuration conflicts or correlated downtime | Check existing host capacity and Float Monitor dependencies with IT before DESIGN | Co-hosting feasibility and non-disruption test (proposed) |
@@ -411,6 +440,8 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 - [x] Task completion aggregation approved: both overall and every participating department must independently meet ≥80% (D-012).
 - [x] Hybrid Pilot approach (standard task test plus real department cases) and per-person scoring rule (all critical tasks + ≥80% of all tasks) approved (D-053/D-054).
 - [x] Critical task types, Pilot duration (3 working days), real-work cases (one per department), ~200-Node/10-editor workload, and Hybrid graph layout confirmed (D-055–D-059).
+- [x] Directed, untyped relationships; link creation/deletion history and recovery; allowed circular links; simultaneous link edits; unique links per ordered pair (D-060–D-064).
+- [ ] Confirm interaction of link history and restore with expired/deleted Nodes, link event retention and remaining graph concurrency/cycle safety test details.
 - [ ] Confirm exact critical task scripts, noncritical task inventory and observed success criteria; set acceptable load responsiveness before full-feature Pilot (D-055/D-058).
 - [ ] Exact standardized and critical task checklists, Pilot scripts and Hard Gates finalized before test.
 - [ ] Specific mandatory Hard Gates, remaining usability test administration details (task scripts/observations, noncritical checklist, rating wording), additional metrics and expansion decision criteria approved. Hybrid format, participant success formula and critical task domains already confirmed (D-053/D-054/D-055).
@@ -421,7 +452,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 
 ## 12. Current Baseline
 
-**Baseline:** DEFINE draft v0.28  
+**Baseline:** DEFINE draft v0.29  
 **Status:** Draft — DEFINE in progress  
 **Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific Pilot departments and participant identities, hard-gate acceptance details and remaining test scripts/critical task list are not yet decided. The Hybrid Pilot and participant scoring rule are confirmed (D-053/D-054). Minimum sample size is confirmed: ≥5 first-time users per department (D-011). The two-level exit **policy** (D-009), usability **thresholds** (D-010), and overall-plus-each-department task-completion evaluation (D-012) are confirmed.
 
@@ -438,6 +469,8 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 **Data protection/reporting (D-045–D-049):** Full-dataset automatic backups with restore capability are required, but their location is restricted to the Host; complete Host storage failure may destroy all recovery copies. Web viewing plus PDF hybrid visual-network-and-Node-detail export is required. New PDCA projects start blank; no duplicate/template feature in Pilot. Frequency, report layout and the residual-risk control details remain open. No DESIGN/BUILD authorization is implied.
 **Pilot scope/testing (D-050–D-054):** All confirmed in-scope features must be present before the official Pilot; no Excel import; initial testing on Desktop Full HD 1920×1080 at 16:9 only. Use standardized novice tasks plus real departmental PDCA cases. Each tester passes only by completing all predesignated critical tasks and ≥80% of all tasks, without assistance; ≥80% of users overall and in each department must pass, and mean ease-of-use ≥4/5 overall. Critical task domains are confirmed by D-055; exact scripts still pending. DEFINE only; DESIGN/BUILD not authorized.
 **Pilot operational confirmation (D-055–D-059):** Mandatory critical tasks span Node creation/editing/linking, confirmation of automatic saving, and reverse Result-to-Problem trace. Official Pilot lasts three working days; use one real PDCA per department. Validate an approximately 200-Node linked PDCA with about ten concurrent users (test target, not creation cap); enable Auto Layout plus manually dragged, persistent and shared Node positions. Fine UX mechanics and numeric responsiveness gates remain for DESIGN/test protocol. Project remains in DEFINE.
+
+**Graph relationship semantics (D-060–D-064):** Connections are directional arrows with no mandatory link taxonomy; link creation/removal is recorded with the self-reported editor name and timestamp and removed links can be restored subject to validity; circular connections are allowed and must not cause endless traversal. Multiple collaborators may edit links simultaneously, with no silent overwrite. One active A → B edge is allowed, and B → A remains a separate permitted edge. Details of collision resolution and link-history retention are deferred. DEFINE continues; no DESIGN/BUILD authorization.
 ## 13. Important Decisions
 
 | ID | Decision | Reason | Date |
@@ -501,6 +534,11 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | D-057 | Use one actual PDCA project per participating department in the real-work Pilot segment; two or three real PDCA projects overall | Exercise operational relevance without overloading the three-day Pilot | 2026-11-04 |
 | D-058 | Test representative performance/usability with approximately 200 Nodes in one PDCA and roughly ten concurrent same-PDCA editors; 200 is not a maximum allowed count | Validate realistically complex linked investigations and collaborative usage | 2026-11-04 |
 | D-059 | Support Hybrid Layout: automatic arrangement, manual Node dragging, and persistence/shared visibility of saved positions to other viewers; no silent conflict loss | Let teams efficiently arrange large visual networks while maintaining shared layout | 2026-11-04 |
+| D-060 | Store directional source → target Node links with visible arrows, support forward/backward tracing, and require no link type classification | Make PDCA reasoning direction explicit while preserving simple relation modeling | 2026-11-04 |
+| D-061 | Keep history of link creation/removal with self-declared editor name and timestamp, and enable recovery of accidentally deleted links where endpoints/rules allow | Protect the knowledge graph from accidental changes without requiring whole-PDCA rollback | 2026-11-04 |
+| D-062 | Allow circular directed Node relationships without mandatory warning; cycle-aware traversal must not loop endlessly | Represent iterative PDCA reasoning freely while protecting navigation | 2026-11-04 |
+| D-063 | Allow multiple users to add/delete links in a shared PDCA concurrently, with automatically visible committed changes and no silently lost conflicts | Preserve collaborative editing of the relationship graph without project-wide locks | 2026-11-04 |
+| D-064 | Only one active A → B link per source/target ordered pair; reverse B → A remains independently allowed, including during parallel edits | Avoid redundant arrows while maintaining directional semantics | 2026-11-04 |
 
 ## 14. Change History
 
@@ -534,6 +572,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | DEFINE draft v0.26 | Batched automatic backup, Host-only storage, PDF export, blank-only PDCA creation, and hybrid PDF visualization plus details (D-045–D-049); future questions require three or more choices | Focus important DEFINE decisions and make accepted data-loss tradeoffs explicit before DESIGN | 2026-11-04 |
 | DEFINE draft v0.27 | Batched five confirmed decisions: Full-feature Pilot readiness, no Excel import, Desktop-only Full HD 16:9, Hybrid standardized/real-case Pilot, and per-user critical-plus-80% task success (D-050–D-054) | Firm up meaningful Pilot scope and interpretation of existing usability thresholds without prematurely entering DESIGN or BUILD | 2026-11-04 |
 | DEFINE draft v0.28 | Batched five confirmed Pilot and graph decisions: critical task categories, three-working-day duration, one real case per department, ~200 Nodes with ~10 editors, and Hybrid saved Auto/Manual Node layout (D-055–D-059) | Fix practical Pilot workload and essential visual-canvas behavior without authorizing DESIGN/BUILD | 2026-11-04 |
+| DEFINE draft v0.29 | Batched five approved directed-graph decisions: directed untyped links, link event history and recovery, cyclic relationships, concurrent edge changes, and one active link per ordered pair (D-060–D-064) | Define link integrity, traceability and collaboration behavior without selecting implementation technology | 2026-11-04 |
 
 ---
 
