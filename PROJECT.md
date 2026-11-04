@@ -1,7 +1,7 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.11**  
+> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.12**  
 > Last updated: 2026-11-04  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
 > This document records product needs only. No DESIGN or BUILD has been authorized by this update.
@@ -66,11 +66,13 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - **Internal-only operation (D-014, confirmed):** The finished application is for authorized internal company use only, not public distribution or external customers. The deployment/access design must enforce that boundary; whether the system is hosted on-premises or in an approved private environment is not yet selected.
 - **Host availability (D-015):** Temporary downtime while the host computer is switched off is acceptable. No always-on availability or automatic failover is required. Previously saved PDCA data must remain accessible after service resumes. Offline editing has not been decided.
 - **Host restart (D-016):** When the host computer is powered on again, the application must become available automatically, without an operator manually starting the application. The mechanism is deferred to DESIGN.
+- **Interim host (D-018):** The owner intends to use their currently available laptop as a temporary host for initial use/testing while it is powered on, before the planned shared local server is ready. This is an approved host preference/operating requirement, **not** evidence that the application is installed or running, that LAN reachability or company IT authorization has been verified, or permission to begin DESIGN/BUILD.
 - **Operating window and shared-host intent (D-017):** THE NODE OF PDCA is expected to be available whenever its host computer is powered on; no fixed daily service schedule is required. The intended host is a **planned shared company LAN local server for Project Float Monitor and THE NODE OF PDCA**. This machine is **not yet confirmed set up or operational**. The owner plans to work with IT on its setup on 2026-11-05; feasibility, authorization, capacity, configuration compatibility, and impact on Float Monitor remain unverified. This is an operational constraint, not approval of a technology stack or deployment design.
 - **Zero-spend constraint (D-014, confirmed):** Do not incur new software license fees, subscriptions, paid SaaS/API usage, paid hosting, or other new monetary charges for this project. Use no-fee components and existing company-approved resources only, subject to verification; a free tier with possible charges or restrictive limits must not be assumed to meet this requirement.
 
 **Unknown**
 - Hosting/network policies, identification/login requirements, data retention, image/file size, supported devices/browsers, concurrent-user volume, availability, backup/recovery policy, and corporate security approval.
+- Whether the owner's laptop can serve authorized LAN users (network reachability, firewall/security policy, available resources, company IT approval) as an interim host, and how saved data would be retained or moved when changing hosts. These are not yet verified.
 - Whether the planned shared local-server computer for Project Float Monitor and THE NODE OF PDCA can be prepared with IT, without new spending, and whether external connectivity is allowed. A setup attempt with IT is planned for 2026-11-05; outcome, machine specifications, capacity, Float Monitor requirements, IT authorization, and deployment configuration remain unverified. No technical hosting design is approved.
 - Development/maintenance ownership, engineering capacity, and internal time/operational resource use. **Zero new monetary spending** is confirmed, but internal labor, existing hardware, electricity, storage, maintenance and opportunity costs still exist and must not be represented as zero total cost.
 - Which open-source licenses satisfy company policy and any attribution, notice, redistribution or network-service obligations; license review is required before selecting dependencies.
@@ -156,6 +158,7 @@ Data ownership, history, retention, recovery, and deletion behavior require DEFI
 - **R-11 (D-015):** Temporary downtime when the host is off is acceptable; saved records must persist across that outage.
 - **R-12 (D-016):** The shared application must automatically start serving users after the host computer is powered on, without manual application startup.
 - **R-13 (D-017):** No fixed daily availability window; provide service while the host computer is on. Target a planned shared company LAN local-server computer for Project Float Monitor and THE NODE OF PDCA, subject to setup, feasibility, IT approval, and non-disruptive co-hosting.
+- **R-14 (D-018):** Allow the owner's laptop to be the interim host while powered on, before moving to the planned shared local server, subject to security/IT approval, LAN reachability, and capacity checks. Data continuity across a future host change remains to be specified.
 
 ### Requirements pending confirmation
 - Identity/accountability; edit history; conflict resolution behavior; deletion/recovery; search; non-functional performance and security thresholds.
@@ -220,6 +223,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 | AC-08 | Cutting & Packing and the selected 1–2 other departments can apply the same seven-category standard in representative cases; broad-rollout exit threshold TBD | NOT TESTED |
 | AC-09 | Proposed: after host shutdown and power-on, the application becomes available automatically without manual application startup, and previously saved PDCA records remain accessible (D-015, D-016) | NOT TESTED |
 | AC-10 | Proposed: during the host's powered-on period, THE NODE OF PDCA can be accessed over the authorized company LAN without disrupting Project Float Monitor; subject to verified capacity and IT approval (D-017) | NOT TESTED |
+| AC-11 | Proposed: authorized LAN clients can access THE NODE OF PDCA while the interim laptop host is on; stored records can be preserved for a future host transition (D-018). Exact transition procedure TBD | NOT TESTED |
 
 ## 10. Important Risks
 
@@ -231,6 +235,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 | Usability too complex for casual users | Low adoption | Representative novice-user evaluation | Observed pilot tasks |
 | Sensitive factory information exposed | Confidentiality or compliance impact | Internal access and factory IT/security review | Access validation |
 | Shared local host affects Project Float Monitor | Resource contention, port/configuration conflicts or correlated downtime | Check existing host capacity and Float Monitor dependencies with IT before DESIGN | Co-hosting feasibility and non-disruption test (proposed) |
+| Interim laptop is unavailable or later replaced | Temporary service outage or risk to locally stored PDCA records | Define laptop security/availability and data preservation for host transition | Proposed interim-host access and data-continuity checks |
 
 ## 11. Definition of Done
 
@@ -241,6 +246,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 - [x] Custom-build product direction confirmed; no off-the-shelf replacement purchase (D-013).
 - [x] Open-source frameworks/libraries permitted; internal-only operation and no-new-spending constraint confirmed (D-014).
 - [x] Availability whenever host is powered on (no fixed daily window), and intent to share a planned local-server computer with Project Float Monitor confirmed (D-017). Server setup and co-hosting feasibility are NOT confirmed.
+- [x] Owner's laptop selected as intended interim host while powered on (D-018); actual network/IT feasibility remains unverified.
 - [ ] Actual license-compliant dependency policy, shared-host capacity/compatibility, no-new-cost operation, IT approval, and delivery/maintenance ownership verified.
 - [x] Pilot success **policy** approved: all mandatory functional gates plus practical usability; minor non-blocking issues can be accepted when documented.
 - [x] Usability thresholds approved: first-time task completion ≥80% without assistance and mean ease-of-use rating ≥4/5 (D-010).
@@ -253,13 +259,13 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 
 ## 12. Current Baseline
 
-**Baseline:** DEFINE draft v0.11  
+**Baseline:** DEFINE draft v0.12  
 **Status:** Draft — DEFINE in progress  
 **Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific pilot departments and participant identities, hard-gate acceptance details, and usability measurement procedure are not yet decided. Minimum sample size is confirmed: ≥5 first-time users per department (D-011). The two-level exit **policy** (D-009), usability **thresholds** (D-010), and overall-plus-each-department task-completion evaluation (D-012) are confirmed.
 
 **Delivery strategy:** Custom-build the application for the factory (D-013); existing market products are references, not purchase candidates for the core solution. Open-source libraries/frameworks are allowed, finished use is internal-only, and no new monetary spending is permitted (D-014). This is not a claim of zero internal labor or existing-infrastructure cost.
 
-**Host operating expectation:** Available whenever the host is on, with no fixed operating window. The intended host is a planned company LAN local-server computer for both Project Float Monitor and THE NODE OF PDCA (D-017), not yet confirmed set up. An IT-assisted setup attempt is planned for 2026-11-05; compatibility, capacity and IT authorization remain to be checked before any deployment.
+**Host operating expectation:** Available whenever the host is on, with no fixed operating window. The owner's laptop is the intended interim host (D-018), subject to IT/LAN/capacity checks. The intended later host is a planned company LAN local-server computer for both Project Float Monitor and THE NODE OF PDCA (D-017), not yet confirmed set up. An IT-assisted setup attempt is planned for 2026-11-05; compatibility, capacity and IT authorization remain to be checked before any deployment.
 
 This file records confirmed problem/outcome/access/rollout/delivery decisions and clearly labeled candidate scope/acceptance criteria. No app implementation, production integration, or deployment is authorized by this draft.
 
@@ -284,6 +290,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | D-015 | Temporary unavailability while the host computer is off is acceptable; no always-on or automatic failover requirement | Keep availability expectations proportionate to existing resources | 2026-11-04 |
 | D-016 | Application must automatically become available after the host computer is powered on, without manually launching the application | Reduce operational steps for internal users | 2026-11-04 |
 | D-017 | No fixed operating hours: THE NODE OF PDCA should be available whenever its host is on. Intended host is a planned shared company LAN local server for Project Float Monitor and THE NODE OF PDCA, not yet set up or verified; pending IT and capacity checks | Reuse existing internal resources without new spending; avoid prescribing implementation prematurely | 2026-11-04 |
+| D-018 | Owner's currently available laptop is the intended interim host while powered on, before the planned shared LAN local server is ready; feasibility remains unverified | Enable initial testing using existing equipment without assuming infrastructure is already operational | 2026-11-04 |
 
 ## 14. Change History
 
@@ -300,6 +307,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | DEFINE draft v0.9 | Confirmed host-off downtime tolerance and automatic service availability after host power-on (D-015, D-016) | Define operational behavior without choosing architecture | 2026-11-04 |
 | DEFINE draft v0.10 | Confirmed no fixed operating window and intended reuse of Float Monitor's existing company LAN local server, subject to IT/capacity validation (D-017) | Record shared-host operational requirements without entering DESIGN | 2026-11-04 |
 | DEFINE draft v0.11 | Clarified that the shared local server for Float Monitor and THE NODE OF PDCA is planned, not yet operational; owner intends IT-assisted setup attempt on 2026-11-05 | Avoid treating planned infrastructure as available or IT-approved | 2026-11-04 |
+| DEFINE draft v0.12 | Confirmed owner's laptop as intended interim host while powered on, pending LAN/IT/capacity verification and data-continuity planning | Record staged hosting intent without beginning DESIGN or BUILD | 2026-11-04 |
 
 ---
 
