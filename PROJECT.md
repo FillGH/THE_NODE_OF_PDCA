@@ -1,7 +1,7 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.25**  
+> **Lifecycle stage: DEFINE (in progress)** · **Baseline: DEFINE draft v0.26**  
 > Last updated: 2026-11-04  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
 > This document records product needs only. No DESIGN or BUILD has been authorized by this update.
@@ -110,7 +110,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 ### Important unknowns
 - Which additional 1–2 departments, pilot users (minimum 5 first-time testers per department, confirmed D-011), and representative PDCA cases will be selected; how to ensure cross-department representation.
 - What proof is sufficient to declare pilot success and proceed to factory rollout.
-- Pilot reporting expectations, agreed usability task protocol and any additional image/document handling constraints. Basic PDCA search, Node history/restoration, and Node/PDCA deletion rules are already confirmed (D-040, D-033–D-039, D-044).
+- Exact PDF report composition/layout and usability task protocol, plus any additional image/document handling constraints. PDF export and hybrid visual-plus-detail content are confirmed (D-047/D-049); search, Node history/restoration and deletion are also confirmed (D-040, D-033–D-039, D-044).
 - Which access/identity and data-governance rules are required by the factory.
 - Who will build, operate and maintain the custom application; which existing company resources can host it without new expenditure, and what internal labor/maintenance capacity is available.
 - Which open-source licenses are compatible with internal-only company use and zero-fee operation; no library or framework has yet been selected.
@@ -130,6 +130,9 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - [x] A PDCA may contain multiple Problem nodes; a single-Problem-per-PDCA rule is not required (D-042).
 - [x] All PDCA projects remain editable without a mandatory project-level closure or Completed lock (D-043).
 - [x] Whole-PDCA soft delete and recovery within seven days; thereafter automatic permanent purge including contained Nodes and relationships (D-044).
+- [x] Automatically create restorable backups of the saved full PDCA dataset (including Node relationships, images and history); initial backups remain on the Host only (D-045, D-046).
+- [x] Export a PDCA as PDF containing both its visual Node relationship network and a readable detailed section (D-047, D-049).
+- [x] Start new PDCA projects from a blank project; no duplication or shared template feature for Pilot (D-048).
 - [x] Concurrent collaboration on the same PDCA.
 - [x] Common use across departments; open editing for authorized internal users.
 - [x] Rollout in **Pilot → evaluate → expand factory-wide**, not an all-factory first release.
@@ -138,6 +141,13 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 
 **Confirmed Node deletion baseline (D-035–D-039):** Soft-delete Nodes into recoverable Trash for seven days, then purge automatically; any authorized internal user may soft-delete and restore; no earlier manual permanent purge; never cascade deletion to adjacent Nodes; preserve/restore eligible graph edges; confirm with Node name and relationship count.
 **Confirmed PDCA-level deletion (D-044):** A user may delete an entire PDCA project, which enters Trash as a unit together with its contained Nodes, images and internal relationships. It can be restored as a whole within seven days; after seven days the entire deleted PDCA is automatically permanently purged from application-accessible records. Purging from separately retained backups is subject to an independent retention policy, not assumed by this decision.
+**Confirmed automatic local backup and PDF report direction (D-045–D-049):**
+- **D-045:** Automatically back up saved PDCA system records without requiring manual backup initiation, and provide a process for restoring the full application dataset from an available backup. Restore scope includes PDCA/Nodes, relationships, attached images, and retained edit history. Backup schedule, verification and detailed recovery procedure remain to be determined; success after total host-storage failure is not implied.
+- **D-046:** Keep backup copies **on the Host computer only** for the initial scope; no cloud, separate backup machine, or off-host replica is required. This accepts the risk that physical failure, loss, ransomware, or total loss of Host storage can destroy both primary data and all backups. Whether to use a separate disk/partition on that same Host is a later design choice, not a confirmed safeguard.
+- **D-047:** Allow users to view the PDCA in the web application and **export it to a PDF report** for meetings/management communication; the specific layout remains for DESIGN.
+- **D-048:** Every new PDCA starts from an empty project, with **no Duplicate PDCA feature and no Template System** in Pilot.
+- **D-049:** The exported PDF is a **hybrid report** including both a visual network of PDCA Nodes/links and readable details of the relevant Nodes. Report formatting, page layout, scaling and precise fields remain for DESIGN.
+**Interaction policy:** Future DEFINE question sets should present **at least three clear choices per question** and prioritize material product decisions over standard UI/UX minutiae (owner direction; not a system capability).
 ### Proposed for pilot — not yet approved
 - [ ] Create, edit, and connect the seven categories in a representative real PDCA case.
 - [ ] View and update PIC, dates, action status, and results separately per action.
@@ -170,7 +180,7 @@ A single, easy-to-use **factory-wide web-based PDCA platform** with one common m
 - [ ] Record owner-accepted interaction baseline before substantive integration.
 
 ### Data lifecycle — partly confirmed
-Saved Node history and restoration are confirmed (D-033/D-034). Node Trash and seven-day purge are confirmed (D-035–D-039); entire-PDCA Trash and seven-day purge are confirmed (D-044). Data ownership, history and backup retention, additional versioned data, recovery outside Trash and security still require decisions because operational records are retained.
+Saved Node history and restoration are confirmed (D-033/D-034). Node Trash and seven-day purge are confirmed (D-035–D-039); entire-PDCA Trash and seven-day purge are confirmed (D-044). Automatic restorable full-dataset backups are confirmed, stored on the Host only (D-045/D-046); backup frequency, retention, integrity testing, purge/backup interaction, and recovery objectives remain undecided. A complete Host storage failure may destroy both source data and local backups. Data ownership, history retention, additional versioned data, recovery outside accessible backups and security require decisions because operational records are retained.
 
 ## 8. Requirements
 
@@ -214,8 +224,13 @@ Saved Node history and restoration are confirmed (D-033/D-034). Node Trash and s
 - **R-36 (D-042):** Permit multiple Problem Nodes in one PDCA with free internal links to relevant other Node categories. Do not enforce one Problem Node per PDCA.
 - **R-37 (D-043):** Do not require a PDCA project-level Completed/Closure state that makes the PDCA read-only; all non-deleted PDCA projects remain editable by authorized users. This does not remove the existing 'Status & Result' Node category or temporary Node editing locks.
 - **R-38 (D-044):** Support deletion of an entire PDCA project through seven-day recoverable Trash as a single unit, preserving all contained Nodes and internal links during the recovery window. Allow restoration of the entire project within seven days; automatically permanently remove the PDCA and its application-held contents and links after expiry. Keep host-backup retention a separate unresolved policy.
+- **R-39 (D-045):** Provide automatic backups of the full saved PDCA application dataset (including Node text, inter-Node links, attached images, history and related project data) and a recovery mechanism to restore from an available valid backup. Define frequency, retention, integrity checks and procedure later.
+- **R-40 (D-046):** Store backups exclusively within the Host computer for initial scope; do not require cloud or another machine. Explicitly accept lack of recovery guarantee after total loss of Host storage; do not describe this as protection from physical Host disaster.
+- **R-41 (D-047):** Export a saved PDCA project into a PDF report in addition to viewing it through the Web Application, suitable for meeting and management communication.
+- **R-42 (D-048):** Creating a new PDCA always starts from an empty project; do not include Duplicate PDCA or reusable template features in Pilot.
+- **R-43 (D-049):** PDF export must include both a visual Node-link network and the supporting readable Node details in one hybrid report. Defer exact report design to DESIGN.
 ### Requirements pending confirmation
-- Authentication-free naming risks and independent access control; revision/backup retention and wider versioned content; recovery outside the confirmed seven-day Node/PDCA Trash; non-functional performance and security thresholds. Advanced search is not a Pilot requirement (D-040).
+- Authentication-free naming risks and independent access control; automatic-backup cadence, retention and test procedure, backup purge interaction, recovery objectives, and wider versioned content; limits of Host-only backups and recovery outside valid available backups; non-functional performance and security thresholds. Advanced search is not a Pilot requirement (D-040).
 
 ## 9. Acceptance Criteria
 
@@ -300,6 +315,11 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 | AC-31 | Proposed: a single PDCA stores and displays more than one Problem Node linked to different Facts, Actions and Results (D-042) | NOT TESTED |
 | AC-32 | Proposed: users can continue editing an existing non-deleted PDCA without a project Completed/Closure lock; Status & Result nodes still work and simultaneous same-Node edits are still protected (D-043) | NOT TESTED |
 | AC-33 | Proposed: soft-delete an entire PDCA including Nodes and links, recover all within seven days, then observe automated removal and no Trash restoration after expiry; verify other PDCA projects are unaffected (D-044) | NOT TESTED |
+| AC-34 | Proposed: an automatic backup is created without a manual request; restore from the available saved backup recovers project/Node content, relationships, images and stored history as a usable full dataset (D-045) | NOT TESTED |
+| AC-35 | Proposed: backups reside on the Host computer without requiring cloud/off-host equipment; documentation and Pilot risk acceptance make clear that loss of Host storage can lose all backup copies (D-046) | NOT TESTED |
+| AC-36 | Proposed: users can generate a PDF of an existing PDCA while continuing to view it in the Web Application (D-047) | NOT TESTED |
+| AC-37 | Proposed: creating a new PDCA starts blank; no Duplicate or Template workflow is offered in Pilot (D-048) | NOT TESTED |
+| AC-38 | Proposed: an exported PDF displays both the PDCA Node-link visual network and readable Node information; exact layout is subject to later DESIGN acceptance (D-049) | NOT TESTED |
 
 ## 10. Important Risks
 
@@ -314,6 +334,8 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 | Shared local host affects Project Float Monitor | Resource contention, port/configuration conflicts or correlated downtime | Check existing host capacity and Float Monitor dependencies with IT before DESIGN | Co-hosting feasibility and non-disruption test (proposed) |
 | Interim laptop is unavailable or later replaced | Temporary service outage or risk to locally stored PDCA records | Define laptop security/availability and data preservation for host transition | Proposed interim-host access and data-continuity checks |
 | Host migration misses images or graph relationships | Lost evidence or broken reasoning trace after moving from laptop to local server | Define complete migration scope, backup, and integrity verification | Proposed before/after text, relationship, and image retrieval checks |
+| Local Host backup and primary data are lost together | Complete loss of saved PDCA records despite automatic backups | Owner-approved Host-only backup constraint (D-046) explicitly accepts this residual risk; recovery possible only while usable backup remains. Validate scope and restore process (D-045) | Test restore from a surviving local backup; separately record no protection against total Host storage loss |
+| Expired Trash records remain inside retained backups | Deleted Node/PDCA data may remain recoverable outside the active application even after seven-day purge | Separate active data expiry (D-036/D-044) from backup retention; define compliant retention/purge handling with IT before deployment | Confirm backup policy does not misrepresent irreversible erasure |
 
 **PDCA-level deletion risk (D-044):** Deleting the whole project affects its contained Nodes and internal links; show clear project-level warning using standard safe-delete UX, preserve as a recoverable unit for seven days, and keep backup-retention policy and final purge validation explicit.
 ## 11. Definition of Done
@@ -331,6 +353,8 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 - [x] All saved PDCA data, node relationships, images, and supporting document references must be preserved on host transition (D-019); migration method and test evidence remain open.
 - [x] Pilot self-entered name without password/Microsoft sign-in, Node edit history, and direct version restore approved (D-032–D-034).
 - [x] Five Node deletion decisions confirmed: soft delete, seven-day auto purge, open delete/restore permissions, non-cascading link behavior and mandatory confirmation (D-035–D-039).
+- [x] Five confirmed product choices: automatic restorable full-dataset Backup, Host-only backup copies, PDF export, no PDCA Duplicate/Template, and PDF hybrid visual-plus-detail report (D-045–D-049).
+- [ ] Backup cadence/retention, actual restore testing criteria, local-only data-loss risk and backup-versus-deletion retention treatment accepted by IT/owner.
 - [ ] Access restrictions independent of user-entered names, history retention and remaining data-governance risks approved.
 - [ ] Actual license-compliant dependency policy, shared-host capacity/compatibility, no-new-cost operation, IT approval, and delivery/maintenance ownership verified.
 - [x] Pilot success **policy** approved: all mandatory functional gates plus practical usability; minor non-blocking issues can be accepted when documented.
@@ -344,7 +368,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 
 ## 12. Current Baseline
 
-**Baseline:** DEFINE draft v0.25  
+**Baseline:** DEFINE draft v0.26  
 **Status:** Draft — DEFINE in progress  
 **Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; factory-wide use is the eventual end state. Specific pilot departments and participant identities, hard-gate acceptance details, and usability measurement procedure are not yet decided. Minimum sample size is confirmed: ≥5 first-time users per department (D-011). The two-level exit **policy** (D-009), usability **thresholds** (D-010), and overall-plus-each-department task-completion evaluation (D-012) are confirmed.
 
@@ -358,6 +382,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 
 **Node deletion:** D-035–D-039 establish recoverable Trash for seven days, automated final removal thereafter, authorized-user delete/restore, no cascade to other Nodes, and explicit confirmation identifying Node and relationship count. No DESIGN or BUILD is authorized.
 **Core PDCA boundary (D-040–D-044):** Keep discovery/search simple; links stay within one PDCA; each PDCA can contain multiple Problem Nodes; there is no project-level closure-based edit lock; whole-PDCA deletion uses seven-day recoverable Trash followed by automatic permanent removal. Fine UI/UX decisions follow modern web conventions during DESIGN. No DESIGN or BUILD is authorized.
+**Data protection/reporting (D-045–D-049):** Full-dataset automatic backups with restore capability are required, but their location is restricted to the Host; complete Host storage failure may destroy all recovery copies. Web viewing plus PDF hybrid visual-network-and-Node-detail export is required. New PDCA projects start blank; no duplicate/template feature in Pilot. Frequency, report layout and the residual-risk control details remain open. No DESIGN/BUILD authorization is implied.
 ## 13. Important Decisions
 
 | ID | Decision | Reason | Date |
@@ -406,6 +431,11 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | D-042 | One PDCA can contain multiple Problem Nodes, with free links to other applicable Node categories within that PDCA | Support real operational cases involving several interrelated problems | 2026-11-04 |
 | D-043 | No PDCA-level Completed/Closure status that locks editing; existing non-deleted PDCA projects remain editable | Avoid unnecessary lifecycle complexity in Pilot | 2026-11-04 |
 | D-044 | Permit whole-PDCA soft delete with all contained Nodes/links, seven-day recoverability, then automatic permanent deletion; backup retention remains a separate unresolved policy | Allow safe removal of obsolete/mistaken projects without immediate loss | 2026-11-04 |
+| D-045 | Automatically create restorable backups of the full saved PDCA dataset, including Nodes, relationships, images and history; exact backup schedule and restore validation remain undecided | Recover data after software or data corruption while local backup remains intact | 2026-11-04 |
+| D-046 | Initially keep backups on the Host computer only; no off-host or cloud backup required, accepting loss risk from complete Host storage failure | Avoid additional infrastructure and spending while explicitly accepting the risk | 2026-11-04 |
+| D-047 | Support exporting a PDCA project to PDF as well as viewing it in the Web Application | Facilitate meetings and management reports | 2026-11-04 |
+| D-048 | All new PDCA projects begin blank; no Duplicate PDCA or Template System in Pilot | Keep initial creation workflow simple and scope controlled | 2026-11-04 |
+| D-049 | Use a Hybrid PDF Report containing both the visual Node-link network and detailed Node information | Make reports suitable for high-level explanation and later reference | 2026-11-04 |
 
 ## 14. Change History
 
@@ -436,6 +466,7 @@ This file records confirmed problem/outcome/access/rollout/delivery decisions an
 | DEFINE draft v0.23 | Batched three confirmed DEFINE choices: self-entered display names without password/Microsoft login, saved Node edit history, and restore of old versions as new revisions (D-032–D-034) | Keep collaboration easy and errors reversible without equating labels with verified identities | 2026-11-04 |
 | DEFINE draft v0.24 | Batched five confirmed Node deletion decisions: Trash soft delete, seven-day auto purge, open delete/restore, preserve neighboring Nodes and links, and explicit confirmation (D-035–D-039) | Set recoverability and graph deletion rules before DESIGN | 2026-11-04 |
 | DEFINE draft v0.25 | Batched five confirmed DEFINE decisions: simple search/modern UX defaults, within-PDCA link scope, multiple Problems per PDCA, no closure-based edit lock, and seven-day whole-PDCA Trash (D-040–D-044) | Prioritize material product scope and minimize unnecessary UI-detail decisions | 2026-11-04 |
+| DEFINE draft v0.26 | Batched automatic backup, Host-only storage, PDF export, blank-only PDCA creation, and hybrid PDF visualization plus details (D-045–D-049); future questions require three or more choices | Focus important DEFINE decisions and make accepted data-loss tradeoffs explicit before DESIGN | 2026-11-04 |
 
 ---
 
