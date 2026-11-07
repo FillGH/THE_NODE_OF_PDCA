@@ -2,7 +2,7 @@
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
 > **Lifecycle stage: DESIGN (authorized: UI/UX and mock-data prototype only)** · **Requirements baseline: DEFINE v0.38 (Closure Patch; D-001–D-107)**  
-> Last updated: 2026-11-05  
+> Last updated: 2026-11-08  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
 > **DESIGN entry authorized by Project Owner (2026-11-05): UI/UX exploration and mock-data prototype only. BUILD, backend/database integration, real factory data processing and deployment remain unauthorized.** Requirements D-001–D-107 and Closure-01–05 remain the approved product baseline.
 
@@ -403,9 +403,9 @@ The following are candidate test activities for **already-confirmed capabilities
 
 **Current high-level concept only (Confirmed):** A visual PDCA knowledge network with individually linkable nodes, seven fixed categories, and common factory-wide access.
 
-**DESIGN AUTHORIZED — UI/UX AND MOCK-DATA PROTOTYPE ONLY; NO UI BASELINE ACCEPTED YET.** The Project Owner explicitly approved the transition from DEFINE to DESIGN on 2026-11-05, after the v0.38 closure and N-01/N-03 editorial cleanup. Prior standalone prototypes and Blender-inspired visual discussions remain exploratory inputs, not accepted designs. DESIGN may choose a lightweight prototype approach but **not** commence production implementation, backend/database integration, live collaboration infrastructure, authentication/access-control integration, deployment or real factory record processing. Those activities remain prohibited until a separate BUILD authorization and any required IT approvals.
+**DESIGN AUTHORIZED — UI/UX AND MOCK-DATA PROTOTYPE ONLY.** The Project Owner explicitly approved the transition from DEFINE to DESIGN on 2026-11-05, after the v0.38 closure and N-01/N-03 editorial cleanup. Prior standalone prototypes and Blender-inspired visual discussions remain exploratory inputs, not accepted designs. DESIGN may choose a lightweight prototype approach but **not** commence production implementation, backend/database integration, live collaboration infrastructure, authentication/access-control integration, deployment or real factory record processing. Those activities remain prohibited until a separate BUILD authorization and any required IT approvals.
 
-**DESIGN v0.1 — authorized scope, work plan and review gates (PROPOSED execution plan; not accepted UI):**
+**DESIGN v0.1 — original authorized scope, work plan and review gates:**
 1. **Information architecture and journeys:** Sketch PDCA discovery/create/open, graph canvas with seven Node categories, Node detail editing, Action Overview, history/restore, Trash and per-PDCA exports, using representative *fictional* factory data.
 2. **Graph/canvas interactions:** Compare how users create Nodes, connect directed links, navigate a busy (~200-Node) canvas, trace back from Result to Problem, use Auto Layout versus saved manual positions, and distinguish seven Node types without forcing a PDCA phase.
 3. **Collaboration state previews:** Simulate multiple named Sessions, duplicate display names, per-Node editing locks, one editing Tab per Session, save/pending/disconnected/conflict states and safe treatment of unsaved drafts. Mock-only behavior cannot prove concurrency correctness.
@@ -415,12 +415,17 @@ The following are candidate test activities for **already-confirmed capabilities
 
 **No implicit permission:** UI prototypes may be static or interactive with local fictional data only. No production database, factory-host setup, IT integration, actual employee information, multi-user production service or full-stack application is authorized by DESIGN entry.
 
-### UI/UX interaction baseline — DESIGN in progress; not accepted
-- [ ] Define first mock-data screen map and essential navigation/flows.
-- [ ] Create and review representative desktop UI/UX mock-data prototype.
-- [ ] Exercise important Pilot tasks and realistic empty/large/collaborative/failed-save states.
-- [ ] Resolve material interaction choices with the Project Owner; involve representative Pilot users where practical.
-- [ ] Record an owner-accepted interaction baseline before any substantial integration or separate BUILD authorization.
+### UI/UX interaction baseline — core scope accepted; DESIGN in progress
+
+On 2026-11-08, the Project Owner explicitly accepted [DESIGN v0.10 at commit `684bc50`](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/684bc5006f6dd60f717a3c755da7f68bfe63f430/design/prototypes/DESIGN_v0.10.html) as the **core UI/UX interaction baseline**. Accepted scope covers Node creation, editing and linking; reasoning trace; Canvas, Inspector and Mini-map; Snap and Free Float with Auto Arrange and Undo; and per-PDCA Action Overview presentation, statuses, counts, percentages and status filtering.
+
+**Evidence:** Owner-reported B1–B5 and S1 passed, supported by simulated-DOM checks and three Edge timing runs per mode on the synthetic 200-Node, 273-link QA graph. See the [acceptance evidence record](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/0ea10b7ac8c5ed96742913b22b26ca62c5c0d7f7/design/qa/DESIGN_v0.10-acceptance.md). This is UI/UX evidence for a mock-data prototype; Pilot acceptance, production persistence and concurrency require their own evidence.
+
+**Requirements boundary:** D-001–D-107 and Closure-01–05 remain the product baseline. The demo's all-Workspaces Action Overview is outside D-092; its forward-category link restriction and arrowless rendering do not supersede D-060/D-105.
+
+- [x] Create, review and record the owner-accepted core UI mock-data prototype and its tested interactions.
+- [ ] Complete the remaining screen map and interaction design, including save/reconnect, locks/drafts, History/Trash, and other unreviewed workflows.
+- [ ] Resolve remaining DESIGN and IT risks for Host/access, backup/restore and operational readiness before the separate BUILD gate.
 
 ### Data lifecycle — partly confirmed
 Saved Node history and restoration are confirmed (D-033/D-034). Node Trash and seven-day purge are confirmed (D-035–D-039); entire-PDCA Trash and seven-day purge are confirmed (D-044). Inactivity alone must NOT archive or remove a PDCA, and inactive projects remain findable/editable until a user deliberately deletes them (D-074). Automatic restorable full-dataset backups are confirmed on the Host only (D-045/D-046), with recovery objectives RPO ≤4h and RTO ≤1 working day under defined recoverable conditions (D-068/D-069). Backup cadence implementation, retention, integrity testing and backup/purge interaction remain undecided. Total Host storage failure may destroy both records and backups. Data governance/history retention and security still need confirmation.
@@ -753,7 +758,7 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 - [x] **Separate explicit Project Owner authorization to ENTER DESIGN granted on 2026-11-05.** Scope is restricted to UI/UX DESIGN and mock-data prototyping; BUILD is explicitly not authorized.
 
 **DESIGN / pre-BUILD carry-forward — not additional DEFINE approval conditions:**
-- Define UI/UX interaction baseline with representative mock-data prototype before substantive integration (AGENTS.md §4).
+- Core UI/UX interaction baseline accepted for DESIGN v0.10 (§7). Complete remaining user-facing DESIGN and pre-BUILD risk work before substantive integration (AGENTS.md §4).
 - Clarify per-Node locking interaction matrix, save/reconnect/conflict rules, safe Session switching, shared-PC drafts and multi-tab coordination; verify data integrity under realistic parallel activity.
 - Confirm applicable IT security/network access boundary and unauthorized-LAN-client denial. If no IT-approved method supports D-032/D-066, escalate to Project Owner for a product trade-off before BUILD; never silently relax G-11.
 - Select/validate usable Host, zero-new-spend dependencies, resource/maintenance capacity, license compatibility, image/storage growth, backup cadence, 30-day retention, deletion vs audit/backup erasure governance, full restore and migration procedures. The actual Pilot Host and any total-loss limitations must be explicit.
@@ -770,8 +775,8 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 ## 12. Current Baseline
 
 **Requirements baseline:** DEFINE v0.38 — approved Closure Patch; 107 Decisions remain preserved  
-**Current lifecycle baseline:** DESIGN v0.1 — authorized UI/UX and mock-data prototype scope  
-**Status:** DESIGN authorized by Project Owner on 2026-11-05. UI/UX baseline not yet reviewed or accepted; BUILD remains NOT AUTHORIZED.  
+**Current lifecycle baseline:** DESIGN in progress — v0.10 accepted as the scoped core UI/UX interaction baseline (§7)  
+**Status:** DESIGN authorized on 2026-11-05; Project Owner accepted the core UI on 2026-11-08. Remaining DESIGN work is open; BUILD remains NOT AUTHORIZED.  
 **Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; following full Pilot PASS and the Project Owner's final GO decision (D-070), **all authorized factory departments can voluntarily start using the system**, with no mandatory adoption order or timetable (D-072). Specific Pilot departments/participants, detailed evidence scripts and IT/security operational approvals remain to be decided. The Hybrid Pilot and scoring rules are confirmed (D-053/D-054). Minimum sample size is ≥5 first-time users per department (D-011). The two-level exit policy (D-009), usability thresholds (D-010), and overall-plus-each-department task-completion evaluation (D-012) remain binding; Project Owner decides full vs targeted remedial retests (D-071).
 
 **Delivery strategy:** Custom-build the application for the factory (D-013); existing market products are references, not purchase candidates for the core solution. Open-source libraries/frameworks are allowed, finished use is internal-only, and no new monetary spending is permitted (D-014). This is not a claim of zero internal labor or existing-infrastructure cost.
@@ -955,6 +960,8 @@ This file records confirmed requirements and the owner-authorized move to **DESI
 | DEFINE v0.38 — independent follow-up audit documentation cleanup (N-01/N-03) | Reconcile three active per-user/per-PDCA references with Closure-03 Session-based editing; update two outstanding-owner/maintainer unknowns to reflect the confirmed Project Owner + AI Coding Agent builder model while retaining administrator, technical maintenance and capacity unknowns | Remove misleading implementation guidance without changing product scope or authorizing DESIGN/BUILD | 2026-11-05 |
 | DESIGN entry v0.1 — owner-authorized UI/UX mock-data prototype only | Owner explicitly authorizes transition to DESIGN after DEFINE v0.38 Closure Patch and independent follow-up review; design will refine information architecture, seven-Node canvas/editor and workflows using fictional mock data with a separate UI baseline acceptance gate | Record the authorized lifecycle transition without silently authorizing BUILD, backend integration, production data processing or deployment | 2026-11-05 |
 
+| DESIGN v0.10 — core UI/UX baseline accepted | Project Owner accepts the tested core mock-data interactions at commit `684bc50`; owner-reported B1–B5 and S1 are recorded in the acceptance evidence | Freeze the reviewed UI scope and preserve the separate remaining DESIGN and BUILD gates | 2026-11-08 |
+
 ---
 
 # Decision Gates
@@ -962,11 +969,11 @@ This file records confirmed requirements and the owner-authorized move to **DESI
 ## Ready to Build — NOT MET
 - [x] Problem and desired outcome described.
 - [ ] Scope, constraints, acceptance thresholds, and important unknowns sufficiently settled.
-- [ ] DESIGN and an accepted user-facing interaction baseline completed.
+- [ ] Remaining DESIGN and unreviewed user-facing workflows completed; scoped core UI/UX baseline recorded in §7.
 - [ ] Material risks addressed proportionately.
 
 ## Ready to Release — NOT APPLICABLE YET
-No implementation, testing, pilot, or production release has been authorized or performed.
+Production implementation, integrated-system testing, Pilot and production release have not been authorized or performed.
 
 ---
 
