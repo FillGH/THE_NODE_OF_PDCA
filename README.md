@@ -4,6 +4,25 @@
 
 A lightweight, risk-based starter for engineering and software projects. It is designed to be reusable across web apps, dashboards, automations, AlgoTrade systems, industrial tools, scripts, and other technical projects without forcing heavyweight process onto small work.
 
+## THE NODE OF PDCA · BUILD ช่วงที่ 1
+
+ทดสอบด้วยข้อมูลสมมติในเครื่องพัฒนา จากโฟลเดอร์นี้เปิด PowerShell แล้วรันคำสั่งต่อไปนี้ด้วย Node.js 24 ไม่ต้องติดตั้งแพ็กเกจเพิ่ม
+
+```powershell
+npm.cmd start
+```
+
+เปิด [http://127.0.0.1:4173](http://127.0.0.1:4173) ด้วย Edge บนเดสก์ท็อป ใส่ Display Name สมมติ แล้วกด **สร้าง PDCA** ผังเริ่มต้นว่าง ใช้ `Ctrl+C` ใน PowerShell เพื่อหยุดแอป ไฟล์ข้อมูล `.pdca-dev/pdca.sqlite` จะถูกเปิดใช้อีกครั้งเมื่อรันจากโฟลเดอร์เดิม
+
+1. สร้างสองผังชื่อเดียวกัน เทียบ Record ID ใน Workspaces แล้วเปลี่ยนชื่อผังหนึ่ง ใช้ช่องค้นหาชื่อผัง, Title หรือ Content เพื่อเปิดผังหรือ Node ที่ตรงกัน
+2. ใช้ **＋ Node** และ **Node Inspector** เพื่อสร้างและแก้ Node เพิ่มรูป PNG, JPEG, GIF หรือ WebP ได้สูงสุด 16 MiB ต่อรูป ลิงก์ HTTP/HTTPS เปิดในแท็บใหม่ ส่วนพาธ LAN และ `file:` แสดงให้คัดลอกไปเปิดใน File Explorer
+3. ลากจุดขวาของการ์ดไปที่จุดซ้ายของ Node ปลายทาง หรือใช้ตัวเลือกใน Inspector ใช้รายการ **← รับจาก** เพื่อตามเส้นย้อน ใช้ **Auto Arrange** หรือเข้า **Free Float** แล้วลากการ์ด รอ **บันทึกแล้ว** ก่อนเปิดผังใหม่เพื่อตรวจตำแหน่ง
+4. ตรวจสถานะบันทึกในแถบด้านบน หากการบันทึกล้มเหลว ข้อความที่แก้ยังอยู่ในหน้าปัจจุบันและกด **ลองบันทึกอีกครั้ง** ได้ เมื่อทิ้งฉบับร่างแล้วเปิดผังใหม่จะเห็นข้อมูลฉบับที่เก็บสำเร็จล่าสุด
+
+รัน `npm.cmd test` เพื่อตรวจการค้นหา การเปิด SQLite ใหม่ กติกาเส้น การเก็บข้อมูลเมื่อเปลี่ยนประเภท และ History ในไฟล์ทดสอบแยก ชุดทดสอบจำลองความล้มเหลวระหว่างเขียน History แล้วตรวจว่าผัง รูป และประวัติยังอยู่ในฉบับเดิม
+
+Canvas สืบจาก DESIGN v0.10 ที่รับรอง แอปรันบน loopback เท่านั้น ใช้ Node.js 24 และ SQLite ที่มากับ Node จึงเปิดทดสอบได้โดยไม่มีแพ็กเกจเสริมหรือค่าใช้จ่ายใหม่ `node:sqlite` ในรุ่นที่ทดสอบ (24.14.1) แสดง ExperimentalWarning [DESIGN v0.10](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/684bc5006f6dd60f717a3c755da7f68bfe63f430/design/prototypes/DESIGN_v0.10.html) · [ใบอนุญาต Node.js](https://github.com/nodejs/node/blob/v24.x/LICENSE) · [สิทธิ์ใช้งาน SQLite](https://sqlite.org/copyright.html)
+
 ## Core principle
 
 **Use engineering judgment to add only the process, code, documentation, and controls that earn their cost.**

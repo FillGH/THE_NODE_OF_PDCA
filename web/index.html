@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="color-scheme" content="light dark"/>
+<title>THE NODE OF PDCA</title>
+<link rel="stylesheet" href="/canvas.css">
+</head>
+<body>
+<div class="app" id="app">
+  <div class="topbar">
+    <div class="logo">N</div>
+    <div class="brand">THE NODE OF PDCA<small>VISUAL THINKING SYSTEM</small></div>
+    <div class="separator"></div>
+    <nav class="header-nav" aria-label="Navigation">
+      <button class="navbtn active" id="home">Workspaces</button>
+      <button class="navbtn" id="canvasNav" disabled>Canvas</button>
+    </nav>
+    <div class="editor"><span id="editorName"></span>
+      <span id="saveStatus" role="status" aria-live="polite"></span>
+      <button class="btn" id="retrySave" hidden>ลองบันทึกอีกครั้ง</button>
+    </div>
+    <span class="tag training">BUILD 1 · ข้อมูลสมมติ</span>
+    <button class="iconbutton" id="themeToggle" aria-label="Toggle dark mode">☾</button>
+    <div class="font-size-controls" id="canvasFontControls" aria-label="Text size" hidden>
+      <button data-size="0.9">A−</button><button class="active" data-size="1">A</button><button data-size="1.15">A+</button>
+    </div>
+  </div>
+  <p class="field-error navigation-error" id="navigationError" role="alert"></p>
+  <div class="shell"><main class="main">
+    <div class="subhead" id="canvasToolbar" hidden>
+      <div class="canvas-name"><strong id="canvasTitle"></strong><button class="btn" id="renamePdca">เปลี่ยนชื่อ</button></div>
+      <div class="tools">
+        <div class="segments" aria-label="Layout mode"><button class="active" id="snapMode">▦ Snap</button><button id="freeMode">⬚ Free Float</button></div>
+        <button class="btn" id="autoArrange">↗ Auto Arrange</button><button class="btn" id="undoLayout">↶ Undo</button>
+        <button class="btn" id="defaultView">⟲ Default View</button>
+        <button class="btn primary" id="addGeneral">＋ Node</button>
+        <div class="zoomcontrols"><button id="zoomOut" aria-label="Zoom out">−</button><span class="zlabel" id="zoomLabel">100%</span><button id="zoomIn" aria-label="Zoom in">+</button><button id="zoomFit" title="Fit canvas">⛶</button></div>
+      </div>
+    </div>
+    <div class="content">
+      <div class="board-panel" id="canvasPanel" hidden>
+        <div id="laneHeader" class="snap-header"><div id="laneHeaderTrack"></div></div>
+        <div class="board-viewport" id="viewport" tabindex="0" aria-label="PDCA Canvas · drag empty space to pan">
+          <div class="board-size" id="boardSize"><div class="stage" id="stage">
+            <div id="orbs" class="orbs"></div><div id="lanes" class="lanes"></div>
+            <svg id="links" class="world-links" xmlns="http://www.w3.org/2000/svg"></svg><div id="cards" class="cards"></div>
+          </div></div>
+          <p class="empty-canvas" id="emptyCanvas">ผังนี้ยังไม่มี Node · กด ＋ Node เพื่อเริ่มต้น</p>
+          <div id="minimap" tabindex="0" role="group" aria-label="Mini-map · ใช้ปุ่มลูกศรเพื่อเลื่อน Canvas" hidden>
+            <svg id="minimapSvg" viewBox="0 0 160 100" preserveAspectRatio="none" aria-hidden="true"></svg>
+          </div>
+        </div>
+        <div class="bottom-bar"><span id="footerLeft"></span><span id="footerPdcaName"></span><span id="routeStatus" aria-live="polite"></span><span class="canvas-tip">หมุนล้อเพื่อซูม · ลากพื้นว่างเพื่อเลื่อน · คลิกเส้นเพื่อแก้ไข</span></div>
+      </div>
+      <aside class="drawer" id="drawer" aria-label="Node Inspector" inert>
+        <div class="drawer-header"><span>Node Inspector</span><button id="closeDrawer" aria-label="Close Node Inspector">×</button></div>
+        <div id="drawerContent" class="drawer-content"></div>
+      </aside>
+      <section class="overlay open" id="overlay" aria-labelledby="workspaceTitle">
+        <h1 id="workspaceTitle">Workspaces</h1>
+        <p>สร้างหรือค้นหาผัง PDCA และเปิด Node ที่พบได้โดยตรง</p>
+        <div class="workspace-tools">
+          <button class="btn primary" id="createPdca">＋ สร้าง PDCA</button>
+          <label for="search" class="sr-only">ค้นหา PDCA หรือ Node</label>
+          <input class="workspace-search" id="search" type="search" placeholder="ค้นหาชื่อ PDCA, Title หรือ Content">
+          <button class="btn" id="clearSearch" disabled>ล้างคำค้น</button>
+        </div>
+        <div class="workspace-cards" id="workspaceCards" aria-live="polite"></div>
+      </section>
+    </div>
+  </main></div>
+</div>
+
+<dialog id="identityDialog" aria-labelledby="identityTitle">
+  <form class="modal" id="identityForm">
+    <span class="tag training">BUILD 1 · ข้อมูลสมมติเท่านั้น</span>
+    <h2 id="identityTitle">เริ่มใช้งาน THE NODE OF PDCA</h2>
+    <div class="field"><label for="displayName">Display Name สำหรับ History</label><input id="displayName" placeholder="เช่น ผู้ทดสอบ A" autofocus></div>
+    <p class="fieldhelp">ใช้ชื่อสมมติสำหรับระบุผู้แก้ในประวัติการบันทึก</p>
+    <p class="field-error" id="identityError" role="alert"></p>
+    <div class="modal-footer"><button type="submit" class="btn primary">เข้า Workspaces</button></div>
+  </form>
+</dialog>
+<dialog id="pdcaDialog" aria-labelledby="pdcaDialogTitle">
+  <form class="modal" id="pdcaForm">
+    <h2 id="pdcaDialogTitle"></h2>
+    <div class="field"><label for="pdcaName">ชื่อ PDCA</label><input id="pdcaName" autofocus></div>
+    <p class="field-error" id="pdcaError" role="alert"></p>
+    <div class="modal-footer"><button type="button" class="btn" id="cancelPdca">ยกเลิก</button><button type="submit" class="btn primary" id="confirmPdca">ยืนยัน</button></div>
+  </form>
+</dialog>
+<dialog id="newModal" aria-labelledby="newNodeTitle">
+  <form class="modal" id="nodeForm">
+    <h2 id="newNodeTitle">New Node</h2>
+    <div class="field"><label for="createCategory">Category</label><select id="createCategory"></select></div>
+    <div class="field"><label for="createTitle">Title</label><input id="createTitle" placeholder="Title of your node" autofocus></div>
+    <div class="modal-footer"><button type="button" class="btn" id="cancelCreate">Cancel</button><button type="submit" class="btn primary">Create Node</button></div>
+  </form>
+</dialog>
+<dialog id="edgeDialog" aria-labelledby="edgeHeading">
+  <form method="dialog" class="modal">
+    <h2 id="edgeHeading">เส้นเชื่อม Node</h2>
+    <p class="edge-endpoints"><strong id="edgeFrom"></strong><span aria-hidden="true">→</span><strong id="edgeTo"></strong></p>
+    <div class="field"><label for="edgeLabel">คำอธิบายบนเส้น</label><input id="edgeLabel" maxlength="48" autofocus></div>
+    <fieldset class="edge-palette"><legend>สีเส้น</legend><div id="edgePalette"></div></fieldset>
+    <div class="modal-footer">
+      <button id="deleteEdge" class="btn danger" type="button">ลบเส้น</button>
+      <button class="btn primary" type="submit">ใช้การแก้ไข</button>
+      <button id="cancelEdge" class="btn" type="button">ยกเลิก</button>
+    </div>
+  </form>
+</dialog>
+<dialog id="figureDialog" aria-labelledby="figureCaption">
+  <figure class="figure-panel"><button class="iconbutton" id="closeFigure" aria-label="ปิดภาพ" autofocus>×</button>
+    <img id="figureImage" alt=""><figcaption id="figureCaption"></figcaption>
+  </figure>
+</dialog>
+<div id="tooltip" class="tooltip"></div><div id="toast" class="toast" role="status" aria-live="polite"></div>
+<script type="module" src="/canvas.js"></script>
+</body></html>
