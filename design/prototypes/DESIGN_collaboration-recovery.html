@@ -1,0 +1,506 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE NODE OF PDCA · Collaboration &amp; Recovery DESIGN</title>
+<style>
+:root { color-scheme:light; --bg:#eef2f6; --panel:#fff; --ink:#182539; --sub:#506176; --line:#d5dfe9; --nav:#17283e; --accent:#0b6f69; --soft:#e9f6f3; --warn:#775015; --warnbg:#fff5df; --bad:#982e38; --badbg:#fcecee; font:15px/1.55 "Segoe UI",Tahoma,sans-serif; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); }
+h1,h2,h3,p { margin:0; }
+h1 { font-size:clamp(24px,3vw,35px); line-height:1.2; }
+h2 { font-size:19px; }
+h3 { font-size:15px; }
+button,select,textarea { font:inherit; }
+button,select { min-height:38px; }
+button { cursor:pointer; }
+button:disabled { cursor:default; opacity:.52; }
+button:focus-visible,select:focus-visible,textarea:focus-visible,summary:focus-visible { outline:3px solid #1b9a91; outline-offset:3px; }
+button { padding:7px 12px; border:1px solid var(--line); border-radius:8px; background:#fff; color:var(--ink); font-weight:650; }
+button:hover:enabled { border-color:#82a5b8; background:#f3f8fa; }
+.primary { background:var(--accent); border-color:var(--accent); color:white; }
+.primary:hover:enabled { background:#095953; }
+.danger { color:var(--bad); }
+select,textarea { border:1px solid #b7c8d9; background:white; color:var(--ink); border-radius:8px; padding:8px 10px; width:100%; }
+textarea { min-height:114px; resize:vertical; }
+textarea:disabled { background:#f4f7fa; color:#53667b; }
+label { display:grid; gap:4px; font-weight:650; }
+.brand { background:var(--nav); color:white; padding:17px max(24px,calc((100vw - 1300px)/2)); display:flex; align-items:center; justify-content:space-between; gap:12px; }
+.brand strong { letter-spacing:.07em; font-size:13px; }
+.brand span { font-size:12px; color:#b8e7e1; letter-spacing:.08em; }
+.main { width:min(1300px,calc(100% - 44px)); margin:25px auto 45px; display:grid; gap:18px; }
+.intro { display:grid; gap:5px; }
+.sub { color:var(--sub); font-size:13px; }
+.scenario { padding:14px 16px; background:#e0eeef; border:1px solid #bdd8d9; border-radius:12px; display:grid; grid-template-columns:minmax(230px,400px) auto minmax(240px,1fr); align-items:end; gap:11px; }
+.scenario p { align-self:center; }
+.clients { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:16px; align-items:start; }
+.client,.events { background:var(--panel); border:1px solid var(--line); border-radius:13px; box-shadow:0 7px 25px #14273c0a; }
+.client-head { padding:15px 17px 12px; border-bottom:1px solid var(--line); display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.client-body { padding:14px 17px; display:grid; gap:10px; }
+.badge { border-radius:999px; background:var(--soft); color:#185e58; padding:3px 9px; font-size:12px; font-weight:750; white-space:nowrap; }
+.badge.bad { background:var(--badbg); color:var(--bad); }
+.tabs,.row { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
+.tabs button[aria-pressed=true] { background:#dfeeed; border-color:#76a8a4; color:#195954; }
+.row small { color:var(--sub); }
+.status { border-radius:8px; padding:8px 10px; background:#edf3f8; color:#264661; font-size:13px; font-weight:650; }
+.status.good { background:var(--soft); color:#185e58; }
+.status.warn { background:var(--warnbg); color:var(--warn); }
+.status.bad { background:var(--badbg); color:var(--bad); }
+.notice { background:#f1f6fa; border-radius:8px; padding:8px 10px; color:#314e67; font-size:13px; }
+.saved { display:grid; gap:3px; background:#f6f8fb; border:1px solid var(--line); border-radius:9px; padding:9px 11px; }
+.saved p,.review pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+.review { border:1px solid #c9a66b; border-radius:9px; background:#fffaf0; padding:10px; display:grid; gap:8px; }
+.compare { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.compare pre { font:inherit; font-size:13px; margin:4px 0 0; padding:7px; border:1px solid var(--line); border-radius:6px; background:white; }
+.review textarea { min-height:78px; }
+.controls { border-top:1px dashed var(--line); padding-top:8px; }
+.controls summary { cursor:pointer; font-size:13px; font-weight:700; color:var(--sub); }
+.controls .row { margin-top:8px; }
+.controls button { font-size:12px; min-height:32px; }
+.events { padding:12px 17px; }
+.events ol { margin:6px 0 0; padding-left:22px; color:var(--sub); font-size:13px; }
+.quiet { font-size:12px; color:var(--sub); }
+@media (max-width: 820px) {
+  .scenario, .clients { grid-template-columns: 1fr; }
+  .brand { padding-inline: 16px; }
+  .main { width: calc(100% - 26px); }
+}
+</style>
+</head>
+<body>
+<header class="brand"><strong>THE NODE OF PDCA</strong><span>DESIGN · OFFLINE SIMULATION</span></header>
+<main class="main">
+  <section class="intro">
+    <h1>การแก้ไขร่วมกันและกู้ Draft</h1>
+    <p>Workspace สมมติ · ซองรั่วหลังซีล</p>
+    <p class="sub">ฝั่งซ้ายและขวาจำลองคนละเครื่อง ชื่อแสดงผลซ้ำกันได้ · ข้อมูลทั้งหมดอยู่ในหน้าเดโมและหายเมื่อรีเฟรช</p>
+  </section>
+  <section class="scenario" aria-label="เลือกสถานการณ์">
+    <label for="scenario">สถานการณ์ทดลอง<select id="scenario"></select></label>
+    <button class="primary" id="load" type="button">โหลดสถานการณ์</button>
+    <p id="guide" class="sub"></p>
+  </section>
+  <div id="notice" class="notice" role="status" aria-live="polite"></div>
+  <div class="clients"><section class="client" id="client-a"></section><section class="client" id="client-b"></section></div>
+  <section class="events"><h2>เหตุการณ์ในเดโม</h2><ol id="events"></ol></section>
+  <p class="quiet">ปุ่มตอบผลการบันทึกและหมดอายุล็อกเป็นเครื่องมือจำลองสำหรับตรวจแบบ · ไม่ใช่คำสั่งในหน้าจอสำหรับผู้ใช้งานจริง</p>
+</main>
+<script>
+'use strict';
+// Model: one fictional PDCA; sessions, tabs, locks, drafts and saved revisions live in memory.
+const seed = [
+  {id:'fact', kind:'Fact', title:'รอยรั่วกระจุกอยู่ช่วงเริ่มกะ', text:'ใน 8 ซองที่รั่ว พบ 6 ซองในชุดแรกหลังเริ่มเดินเครื่อง', rev:1},
+  {id:'action', kind:'Action', title:'ทดลองอุ่นหัวซีลก่อนปล่อยซองชุดแรก', text:'เก็บตัวอย่างหลังอุณหภูมิคงที่ 3 นาที', rev:1},
+  {id:'result', kind:'Status & Result', title:'หลังอุ่นหัวซีล พบซองรั่ว 1 จาก 100', text:'บันทึกผลรอบแรกและรอทดสอบซ้ำข้ามกะ', rev:1}
+];
+
+function newModel() {
+  return {
+    nodes:Object.fromEntries(seed.map(node => [node.id,{...node}])), locks:{}, lockRounds:{}, serial:2, saveSerial:0,
+    clients:Object.fromEntries(['a','b'].map((key,i) => [key,{
+      key, id:'S'+(i+1), name:'ผู้ทดสอบ', online:true, allowed:true, writer:null, viewing:1,
+      tabs:{1:{open:true,node:'fact',review:null},2:{open:true,node:'fact',review:null}},
+      drafts:{}, pending:null, cache:null
+    }])),
+    events:[], notice:'เลือกสถานการณ์ หรือกด “ขอแก้ไข Node” เพื่อเริ่มลอง'
+  };
+}
+
+const activeTab = client => client.tabs[client.viewing];
+const tabKey = (client, tab = client.viewing) => client.id + ':' + tab;
+const hasLock = (model, client, node = activeTab(client).node) => model.locks[node] === tabKey(client);
+const canRead = client => client.allowed && activeTab(client).open;
+const hasWriteTab = client => canRead(client) && client.online && client.writer === client.viewing;
+const currentDraft = client => client.drafts[activeTab(client).node];
+const editable = (model, client) => hasWriteTab(client) && hasLock(model, client) && !currentDraft(client)?.reviewRequired;
+
+function note(model, client, message) {
+  model.notice = message;
+  model.events.unshift((client ? client.id + ' · ' : '') + message);
+  model.events.length = Math.min(12, model.events.length);
+}
+
+function requireReview(client, keepPending = false) {
+  if (!keepPending) client.pending = null;
+  for (const draft of Object.values(client.drafts)) draft.reviewRequired = true;
+  for (const tab of Object.values(client.tabs)) tab.review = null;
+}
+
+function releaseTab(model, client, tab) {
+  const owner = tabKey(client, tab);
+  for (const node of Object.keys(model.locks)) if (model.locks[node] === owner) delete model.locks[node];
+}
+
+function releaseSession(model, client) {
+  for (const tab of [1,2]) releaseTab(model,client,tab);
+}
+
+function validateEdit(model,client,nodeId) {
+  if (!hasWriteTab(client)) return 'ต้องเชื่อมต่อและมีสิทธิ์จากแท็บแก้ไขก่อน';
+  const holder = model.locks[nodeId];
+  if (holder && holder !== tabKey(client)) return 'Node นี้ถูกล็อกอยู่ เปิดอ่านได้และลองใหม่เมื่อปล่อยล็อก';
+  return '';
+}
+
+function acquireLock(model, client, nodeId) {
+  if (!model.locks[nodeId]) model.lockRounds[nodeId] = (model.lockRounds[nodeId] || 0) + 1;
+  model.locks[nodeId] = tabKey(client);
+}
+
+function claimTab(model, client) {
+  if (!client.online || !canRead(client)) return note(model,client,'ยังเปิดแท็บแก้ไขไม่ได้ ต้องเชื่อมต่อและผ่านการตรวจสิทธิ์');
+  if (client.writer === client.viewing) return;
+  if (client.writer && client.tabs[client.writer].open && (client.pending || Object.keys(client.drafts).length)) {
+    return note(model,client,'แท็บเดิมมีงานค้าง กลับไปตรวจผลบันทึกหรือเลือกทิ้ง draft ก่อนสลับ');
+  }
+  if (client.writer) releaseTab(model,client,client.writer);
+  client.writer = client.viewing;
+  note(model,client,'แท็บ '+client.viewing+' ได้สิทธิ์แก้ไขใน Session นี้');
+}
+
+function beginEdit(model, client) {
+  const tab = activeTab(client);
+  const error = validateEdit(model,client,tab.node);
+  if (error) return note(model,client,error);
+  if (currentDraft(client)?.reviewRequired) return openReview(model,client);
+  if (Object.entries(model.locks).some(([id,holder]) => id !== tab.node && holder === tabKey(client))) {
+    return note(model,client,'จบการแก้ไข Node ก่อนหน้าให้เรียบร้อยก่อนเริ่มอีก Node');
+  }
+  acquireLock(model, client, tab.node);
+  note(model,client,'เริ่มแก้ไข '+model.nodes[tab.node].title);
+}
+
+function typeText(model, client, value) {
+  if (!editable(model,client)) return false;
+  const node = model.nodes[activeTab(client).node];
+  const draft = client.drafts[node.id] || {baseRev:node.rev, original:node.text, text:'', reviewRequired:false};
+  draft.text = value;
+  client.drafts[node.id] = draft;
+  if (!client.pending) queueSave(model, client, node.id, draft);
+  else if (!client.pending.result) client.pending.text = value;
+  model.notice = 'รอผล Auto-save · ข้อความที่พิมพ์ต่อยังอยู่ใน draft';
+  return true;
+}
+
+function queueSave(model, client, nodeId, draft, tab = client.viewing) {
+  client.pending = {
+    id:++model.saveSerial, node:nodeId, tab, baseRev:draft.baseRev,
+    lockRound:model.lockRounds[nodeId], text:draft.text, result:null
+  };
+}
+
+function processSave(model, client, success) {
+  const request = client.pending;
+  if (!request) return note(model,client,'ไม่มีคำขอบันทึกที่รอผลใน Session นี้');
+  if (request.result) return note(model,client,'คำขอนี้มีผลแล้ว · ไม่บันทึกซ้ำ');
+  const node = model.nodes[request.node];
+  if (!success || !client.allowed || !client.online || client.writer !== request.tab ||
+      model.locks[node.id] !== tabKey(client,request.tab) ||
+      model.lockRounds[node.id] !== request.lockRound || node.rev !== request.baseRev) {
+    request.result = {saved:false};
+    return note(model,client,'Host ปฏิเสธคำขอบันทึก · ฉบับที่บันทึกแล้วอยู่ครบ');
+  }
+  node.text = request.text;
+  node.rev++;
+  request.result = {saved:true, rev:node.rev};
+  note(model,client,'Host บันทึก r'+node.rev+' แล้ว · ผู้ชมเห็นฉบับใหม่ ผู้แก้ยังรอผล');
+}
+
+function deliverSave(model, client, requestId) {
+  const request = client.pending;
+  if (!client.online || !client.allowed || !request?.result || request.id !== requestId) return;
+  client.pending = null;
+  const draft = client.drafts[request.node];
+  if (!request.result.saved) {
+    if (draft) draft.reviewRequired = true;
+    return note(model,client,'บันทึกไม่สำเร็จ · เก็บ draft ไว้ให้ตรวจและยืนยันอีกครั้ง');
+  }
+  if (!draft || draft.text === request.text) {
+    delete client.drafts[request.node];
+    return note(model,client,'ได้รับผลบันทึกสำเร็จ r'+request.result.rev);
+  }
+  draft.baseRev = request.result.rev;
+  draft.original = request.text;
+  if (!draft.reviewRequired && client.writer === request.tab &&
+      model.locks[request.node] === tabKey(client,request.tab) &&
+      model.lockRounds[request.node] === request.lockRound &&
+      model.nodes[request.node].rev === request.result.rev) {
+    queueSave(model, client, request.node, draft, request.tab);
+    return note(model,client,'ได้รับผลของข้อความชุดแรก · ข้อความที่พิมพ์ต่อกำลังรอบันทึก');
+  }
+  draft.reviewRequired = true;
+  note(model,client,'ได้รับผลของข้อความชุดแรก · ตรวจ draft ที่พิมพ์ต่อก่อนส่ง');
+}
+
+function replyToSave(model, client, success) {
+  processSave(model, client, success);
+  deliverSave(model, client, client.pending?.id);
+}
+
+function openReview(model, client) {
+  const tab = activeTab(client), draft = currentDraft(client), node = model.nodes[tab.node];
+  if (!draft || !draft.reviewRequired) return;
+  if (client.pending?.node === node.id) return note(model,client,'ตรวจผลบันทึกของคำขอเดิมก่อนเปิด draft');
+  const error = validateEdit(model,client,node.id);
+  if (error) return note(model,client,error);
+  tab.review = {node:node.id, rev:node.rev, text:draft.text};
+  note(model,client,draft.baseRev === node.rev ? 'ตรวจ draft ก่อนส่งอีกครั้ง' : 'มีฉบับใหม่กว่า · เทียบแล้วเลือกข้อความที่จะส่ง');
+}
+
+function confirmReview(model,client) {
+  const tab = activeTab(client), review = tab.review, node = model.nodes[tab.node];
+  if (!review || review.node !== node.id || !currentDraft(client)) return;
+  const error = validateEdit(model,client,node.id);
+  if (error || node.rev !== review.rev) {
+    tab.review = null;
+    return note(model,client,error || 'ข้อมูลเปลี่ยนระหว่างตรวจ draft · เปิดเทียบฉบับล่าสุดอีกครั้ง');
+  }
+  if (Object.entries(model.locks).some(([id,holder]) => id !== node.id && holder === tabKey(client))) {
+    return note(model,client,'จบการแก้ไข Node อื่นก่อนส่ง draft');
+  }
+  acquireLock(model, client, node.id);
+  client.drafts[node.id] = {baseRev:node.rev, original:node.text, text:review.text, reviewRequired:false};
+  tab.review = null;
+  typeText(model,client,review.text);
+  note(model,client,'ยืนยันข้อความแล้ว · รอผล Auto-save');
+}
+
+function expireLock(model,client) {
+  const id = activeTab(client).node, holder = model.locks[id];
+  if (!holder) return note(model,client,'Node นี้ไม่มีล็อก');
+  const owner = Object.values(model.clients).find(c => holder.startsWith(c.id+':'));
+  if (owner?.drafts[id]) owner.drafts[id].reviewRequired = true;
+  if (owner) for (const tab of Object.values(owner.tabs)) if (tab.review?.node === id) tab.review = null;
+  delete model.locks[id];
+  note(model,client,'จำลองล็อกหมดอายุ · ข้อมูลที่บันทึกแล้วอยู่ครบ');
+}
+
+function dispatch(model, key, action, value) {
+  const c = model.clients[key], tab = activeTab(c), id = tab.node;
+  switch (action) {
+    case 'view-tab': c.viewing = Number(value); break;
+    case 'node':
+      if (value !== id && hasLock(model,c) && (c.pending?.node === id || currentDraft(c))) {
+        return note(model,c,'Node นี้มีงานค้าง ให้ตรวจผลบันทึกหรือทิ้ง draft ก่อนเปลี่ยน Node');
+      }
+      if (value !== id && hasLock(model,c)) delete model.locks[id];
+      tab.node = value; tab.review = null; break;
+    case 'claim': claimTab(model,c); break;
+    case 'edit': beginEdit(model,c); break;
+    case 'finish':
+      if (currentDraft(c) || c.pending?.node === id) return note(model,c,'ยังมีงานค้าง ให้ตรวจผลบันทึกหรือทิ้ง draft ก่อนจบ');
+      if (hasLock(model,c)) delete model.locks[id];
+      note(model,c,'จบการแก้ไขและปล่อยล็อก'); break;
+    case 'save-ok': replyToSave(model,c,true); break;
+    case 'save-fail': replyToSave(model,c,false); break;
+    case 'host-process': processSave(model,c,true); break;
+    case 'deliver-save': deliverSave(model,c,c.pending?.id); break;
+    case 'offline':
+      if (c.online && c.allowed) c.cache = {
+        nodes:Object.fromEntries(Object.entries(model.nodes).map(([nodeId,node])=>[nodeId,{...node}])),
+        locks:{...model.locks}
+      };
+      c.online = false; requireReview(c,true); note(model,c,'LAN หลุด · หยุดแก้ไขและเก็บ draft ใน Session นี้'); break;
+    case 'online':
+      c.online = true;
+      note(model,c,c.allowed ? 'เชื่อมต่อแล้ว · ไม่มีการส่ง draft อัตโนมัติ' : 'เชื่อมต่อแล้ว · สิทธิ์เข้าใช้ไม่ผ่าน');
+      if (c.pending?.result) deliverSave(model,c,c.pending.id);
+      else c.pending = null;
+      break;
+    case 'deny': c.allowed = false; c.cache = null; requireReview(c); releaseSession(model,c); note(model,c,'สิทธิ์เข้าใช้ไม่ผ่าน · ซ่อนข้อมูลและ draft'); break;
+    case 'allow':
+      if (!c.online) return note(model,c,'ยังตรวจสิทธิ์ไม่ได้ขณะหลุด LAN');
+      c.allowed = true; note(model,c,'ผ่านการตรวจสิทธิ์จำลอง · ตรวจ Node และ draft ก่อนแก้ต่อ'); break;
+    case 'expire': expireLock(model,c); break;
+    case 'review': openReview(model,c); break;
+    case 'cancel-review': tab.review = null; break;
+    case 'confirm-review': confirmReview(model,c); break;
+    case 'discard':
+      if (!canRead(c) || c.writer !== c.viewing || !currentDraft(c)) return;
+      delete c.drafts[id]; if (c.pending?.node === id) c.pending = null;
+      tab.review = null;
+      if (hasLock(model,c)) delete model.locks[id];
+      note(model,c,'ทิ้ง draft แล้ว · ข้อความที่บันทึกไว้ยังอยู่'); break;
+    case 'close-tab':
+      tab.open = false; tab.review = null;
+      if (c.writer === c.viewing) {
+        requireReview(c); c.writer = null;
+      }
+      note(model,c,'จำลองปิดแท็บ · ล็อกที่ค้างจะปล่อยเมื่อจำลองหมดอายุ'); break;
+    case 'reopen-tab':
+      tab.open = true; note(model,c,'เปิดแท็บอ่านอีกครั้ง · ขอสิทธิ์แท็บแก้ไขได้'); break;
+    case 'new-session':
+      if (!c.allowed && value !== 'discard') {
+        return note(model,c,'กรุณาตรวจสิทธิ์ก่อน หรือเลือกจบ Session เดิมและล้างงานค้าง');
+      }
+      if ((Object.keys(c.drafts).length || c.pending) && value !== 'discard') {
+        return note(model,c,c.pending
+          ? 'ยังรอผลบันทึก · คำขอที่ส่งแล้วอาจบันทึกสำเร็จ แม้เลือกทิ้ง draft และเปลี่ยน Session'
+          : 'มีงานค้าง · บันทึกให้สำเร็จหรือยืนยัน “ทิ้ง draft และเปลี่ยน Session”');
+      }
+      releaseSession(model,c);
+      c.id = 'S'+(++model.serial); c.writer = null; c.pending = null; c.drafts = {}; c.cache = null;
+      c.allowed = c.online && c.allowed;
+      c.tabs = {1:{open:true,node:'fact',review:null},2:{open:true,node:'fact',review:null}}; c.viewing = 1;
+      note(model,c,'เริ่ม Session ใหม่บนเครื่องเดิม · ไม่มี draft จาก Session ก่อนหน้า'); break;
+  }
+}
+
+// Scenario fixtures use the same transitions as the interactive controls.
+const scenarios = {
+  save:['บันทึกสำเร็จ','ซ้ายพิมพ์ข้อความ แล้วกด “จำลองบันทึกสำเร็จ” ตรวจว่าฝั่งขวาเห็น r2 อัตโนมัติ'],
+  failure:['บันทึกไม่สำเร็จ','ซ้ายพิมพ์ → จำลองบันทึกล้มเหลว → ตรวจ draft → ยืนยัน → จำลองบันทึกสำเร็จ'],
+  late:['Host บันทึกแล้ว แต่ผลมาช้า','ซ้ายพิมพ์ a1 → Host ประมวลผล → ขวาเห็น r2 → ซ้ายพิมพ์ a2 → ส่งผลให้แท็บเดิม → ตรวจว่า a2 ยังอยู่ ลองหลุด LAN ก่อนส่งผลในรอบถัดไป'],
+  stale:['คำขอเดิมมาถึงหลังเสียล็อก','ซ้ายพิมพ์ a1 → ขวาจำลองล็อกหมดอายุ ขอแก้และบันทึก b1 → ให้ Host ประมวลผลคำขอของซ้ายและส่งผล → ตรวจว่าผลปฏิเสธและ b1 ยังอยู่'],
+  offline:['หลุด LAN และกู้ draft','ซ้ายพิมพ์ → จำลองหลุด LAN → เชื่อมกลับ → ตรวจ draft → ยืนยัน → จำลองบันทึกสำเร็จ'],
+  conflict:['มีฉบับใหม่กว่าเมื่อกลับมา','ซ้ายกลับออนไลน์แล้วและขวายังล็อก Node ลองตรวจ draft จากซ้าย จากนั้นจบการแก้ทางขวา แล้วเทียบฉบับล่าสุด'],
+  parallel:['สองเครื่องแก้คนละ Node','พิมพ์และตอบผลบันทึกคนละฝั่ง ตรวจว่าการบันทึกของฝ่ายหนึ่งไม่ทับอีกฝ่าย'],
+  lock:['ชนล็อกที่ Node เดียวกัน','ลองขอแก้ไขจากขวาเมื่อซ้ายกำลังแก้ จากนั้นจบการแก้ทางซ้ายและลองใหม่'],
+  tabs:['สลับแท็บของ Session เดิม','ซ้ายพิมพ์ในแท็บ 1 → สลับไปดูแท็บ 2 แล้วขอเป็นแท็บแก้ไข → ตอบผลบันทึกจากแท็บเดิมก่อนขอใหม่'],
+  shared:['เครื่องเดิม ผู้ใช้คนถัดไป','ซ้ายมี draft ค้าง ลองเริ่ม Session ใหม่ ระบบจะแจ้งเตือน กดทิ้ง draft โดยชัดแจ้งแล้วตรวจว่าคนถัดไปเห็นเฉพาะฉบับที่บันทึก']
+};
+
+function loadScenario(key) {
+  const m = newModel();
+  const a = m.clients.a, b = m.clients.b;
+  const act = (client, action, value) => dispatch(m,client.key,action,value);
+  act(a,'claim'); act(a,'edit'); act(b,'claim');
+  if (key === 'parallel') {act(b,'node','action');act(b,'edit');}
+  if (key === 'shared' || key === 'conflict') typeText(m,a,'พบรอยรั่วเพิ่มในชุดเริ่มกะ · รอเทียบรอบถัดไป');
+  if (key === 'shared') act(a,'save-fail');
+  if (key === 'conflict') {
+    act(a,'offline'); act(b,'expire'); act(b,'edit');
+    typeText(m,b,'ผลตรวจล่าสุด: รั่ว 6 ซองในชุดแรก และ 2 ซองในชุดถัดไป');
+    act(b,'save-ok'); act(a,'online');
+  }
+  m.notice = 'สถานการณ์: '+scenarios[key][0];
+  return m;
+}
+
+// UI: DOM is rebuilt on discrete actions. Typing updates only status and buttons.
+const $ = id => document.getElementById(id);
+const escape = text => String(text ?? '').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const button = (action,label,{value='',disabled=false,style=''}={}) =>
+  `<button type="button" class="${style}" data-action="${action}" data-value="${value}" ${disabled?'disabled':''}>${label}</button>`;
+let model;
+const expanded = {a:false,b:false};
+
+function statusFor(client) {
+  if (!activeTab(client).open) return ['warn','แท็บนี้ปิดอยู่'];
+  if (!client.allowed) return ['bad','สิทธิ์เข้าใช้ไม่ผ่าน · ซ่อนข้อมูล'];
+  if (!client.online) return ['bad','หลุด LAN · อ่านได้เฉพาะฉบับล่าสุดที่เห็นในเดโม'];
+  if (client.pending?.node === activeTab(client).node) return ['warn','กำลังบันทึก · รอผล Auto-save'];
+  if (currentDraft(client)?.reviewRequired) return ['warn','ยังไม่ได้บันทึก · มี draft รอตรวจ'];
+  if (hasLock(model,client)) return ['good','กำลังแก้ไข · ฉบับบนระบบล่าสุดบันทึกแล้ว'];
+  return ['','อ่านฉบับที่บันทึกแล้ว'];
+}
+
+function simulationControls(c) {
+  return [
+    button('save-ok','จำลองบันทึกสำเร็จ',{disabled:!c.pending||Boolean(c.pending.result),style:'primary'}),
+    button('save-fail','จำลองบันทึกล้มเหลว',{disabled:!c.pending||Boolean(c.pending.result)}),
+    button('host-process','Host ประมวลผลโดยยังไม่ส่งผล',{disabled:!c.pending||Boolean(c.pending.result)}),
+    button('deliver-save','ส่งผลให้แท็บเดิม',{disabled:!c.pending?.result||!c.online||!c.allowed}),
+    button(c.online?'offline':'online',c.online?'จำลองหลุด LAN':'จำลองเชื่อมกลับ'),
+    button(c.allowed?'deny':'allow',c.allowed?'จำลองสิทธิ์ไม่ผ่าน':'จำลองตรวจสิทธิ์ผ่าน'),
+    button('expire','จำลองล็อกหมดอายุ',{disabled:!model.locks[activeTab(c).node]}),
+    button(activeTab(c).open?'close-tab':'reopen-tab',activeTab(c).open?'จำลองปิดแท็บนี้':'เปิดแท็บนี้ใหม่'),
+    button('new-session','เริ่ม Session ใหม่'),
+    ...(c.allowed && Object.keys(c.drafts).length ? [button('new-session','ทิ้ง draft และเปลี่ยน Session',{value:'discard',style:'danger'})] : []),
+    ...(!c.allowed ? [button('new-session','จบ Session เดิมและล้างงานค้าง',{value:'discard',style:'danger'})] : [])
+  ].join('');
+}
+
+function renderClient(c) {
+  const tab=activeTab(c), nodes=c.online?model.nodes:c.cache?.nodes||{}, node=nodes[tab.node], draft=currentDraft(c);
+  const [tone,status]=statusFor(c);
+  const holder=(c.online?model.locks:c.cache?.locks)?.[tab.node];
+  const lockOwner=Object.values(model.clients).find(client=>holder?.startsWith(client.id+':'));
+  const lockLabel=lockOwner ? `ล็อก: ${lockOwner.name} · ${lockOwner.id} · แท็บ ${holder.split(':')[1]}` : 'ไม่มีผู้แก้ไข';
+  const safeToShow=canRead(c) && Boolean(node);
+  const review=tab.review && draft && hasWriteTab(c);
+  const data=safeToShow ? `
+    <label>Node<select data-role="node">${Object.values(nodes).map(n=>`<option value="${n.id}" ${n.id===node.id?'selected':''}>${n.kind} · ${escape(n.title)}</option>`).join('')}</select></label>
+    <div class="saved"><h3>${c.online?'ฉบับที่บันทึกแล้ว':'ฉบับล่าสุดก่อนหลุด LAN'} · r${node.rev}</h3><p>${escape(node.text)}</p><small class="sub">${escape(lockLabel)}${c.online?'':' · ก่อนหลุด LAN'}</small></div>
+    <div class="row">${button('claim','ขอเป็นแท็บแก้ไข',{disabled:!c.online||c.writer===c.viewing})}
+      ${button('edit','ขอแก้ไข Node',{disabled:!hasWriteTab(c)||hasLock(model,c)||Boolean(draft?.reviewRequired)})}
+      ${button('finish','จบการแก้ไข',{disabled:!hasLock(model,c)||!c.online})}</div>
+    <label>ข้อความที่กำลังแก้<textarea data-role="edit" ${editable(model,c)?'':'disabled'}>
+${escape(editable(model,c)?draft?.text??node.text:node.text)}</textarea></label>
+    ${draft?.reviewRequired?`<div class="row">${button('review','ตรวจ draft ก่อนส่ง',{disabled:!hasWriteTab(c),style:'primary'})}
+      ${button('discard','ทิ้ง draft',{disabled:c.writer!==c.viewing,style:'danger'})}</div>`:''}
+    ${review?`<section class="review"><h3>${draft.baseRev===node.rev?'ตรวจข้อความก่อนส่ง':'มีฉบับล่าสุดที่ต่างจากตอนเริ่มแก้'}</h3>
+      <div class="compare"><div><strong>ล่าสุดบนระบบ · r${node.rev}</strong><pre>${escape(node.text)}</pre></div>
+      <div><strong>draft ของคุณ · เริ่มจาก r${draft.baseRev}</strong><pre>${escape(draft.text)}</pre></div></div>
+      ${draft.baseRev!==node.rev?`<details><summary>ฉบับที่ใช้เริ่มแก้ · r${draft.baseRev}</summary><pre>${escape(draft.original)}</pre></details>`:''}
+      <label>เลือกและแก้ข้อความที่จะส่ง<textarea data-role="review">
+${escape(tab.review.text)}</textarea></label>
+      <div class="row">${button('confirm-review','ยืนยันส่งข้อความนี้',{style:'primary'})}
+      ${button('discard','เก็บฉบับล่าสุดและทิ้ง draft',{style:'danger'})}${button('cancel-review','กลับไปดูก่อน')}</div>
+    </section>`:''}` : '<p class="sub">ข้อมูล Node และ draft จะไม่แสดงในแท็บนี้</p>';
+  const element=$('client-'+c.key);
+  element.innerHTML=`<header class="client-head"><div><h2>เครื่อง ${c.key.toUpperCase()} · ${escape(c.name)}</h2><p class="sub">Session ${escape(c.id)} · ชื่อแสดงผลไม่ได้ยืนยันตัวตน</p></div>
+    <span class="badge ${c.online&&c.allowed?'':'bad'}">${!c.allowed?'สิทธิ์ไม่ผ่าน':c.online?'เชื่อมต่อ':'หลุด LAN'}</span></header>
+    <div class="client-body"><div class="tabs" aria-label="แท็บใน Session">
+      ${[1,2].map(n=>`<button type="button" data-action="view-tab" data-value="${n}" aria-pressed="${c.viewing===n}">
+      แท็บ ${n} · ${!c.tabs[n].open?'ปิด':c.writer===n?'แก้ไข':'อ่าน'}</button>`).join('')}</div>
+      <p class="status ${tone}" data-role="status">${escape(status)}</p>${data}
+      <details class="controls" ${expanded[c.key]?'open':''}><summary>แผงจำลองเหตุการณ์</summary>
+        <div class="row" data-role="controls">${simulationControls(c)}</div>
+      </details>
+    </div>`;
+}
+
+function renderMeta() {
+  $('notice').textContent=model.notice;
+  $('events').innerHTML=model.events.map(line=>'<li>'+escape(line)+'</li>').join('');
+}
+
+function render() {
+  for (const c of Object.values(model.clients)) renderClient(c);
+  renderMeta();
+}
+
+function load() {
+  const key=$('scenario').value;
+  model=loadScenario(key);
+  $('guide').textContent=scenarios[key][1];
+  expanded.a=true; expanded.b=true;
+  render();
+}
+
+for(const key of ['a','b']){
+  const panel=$('client-'+key);
+  panel.addEventListener('toggle',event=>{if(event.target.matches('.controls') && panel.contains(event.target))expanded[key]=event.target.open;},true);
+  panel.addEventListener('click',event=>{
+    const target=event.target.closest('[data-action]');if(!target)return;
+    dispatch(model,key,target.dataset.action,target.dataset.value);
+    render();
+    const button=[...panel.querySelectorAll('[data-action]')].find(el=>el.dataset.action===target.dataset.action&&el.dataset.value===target.dataset.value);
+    if(button&&!button.disabled)button.focus({preventScroll:true});
+    else if(target.dataset.action==='edit')panel.querySelector('[data-role=edit]')?.focus({preventScroll:true});
+    else if(target.dataset.action==='review')panel.querySelector('[data-role=review]')?.focus({preventScroll:true});
+  });
+  panel.addEventListener('change',event=>{
+    if(event.target.dataset.role==='node'){
+      dispatch(model,key,'node',event.target.value);render();panel.querySelector('[data-role=node]')?.focus({preventScroll:true});
+    }
+  });
+  panel.addEventListener('input',event=>{
+    const c=model.clients[key];
+    if(event.target.dataset.role==='review'&&activeTab(c).review)activeTab(c).review.text=event.target.value;
+    if(event.target.dataset.role!=='edit'||!typeText(model,c,event.target.value))return;
+    const [tone,status]=statusFor(c), statusElement=panel.querySelector('[data-role=status]');
+    statusElement.className='status '+tone;statusElement.textContent=status;
+    panel.querySelector('[data-role=controls]').innerHTML=simulationControls(c);
+    renderMeta();
+  });
+}
+$('scenario').innerHTML=Object.entries(scenarios).map(([key,[label]])=>`<option value="${key}">${label}</option>`).join('');
+$('scenario').value='save';
+$('load').addEventListener('click',load);
+load();
+</script>
+</body>
+</html>

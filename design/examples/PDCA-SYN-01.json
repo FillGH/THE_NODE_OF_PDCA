@@ -1,0 +1,58 @@
+{
+  "pdca": { "id": "PDCA-SYN-01", "title": "ซองรั่วหลังซีล" },
+  "example": {
+    "synthetic": true,
+    "exportedAt": "2026-11-09T00:00:00+07:00",
+    "factoryTimeZone": "Asia/Bangkok"
+  },
+  "nodes": [
+    { "id": "N-01", "category": "Problem", "title": "ซองรั่วหลังซีล", "content": "พบซองรั่วระหว่างตรวจรอยซีลช่วงเริ่มกะ" },
+    { "id": "N-02", "category": "Fact", "title": "รอยรั่วกระจุกช่วงเริ่มกะ", "content": "พบซองรั่ว 6 ใบในชุดแรก และ 2 ใบในชุดถัดไป",
+      "images": [{ "ref": "IMG-01", "caption": "ภาพซองตัวอย่างสมมติ", "mediaType": "image/png" }],
+      "documents": ["https://example.invalid/seal-check"] },
+    { "id": "N-03", "category": "Assumption / Hypothesis", "title": "หัวซีลยังอุ่นไม่พอ", "content": "อุณหภูมิหัวซีลช่วงเริ่มกะอาจยังไม่คงที่" },
+    { "id": "N-04", "category": "Action", "title": "ทดลองอุ่นหัวซีล", "content": "เก็บตัวอย่างหลังอุณหภูมิคงที่ 3 นาที",
+      "action": { "pic": "ทีมผลิตตัวอย่าง", "dueDate": "2026-11-08", "status": "In Progress" } },
+    { "id": "N-05", "category": "Status & Result", "title": "ผลหลังอุ่นหัวซีล", "content": "พบซองรั่ว 1 ใบจาก 100 ใบในรอบทดลอง" },
+    { "id": "N-06", "category": "Measures to be implemented", "title": "เสนอเพิ่มขั้นตรวจหัวซีล", "content": "ตรวจอุณหภูมิก่อนปล่อยซองชุดแรกเมื่อผลทดสอบซ้ำยืนยัน" },
+    { "id": "N-07", "category": "Action", "title": "ตรวจซ้ำข้ามกะ", "content": "เก็บข้อมูลจากกะถัดไปโดยใช้วิธีตรวจเดียวกัน",
+      "action": { "pic": null, "dueDate": null, "status": "Not Started" } },
+    { "id": "N-08", "category": "Link to document", "title": "คู่มือตรวจรอยซีล", "content": "เอกสารอ้างอิงตัวอย่างสำหรับวิธีตรวจ",
+      "documents": ["https://example.invalid/seal-check"] }
+  ],
+  "relationships": [
+    { "id": "E-01", "source": "N-01", "target": "N-02" },
+    { "id": "E-02", "source": "N-02", "target": "N-03" },
+    { "id": "E-03", "source": "N-03", "target": "N-04" },
+    { "id": "E-04", "source": "N-04", "target": "N-05" },
+    { "id": "E-05", "source": "N-05", "target": "N-06" },
+    { "id": "E-06", "source": "N-03", "target": "N-07" },
+    { "id": "E-08", "source": "N-02", "target": "N-08" }
+  ],
+  "history": {
+    "textRevisions": [
+      { "nodeId": "N-02", "revision": 1, "title": "รอยรั่วกระจุกช่วงเริ่มกะ", "content": "พบซองรั่วในชุดแรก", "displayName": "ผู้ทดสอบ A", "at": "2026-11-08T09:00:00+07:00" },
+      { "nodeId": "N-02", "revision": 2, "title": "รอยรั่วกระจุกช่วงเริ่มกะ", "content": "พบซองรั่ว 6 ใบในชุดแรก และ 2 ใบในชุดถัดไป", "displayName": "ผู้ทดสอบ B", "at": "2026-11-08T09:10:00+07:00" }
+    ],
+    "categoryChanges": [
+      { "nodeId": "N-03", "from": "Fact", "to": "Assumption / Hypothesis", "displayName": "ผู้ทดสอบ A", "at": "2026-11-08T09:20:00+07:00" }
+    ],
+    "relationshipChanges": [
+      { "type": "Created", "id": "E-01", "source": "N-01", "target": "N-02", "displayName": "ผู้ทดสอบ A", "at": "2026-11-08T09:22:00+07:00" },
+      { "type": "Created", "id": "E-02", "source": "N-02", "target": "N-03", "displayName": "ผู้ทดสอบ A", "at": "2026-11-08T09:23:00+07:00" },
+      { "type": "Created", "id": "E-03", "source": "N-03", "target": "N-04", "displayName": "ผู้ทดสอบ A", "at": "2026-11-08T09:24:00+07:00" },
+      { "type": "Created", "id": "E-04", "source": "N-04", "target": "N-05", "displayName": "ผู้ทดสอบ B", "at": "2026-11-08T09:25:00+07:00" },
+      { "type": "Created", "id": "E-05", "source": "N-05", "target": "N-06", "displayName": "ผู้ทดสอบ B", "at": "2026-11-08T09:26:00+07:00" },
+      { "type": "Created", "id": "E-06", "source": "N-03", "target": "N-07", "displayName": "ผู้ทดสอบ B", "at": "2026-11-08T09:27:00+07:00" },
+      { "type": "Created", "id": "E-07", "source": "N-02", "target": "N-04", "displayName": "ผู้ทดสอบ A", "at": "2026-11-08T09:28:00+07:00" },
+      { "type": "Removed", "id": "E-07", "source": "N-02", "target": "N-04", "displayName": "ผู้ทดสอบ B", "at": "2026-11-08T09:31:00+07:00" },
+      { "type": "Created", "id": "E-08", "source": "N-02", "target": "N-08", "displayName": "ผู้ทดสอบ B", "at": "2026-11-08T09:32:00+07:00" }
+    ],
+    "actionStatusChanges": [
+      { "nodeId": "N-04", "from": "Not Started", "to": "In Progress", "displayName": "ผู้ทดสอบ A", "at": "2026-11-08T09:35:00+07:00" }
+    ],
+    "actionDueDateChanges": [
+      { "nodeId": "N-04", "from": null, "to": "2026-11-08", "displayName": "ผู้ทดสอบ A", "at": "2026-11-08T09:36:00+07:00" }
+    ]
+  }
+}
