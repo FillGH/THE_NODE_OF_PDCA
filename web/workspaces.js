@@ -17,7 +17,7 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
   let current, lastId, committed, saver, baseline, initialRevision, forceGuard;
   let online = false, busy = false, checking = 0, searching = 0, searchTimer, attachmentPending;
   let tab, locks = [], editing, blocked, review, layoutGuard = false;
-  let graphMode = false, startingEdit, handoff, draining, reconciling;
+  let graphAction, startingEdit, handoff, finishing, draining, reconciling;
   let stopping = false;
   const drafts = new Map();
   const versions = new Map();
@@ -30,23 +30,15 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
   const url = (suffix = '') => '/api/pdca/' + current.id + suffix;
   const credentials = () => ({ tabId: control.tabId, tabToken: tab?.token });
   const canWrite = () => !!(current && online && tab?.token && !blocked && !review && !stopping && !busy && !startingEdit && !reconciling);
-  const canEditGraph = () => graphMode && canWrite();
+  const canEditGraph = (action = graphAction) => !!action && graphAction === action && canWrite();
   const lockFor = id => locks.find(lock => lock.nodeId === id);
   const canEditNode = id => canWrite() && editing === id && !!lockFor(id)?.mine;
   const needsReview = () => blocked || (!saver?.dirty() && draftForCurrent());
 
-  function nodeEditControl(id) {
-    const lock = lockFor(id);
-    const requesting = (startingEdit?.workspace === current && !startingEdit.cancelled && startingEdit.nodeId === id) ||
-      (handoff?.workspace === current && handoff.nodeId === id);
-    const finish = editing === id && lock?.mine;
-    const foreignLock = lock && !lock.mine && !lock.sameSession;
-    return {
-      label: requesting ? 'กำลังขอสิทธิ์…' : finish ? 'จบการแก้' : tab?.occupied ? 'ย้ายมาแก้ Node นี้' : 'แก้ Node นี้',
-      disabled: !online || busy || stopping || !!startingEdit || !!handoff || !!review || !!foreignLock || !!reconciling ||
-        (!!needsReview() && !tab?.occupied),
-    };
-  }
+  const canStart = () => !!(current && online && !busy && !stopping && !startingEdit &&
+    !review && !reconciling && (!needsReview() || tab?.occupied));
+  const requestingNode = id => startingEdit?.workspace === current && !startingEdit.cancelled &&
+    startingEdit.nodeId === id;
 
   function show(state, message = '') {
     const status = $('saveStatus');
@@ -56,12 +48,10 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     if (state === 'saving' || state === 'error') document.querySelector('.topbar').classList.remove('hidden');
   }
   function refreshControls(redraw = false) {
-    $('sessionEnd').hidden = !control.active();
-    $('claimTab').hidden = !current;
-    $('claimTab').disabled = !online || busy || !!startingEdit || !!handoff || !!review || !!reconciling;
-    $('claimTab').textContent = graphMode ? 'จบการแก้ผัง' : tab?.occupied ? 'ย้ายมาแก้ผัง' : 'แก้ผัง';
+    $('editorMenu').hidden = !control.active();
     $('connectionState').textContent = !control.active() ? '' : !online ? 'ขาดการเชื่อมต่อ · หยุดแก้ไข' :
-      current ? (graphMode ? 'กำลังแก้ผัง' : editing ? 'กำลังแก้ Node' : 'แท็บอ่าน') : '';
+      startingEdit && !startingEdit.cancelled ? 'กำลังขอสิทธิ์…' :
+        current ? (graphAction ? 'กำลังแก้ผัง' : editing ? 'กำลังแก้ Node' : '') : '';
     $('retrySave').hidden = !current || !draftForCurrent() || !!saver?.dirty();
     $('retrySave').disabled = !online || !!tab?.occupied || busy || !!startingEdit || !!handoff || !!reconciling;
     $('createPdca').disabled = !online;
@@ -250,7 +240,7 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
       tab = info.editTab;
       locks = info.locks;
       if (lost) {
-        graphMode = false;
+        graphAction = undefined;
         editing = undefined;
         block('สิทธิ์แก้ไขสิ้นสุด กรุณาตรวจฉบับร่าง');
       }
@@ -277,7 +267,7 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     committed = saved;
     lastId = saved.id;
     tab = undefined;
-    graphMode = false;
+    graphAction = undefined;
     locks = [];
     editing = undefined;
     blocked = undefined;
@@ -326,19 +316,59 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
   }
   function cancelEditIntent() {
     if (startingEdit) startingEdit.cancelled = true;
-    handoff = undefined;
+    handoff?.complete(false);
   }
-  function askHandoff(nodeId) {
-    const intent = handoff = { workspace: current, nodeId, requestId: crypto.randomUUID() };
-    control.send('handoff', { workspace: current.id, requestId: intent.requestId });
-    $('navigationError').textContent = 'ส่งคำขอไปยังแท็บเดิมแล้ว หากปิดแท็บเดิมให้รอสิทธิ์หมดอายุ';
+  function askHandoff(intent) {
+    return new Promise(resolve => {
+      const requestId = crypto.randomUUID();
+      const timer = setTimeout(() => {
+        showError(new Error('แท็บเดิมยังไม่คืนสิทธิ์ กรุณาลองอีกครั้ง'));
+        complete(false);
+      }, 20_000);
+      function complete(ready) {
+        clearTimeout(timer);
+        if (handoff?.requestId === requestId) handoff = undefined;
+        resolve(ready);
+      }
+      handoff = { workspace: intent.workspace, requestId, complete };
+      control.send('handoff', { workspace: intent.workspace.id, requestId });
+      showError(new Error('กำลังรอแท็บเดิมคืนสิทธิ์'));
+    });
+  }
+  async function acquire(intent, send) {
+    // Ask first when a sibling's draft is visible. Otherwise let the Host
+    // decide whether a cached occupied state still needs a handoff.
+    if (tab?.occupied && needsReview() && !await askHandoff(intent)) return;
+    if (!intent.valid()) return;
+    if (needsReview()) throw new Error('ตรวจฉบับร่างก่อนเริ่มแก้');
+    try { return await send(); }
+    catch (error) {
+      if (error.code !== 'TAB_OCCUPIED' || !intent.valid()) throw error;
+      tab = { occupied: true };
+      if (await askHandoff(intent) && intent.valid()) return send();
+    }
+  }
+  function beginIntent(isCurrent, nodeId) {
+    const intent = { workspace: current, nodeId,
+      valid: () => !intent.cancelled && current === intent.workspace && isCurrent() };
+    startingEdit = intent;
+    checking++;
+    $('navigationError').textContent = '';
     refreshControls();
-    setTimeout(() => {
-      if (handoff !== intent) return;
-      handoff = undefined;
-      refreshControls();
-      poll();
-    }, 20_000);
+    return intent;
+  }
+  function endIntent(intent, redraw = false) {
+    if (startingEdit !== intent) return;
+    startingEdit = undefined;
+    refreshControls(redraw);
+    poll();
+  }
+  async function reconcileAcquisition(intent, error) {
+    if (current !== intent.workspace || (error instanceof ApiError && error.status < 500)) return;
+    try {
+      const info = await readState(true);
+      if (current === intent.workspace) await reconcilePermissions(info);
+    } catch { if (current === intent.workspace) online = false; }
   }
   async function settleEdits() {
     const workspace = draining = current;
@@ -349,70 +379,86 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
       }
     } finally { if (draining === workspace) draining = undefined; }
   }
-  async function finishTab() {
-    if (!current || busy || startingEdit || reconciling || !tab?.token) return false;
-    const workspace = current;
+  function finishTab() {
+    if (current && finishing?.workspace === current) return finishing.result;
+    if (!current || busy || startingEdit || reconciling || !tab?.token) return Promise.resolve(false);
+    const operation = finishing = { workspace: current };
+    operation.result = releaseTab(operation.workspace).finally(() => {
+      if (finishing === operation) finishing = undefined;
+    });
+    return operation.result;
+  }
+  async function releaseTab(workspace) {
     busy = true;
     checking++;
     refreshControls();
     try {
       await settleEdits();
       if (current !== workspace) return false;
-      await request(url('/tab'), 'DELETE', credentials());
+      // Stop renewing locally even when the release acknowledgement is lost.
+      // The next state check can clean up the unused lease.
+      const released = await request(url('/tab'), 'DELETE', credentials(), { timeout: 2500 })
+        .then(() => true, error => error.status === 409);
       if (current !== workspace) return false;
       tab = undefined;
-      graphMode = false;
+      graphAction = undefined;
       locks = locks.filter(lock => !lock.mine);
       editing = undefined;
-      $('navigationError').textContent = '';
-      return true;
+      if (!released) showError(new Error('ยังยืนยันการคืนสิทธิ์ไม่ได้ กรุณาลองอีกครั้ง'));
+      return released;
     } catch (error) { if (current === workspace) showError(error); return false; }
     finally { if (current === workspace) { busy = false; refreshControls(); poll(); } }
   }
-  async function toggleTab() {
-    if (!current || !online || busy || startingEdit || handoff || review || reconciling) return;
-    if (graphMode) return finishTab();
-    if (tab?.occupied) {
-      askHandoff();
-      return;
-    }
-    if (needsReview()) { showError(new Error('ตรวจฉบับร่างก่อนเริ่มแก้ผัง')); return; }
+  async function startGraph(isCurrent = () => true) {
+    if (!canStart() || graphAction) return false;
     const workspace = current;
-    busy = true;
-    checking++;
-    refreshControls();
+    if (!isCurrent() || (editing && !await finishTab())) return false;
+    if (current !== workspace || !isCurrent() || !canStart()) return false;
+    const path = url();
+    const intent = beginIntent(isCurrent);
+    const previousToken = tab?.token;
+    let info;
     try {
-      if (!tab?.token) await takeTab();
-      graphMode = true;
-      $('navigationError').textContent = '';
-    } catch (error) { if (current === workspace) showError(error); }
-    finally { if (current === workspace) { busy = false; refreshControls(); poll(); } }
-  }
-  async function finishNode() {
-    const id = editing;
-    if (!id) return true;
-    if (busy || review || startingEdit || reconciling) return false;
-    const workspace = current;
-    const nodeToken = lockFor(id)?.token;
-    busy = true;
-    checking++;
-    refreshControls();
-    try {
-      await settleEdits();
-      if (current !== workspace) return false;
-      if (!graphMode && tab?.token) {
-        await request(url('/tab'), 'DELETE', credentials());
-        tab = undefined;
-        locks = locks.filter(lock => !lock.mine);
-      } else if (nodeToken) {
-        await request(url('/lock/' + id), 'DELETE', { ...credentials(), nodeToken });
-        locks = locks.filter(lock => lock.nodeId !== id || !lock.mine);
+      info = await acquire(intent, () => request(path + '/tab', 'POST', { tabId: control.tabId }));
+      if (!info) return false;
+      if (intent.valid()) {
+        const latest = await readState(true);
+        if (intent.valid() && latest.editTab?.token === info.editTab.token) {
+          tab = latest.editTab;
+          locks = latest.locks;
+          committed = latest.workspace;
+          graphAction = intent;
+          $('navigationError').textContent = '';
+          const redraw = replaceGraph(committed);
+          endIntent(intent, redraw);
+          return intent;
+        }
       }
-      editing = undefined;
-      $('navigationError').textContent = '';
+    } catch (error) {
+      if (!info) await reconcileAcquisition(intent, error);
+      if (intent.valid()) showError(error);
+    } finally {
+      if (info?.editTab?.token && info.editTab.token !== previousToken && graphAction !== intent) {
+        await request(path + '/tab', 'DELETE', {
+          tabId: control.tabId, tabToken: info.editTab.token,
+        }).catch(() => {});
+      }
+      endIntent(intent);
+    }
+    return false;
+  }
+  function finishGraph(action) {
+    if (graphAction === action) return finishTab();
+  }
+  async function runGraph(action, isCurrent) {
+    const permit = await startGraph(isCurrent);
+    if (!permit) return false;
+    try {
+      if (!canEditGraph(permit) || (isCurrent && !isCurrent())) return false;
+      action();
       return true;
-    } catch (error) { if (current === workspace) showError(error); return false; }
-    finally { if (current === workspace) { busy = false; refreshControls(); poll(); } }
+    } catch (error) { showError(error); return false; }
+    finally { await finishGraph(permit); }
   }
   function leaveInspector(nextId, apply) {
     if (busy || reconciling) return;
@@ -420,11 +466,10 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
       showError(new Error('ตรวจฉบับร่างก่อนออกจากการแก้ Node'));
       return;
     }
-    if ((startingEdit && startingEdit.nodeId !== nextId) ||
-        (handoff?.nodeId && handoff.nodeId !== nextId)) cancelEditIntent();
+    if (startingEdit?.nodeId && startingEdit.nodeId !== nextId) cancelEditIntent();
     if (!editing || nextId === editing) return apply();
     const workspace = current;
-    return finishNode().then(finished => {
+    return finishTab().then(finished => {
       if (finished && current === workspace) apply();
     });
   }
@@ -433,25 +478,25 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     if (info.createdTab) await request(path + '/tab', 'DELETE', credentials);
     else if (info.createdNode) await request(path + '/lock/' + id, 'DELETE', { ...credentials, nodeToken: info.nodeToken });
   }
-  async function editNode(id) {
-    if (nodeEditControl(id).disabled) return;
-    if (editing === id) return finishNode();
-    if (tab?.occupied) { askHandoff(id); return; }
+  async function editNode(id, isCurrent) {
+    if (canEditNode(id)) return isCurrent();
+    if (!canStart() || graphAction || (editing && editing !== id)) return false;
+    const lock = lockFor(id);
+    if (lock && !lock.mine && !lock.sameSession) return false;
     const workspace = current;
     const path = url();
-    const intent = startingEdit = { workspace, nodeId: id };
+    const intent = beginIntent(isCurrent, id);
     let attempted = false;
-    checking++;
-    $('navigationError').textContent = '';
-    refreshControls();
     try {
-      await settleEdits(); // Includes the save that creates a new Node.
-      if (intent.cancelled || current !== workspace) return;
-      attempted = true;
-      const info = await request(path + '/edit/' + id, 'POST', { tabId: control.tabId });
-      if (intent.cancelled || current !== workspace) {
+      if (!tab?.occupied) await settleEdits();
+      const info = await acquire(intent, () => {
+        attempted = true;
+        return request(path + '/edit/' + id, 'POST', { tabId: control.tabId });
+      });
+      if (!info) return false;
+      if (!intent.valid()) {
         await releaseUnusedEdit(path, id, info);
-        return;
+        return false;
       }
       tab = info.editTab;
       locks = info.locks;
@@ -459,28 +504,18 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
       const redraw = replaceGraph(committed);
       uncertainNodes.get(workspace.id)?.delete(id);
       editing = id;
-      startingEdit = undefined;
-      refreshControls(redraw);
-      $('nodeTitle')?.focus({ preventScroll: true });
+      $('navigationError').textContent = '';
+      endIntent(intent, redraw);
+      return true;
     } catch (error) {
       if (attempted && (!(error instanceof ApiError) || error.status >= 500) && current === workspace) {
         if (!uncertainNodes.has(workspace.id)) uncertainNodes.set(workspace.id, new Set());
         uncertainNodes.get(workspace.id).add(id);
-        try {
-          const info = await readState(true);
-          if (current === workspace) await reconcilePermissions(info);
-        } catch {
-          if (current === workspace) online = false;
-        }
+        await reconcileAcquisition(intent, error);
       }
-      if (intent.cancelled || current !== workspace) return;
-      if (error.code === 'TAB_OCCUPIED') { tab = { occupied: true }; askHandoff(id); }
-      else showError(error);
-    } finally {
-      if (startingEdit === intent) startingEdit = undefined;
-      refreshControls();
-      poll();
-    }
+      if (intent.valid()) showError(error);
+      return false;
+    } finally { endIntent(intent); }
   }
 
   function onMessage(event) {
@@ -501,17 +536,10 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
       });
     } else if (handoff && handoff.workspace === current && current?.id === event.workspace &&
         handoff.requestId === event.requestId) {
-      const { nodeId } = handoff;
-      handoff = undefined;
-      if (event.type === 'handoff-ready') {
-        tab = undefined;
-        // The old lock badges can remain visible until the next poll.
-        if (nodeId) editNode(nodeId);
-        else toggleTab();
-      } else if (event.type === 'handoff-blocked') {
-        $('navigationError').textContent = 'แท็บเดิมยังมีงานค้าง กรุณาตรวจในแท็บเดิมก่อน';
-      }
-      refreshControls();
+      const ready = event.type === 'handoff-ready';
+      if (ready) tab = undefined;
+      else $('navigationError').textContent = 'แท็บเดิมยังมีงานค้าง กรุณาตรวจในแท็บเดิมก่อน';
+      handoff.complete(ready);
     }
   }
 
@@ -538,6 +566,8 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     const draft = draftForCurrent();
     if (!draft || !online || busy || startingEdit || handoff || reconciling ||
         (tab?.occupied && !tab.token) || (saver?.dirty() && !blocked)) return;
+    const workspace = current;
+    let alreadySaved = false;
     busy = true;
     checking++;
     refreshControls();
@@ -564,6 +594,7 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
         const changed = replaceGraph(committed);
         startSaver(committed);
         show('saved');
+        alreadySaved = true;
         refreshControls(changed);
         return;
       }
@@ -579,7 +610,13 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
       $('confirmDraft').disabled = !!error;
       reviewDialog.showModal();
     } catch (error) { showError(error); }
-    finally { busy = false; refreshControls(); }
+    finally {
+      if (current === workspace) {
+        busy = false;
+        if (alreadySaved && tab?.token) await finishTab();
+        else refreshControls();
+      }
+    }
   }
   function closeReview() {
     review = undefined;
@@ -590,7 +627,8 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     if (!review?.merged || !online || busy) return;
     busy = true;
     checking++;
-    const accepted = review;
+    const accepted = review, workspace = current;
+    let saved = false;
     try {
       const info = await readState(true);
       if (review !== accepted) return;
@@ -615,11 +653,17 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
       closeReview();
       queue();
       refreshControls(true);
-      await saver?.flush();
+      saved = await saver?.flush();
     } catch (error) {
       closeReview();
       showError(error);
-    } finally { busy = false; refreshControls(); poll(); }
+    } finally {
+      if (current === workspace) {
+        busy = false;
+        if (saved && tab?.token) await finishTab();
+        else { refreshControls(); poll(); }
+      }
+    }
   }
   function discardDraft() {
     if (!current || busy) return;
@@ -631,7 +675,8 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     startSaver(committed);
     show('saved');
     refreshControls(redraw);
-    poll();
+    if (tab?.token) finishTab();
+    else poll();
   }
 
   function onLogin(reason = '') {
@@ -643,6 +688,7 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
   function onEnter(actor) {
     online = true;
     stopping = false;
+    $('editorMenu').open = false;
     $('editorName').textContent = actor.displayName + ' · ' + actor.id.slice(0, 8);
     $('app').hidden = false;
     if (identity.open) identity.close();
@@ -653,8 +699,8 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     searching++;
     cancelEditIntent();
     startingEdit = undefined;
-    graphMode = false;
-    draining = reconciling = undefined;
+    graphAction = undefined;
+    finishing = draining = reconciling = attachmentPending = undefined;
     uncertainNodes.clear();
     saver?.stop();
     current = lastId = committed = saver = baseline = blocked = review = tab = editing = undefined;
@@ -682,6 +728,7 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     for (const id of ['pdcaName', 'createTitle', 'edgeLabel', 'search']) $(id).value = '';
     for (const dialog of document.querySelectorAll('dialog[open]')) dialog.close();
     $('navigationError').textContent = '';
+    $('editorMenu').open = false;
     $('app').hidden = true;
     onHome();
     if (reason) onLogin(reason);
@@ -701,11 +748,11 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
   }
   async function saveImage(node, file) {
     if (!canEditNode(node.id)) return;
+    const workspace = current;
     if (file.size > 16 * 1024 * 1024 || !['image/png', 'image/jpeg', 'image/gif', 'image/webp'].includes(file.type)) {
       throw new Error('รองรับ PNG, JPEG, GIF และ WebP ขนาดไม่เกิน 16 MiB ต่อรูป');
     }
     if (uploads.size && !await saver.flush()) throw new Error('กรุณาบันทึกรูปก่อนหน้าให้สำเร็จก่อน');
-    const workspace = current;
     const data = await new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => resolve(reader.result.split(',')[1]);
@@ -752,7 +799,6 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     refreshSearch();
     $('search').focus();
   });
-  $('claimTab').addEventListener('click', toggleTab);
   $('retrySave').addEventListener('click', inspectDraft);
   $('confirmDraft').addEventListener('click', confirmReview);
   $('cancelDraft').addEventListener('click', closeReview);
@@ -771,7 +817,7 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
   });
   window.addEventListener('pagehide', () => {
     broadcastDraft(blocked || makeDraft());
-    if (current && tab?.token && !blocked && !saver?.dirty()) {
+    if (current && tab?.token && !blocked && !saver?.dirty() && !attachmentPending) {
       request(url('/tab'), 'DELETE', credentials(), { keepalive: true, timeout: 2000 }).catch(() => {});
     }
     control.hide();
@@ -784,10 +830,10 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     try { await poll(); } finally { ticking = false; }
   }, 900);
 
-  let renaming = false;
+  let renameFrom;
   function openNameDialog(rename) {
-    if (rename && !canEditGraph()) return;
-    renaming = rename;
+    if (rename && !canStart()) return;
+    renameFrom = rename ? current.title : undefined;
     $('pdcaDialogTitle').textContent = rename ? 'เปลี่ยนชื่อ PDCA' : 'สร้าง PDCA';
     $('pdcaName').value = rename ? current.title : '';
     $('pdcaError').textContent = '';
@@ -801,10 +847,19 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     event.preventDefault();
     const title = $('pdcaName').value.trim();
     if (!title) { $('pdcaError').textContent = 'กรุณากรอกชื่อ PDCA'; $('pdcaName').focus(); return; }
-    if (renaming) {
-      if (!canEditGraph()) return;
-      if (title !== current.title) { current.title = title; mark(); refreshControls(true); }
-      nameDialog.close();
+    if (renameFrom !== undefined) {
+      const workspace = current, previous = renameFrom;
+      if (title === previous) { nameDialog.close(); return; }
+      await runGraph(() => {
+        if (current.title !== previous) {
+          renameFrom = current.title;
+          throw new Error('ชื่อ PDCA เปลี่ยนแล้ว กรุณาตรวจชื่อปัจจุบัน');
+        }
+        current.title = title;
+        mark();
+        nameDialog.close();
+        refreshControls(true);
+      }, () => current === workspace && nameDialog.open);
       return;
     }
     const submit = $('confirmPdca');
@@ -834,11 +889,15 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
   $('app').hidden = true;
   setTimeout(control.discover, 0);
   return {
-    mark, markNode, editNode, leaveInspector, nodeEditControl, canEditNode, canEditGraph, lockFor,
+    mark, markNode, editNode, leaveInspector, requestingNode, canEditNode, canEditGraph, canStart, lockFor,
+    startGraph, runGraph, finishGraph,
     lastWorkspace: () => lastId,
     addImage(node, file) {
-      attachmentPending = saveImage(node, file).finally(() => { attachmentPending = null; });
-      return attachmentPending;
+      const pending = saveImage(node, file).finally(() => {
+        if (attachmentPending === pending) attachmentPending = undefined;
+      });
+      attachmentPending = pending;
+      return pending;
     },
     removeImage(node, id) {
       if (!canEditNode(node.id)) return;

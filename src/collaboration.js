@@ -90,7 +90,7 @@ export function collaboration({ now = Date.now, duration = leaseMs, allow = () =
       validateTabId(tabId);
       const key = tabKey(actor, workspace);
       let previous = tabs.get(key);
-      if (previous && previous.tabId !== tabId) throw leaseConflict('แท็บอื่นใน Session นี้กำลังแก้ผัง');
+      if (previous && previous.tabId !== tabId) throw leaseConflict('แท็บอื่นใน Session นี้กำลังแก้ผัง', 'TAB_OCCUPIED');
       if (previous && rotate) { clearTab(previous); previous = undefined; }
       const lease = previous || newLease(actor, key, tabId);
       lease.expires = now() + duration;

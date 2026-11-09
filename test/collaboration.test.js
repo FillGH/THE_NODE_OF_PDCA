@@ -62,7 +62,7 @@ test('C-01/C-05/C-07: independent sessions, one tab per PDCA, one editor per Nod
   assert.equal(A.displayName, B.displayName);
   assert.notEqual(A.id, B.id);
   const a = h.edit(A, A1, fact.id), b = h.edit(B, B1, action.id);
-  assert.throws(() => h.edit(A, A2), /แท็บอื่น/);
+  assert.throws(() => h.edit(A, A2), { status: 409, code: 'TAB_OCCUPIED' });
   assert.throws(() => sessions.takeNode(B, id, B1, b.tabToken, fact.id), /กำลังแก้โดย/);
   assert.deepEqual(sessions.state(A, id, A2).editTab, { occupied: true });
   assert.equal(sessions.state(B, id, B1).locks.find(item => item.nodeId === fact.id).mine, false);

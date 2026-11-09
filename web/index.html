@@ -16,12 +16,13 @@
       <button class="navbtn active" id="home">Workspaces</button>
       <button class="navbtn" id="canvasNav" disabled>Canvas</button>
     </nav>
-    <div class="editor"><span id="editorName"></span>
+    <div class="editor"><details id="editorMenu" class="editor-menu" hidden>
+      <summary id="editorName" aria-label="เมนูผู้ใช้"></summary>
+      <div class="editor-menu-panel"><button type="button" class="btn" id="sessionEnd">เปลี่ยนผู้ใช้ / จบทุกแท็บ</button></div>
+    </details>
       <span id="connectionState" role="status"></span>
       <span id="saveStatus" role="status" aria-live="polite"></span>
       <button class="btn" id="retrySave" hidden>ตรวจฉบับร่าง</button>
-      <button class="btn" id="claimTab" hidden>แก้ผัง</button>
-      <button class="btn" id="sessionEnd" hidden>จบ Session</button>
     </div>
     <span class="tag training">BUILD 2 · ข้อมูลสมมติ</span>
     <button class="iconbutton" id="themeToggle" aria-label="Toggle dark mode">☾</button>

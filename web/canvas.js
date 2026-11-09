@@ -65,7 +65,7 @@ function preferredWidth(node, limit) {
 }
 function position(node) {
   const lane = metrics().lanes[node.cat];
-  const layout = drag?.id === node.id && drag.active ? drag.layout : node;
+  const layout = drag?.id === node.id && drag.permit ? drag.layout : node;
   if (cur().mode === 'snap') {
     const width = Math.max(119, lane.w - 26);
     return {x: lane.x + (lane.w - width) / 2, y: layout.snapY, w: width, h: snapHeight(node, width)};
@@ -363,7 +363,7 @@ function clearEdgePreview() {
 }
 
 function editEdge(index) {
-  if (!session.canEditGraph()) return;
+  if (!session.canStart()) return;
   const edge = cur().edges[index];
   if (!edge) return;
   edgeBeingEdited = edge;
@@ -436,7 +436,10 @@ function installEdgeControls() {
   $('drawerContent').addEventListener('click', event => {
     const edit = event.target.closest('[data-edit-edge]');
     if (edit) editEdge(Number(edit.dataset.editEdge));
-    if (event.target.closest('[data-add-edge]')) addEdge(find(selected), find($('inspectorTarget').value));
+    if (event.target.closest('[data-add-edge]')) {
+      const from = selected, to = $('inspectorTarget').value;
+      session.runGraph(() => addEdge(find(from), find(to)), () => drawerOpen && selected === from);
+    }
   });
   $('links').addEventListener('click', event => {
     const edge = event.target.closest('[data-edge]');
@@ -448,26 +451,30 @@ function installEdgeControls() {
     event.preventDefault();
     editEdge(Number(edge.dataset.edge));
   });
-  $('edgeDialog').querySelector('form').addEventListener('submit', event => {
+  function changeEdge(remove) {
+    if (!edgeBeingEdited) return;
+    const original = edgeBeingEdited;
+    const label = $('edgeLabel').value.trim(), color = draftEdgeColor;
+    session.runGraph(() => {
+      const index = cur().edges.findIndex(edge => edge.id === original.id);
+      const edge = cur().edges[index];
+      if (!edge || edge.label !== original.label || edge.color !== original.color) {
+        dismissDialog(dialog);
+        throw new Error('เส้นเชื่อมเปลี่ยนแล้ว กรุณาเปิดตรวจอีกครั้ง');
+      }
+      if (remove) cur().edges.splice(index, 1);
+      else Object.assign(edge, { label, color });
+      dismissDialog(dialog);
+      renderAll();
+      session.mark();
+    }, () => dialog.open && edgeBeingEdited === original);
+  }
+  dialog.querySelector('form').addEventListener('submit', event => {
     event.preventDefault();
-    if (!session.canEditGraph() || !cur().edges.includes(edgeBeingEdited)) return;
-    edgeBeingEdited.label = $('edgeLabel').value.trim();
-    edgeBeingEdited.color = draftEdgeColor;
-    dismissDialog($('edgeDialog'));
-    drawLinks();
-    renderDrawer();
-    session.mark();
+    changeEdge(false);
   });
-  $('cancelEdge').addEventListener('click', () => dismissDialog($('edgeDialog')));
-  $('deleteEdge').addEventListener('click', () => {
-    if (!session.canEditGraph()) return;
-    const index = cur().edges.indexOf(edgeBeingEdited);
-    if (index < 0) return;
-    cur().edges.splice(index, 1);
-    dismissDialog($('edgeDialog'));
-    renderAll();
-    session.mark();
-  });
+  $('cancelEdge').addEventListener('click', () => dismissDialog(dialog));
+  $('deleteEdge').addEventListener('click', () => changeEdge(true));
   $('edgeDialog').addEventListener('close', () => { edgeBeingEdited = null; });
 }
 
@@ -644,7 +651,7 @@ function renderDrawer() {
   drawer.classList.toggle('open', open);
   drawer.inert = !open;
   if (open) $('drawerContent').innerHTML =
-    '<div id="nodeEditPanel"><button id="editSelectedNode" type="button" class="btn" aria-describedby="nodeLockLabel"></button><span id="nodeLockLabel" role="status"></span></div>' +
+    '<span id="nodeLockLabel" role="status" hidden></span>' +
     inspectorFields(node, cats, session.imageAvailable, overdue(node)) + inspectorLinks(node);
   updateAccess();
 }
@@ -657,28 +664,28 @@ function paintEditorBadge(element, lock) {
 
 function updateAccess() {
   if (page !== 'canvas') return;
-  const editable = session.canEditGraph();
+  const available = session.canStart() && !session.canEditGraph();
   const nodeEditable = session.canEditNode(selected);
-  $('app').classList.toggle('read-only', !editable);
   for (const id of ['renamePdca', 'addGeneral', 'snapMode', 'freeMode', 'autoArrange', 'undoLayout', 'defaultView']) {
-    $(id).disabled = !editable;
+    $(id).disabled = !available;
   }
-  for (const button of $('laneHeaderTrack').querySelectorAll('button')) button.disabled = !editable;
+  for (const button of $('laneHeaderTrack').querySelectorAll('button')) button.disabled = !available;
   for (const card of $('cards').children) {
     paintEditorBadge(card.querySelector('.node-editor'), session.lockFor(card.dataset.nodeId));
   }
-  if (!drawerOpen || !$('editSelectedNode')) return;
-  const lock = session.lockFor(selected);
-  const button = $('editSelectedNode');
-  const { label, disabled } = session.nodeEditControl(selected);
-  if (button.textContent !== label) button.textContent = label;
-  button.disabled = disabled;
-  paintEditorBadge($('nodeLockLabel'), lock);
+  const status = $('nodeLockLabel');
+  if (!drawerOpen || !status) return;
+  if (session.requestingNode(selected)) {
+    status.hidden = false;
+    status.textContent = 'กำลังขอสิทธิ์…';
+  } else paintEditorBadge(status, session.lockFor(selected));
   for (const field of $('drawerContent').querySelectorAll('[data-edit], #nodeImage, #documentUrl, [data-add-document], [data-remove-document], [data-remove-image]')) {
-    field.disabled = !nodeEditable || (field.id === 'nodeImage' && uploading);
+    if (field.matches('input, textarea')) field.readOnly = !nodeEditable;
+    if (field.matches('select')) field.setAttribute('aria-readonly', String(!nodeEditable));
+    if (field.id === 'nodeImage') field.disabled = uploading;
   }
   for (const field of $('drawerContent').querySelectorAll('[data-edit-edge], [data-add-edge], #inspectorTarget')) {
-    field.disabled = !editable;
+    field.disabled = !available;
   }
 }
 
@@ -752,8 +759,7 @@ function updateNodeField(event) {
 }
 
 function addNode(cat, title = '') {
-  if (!session.canEditGraph()) return;
-  session.leaveInspector(undefined, () => createNode(cat, title));
+  return session.runGraph(() => createNode(cat, title));
 }
 function createNode(cat, title) {
   if (!session.canEditGraph()) return;
@@ -779,7 +785,7 @@ function createNode(cat, title) {
   drawerOpen = true;
   renderAll();
   revealNodeInView(node.id);
-  $('editSelectedNode').focus({preventScroll: true});
+  $('nodeTitle').focus({preventScroll: true});
 }
 
 function openWorkspace(workspace, nodeId) {
@@ -794,7 +800,7 @@ function openWorkspace(workspace, nodeId) {
   enterWorkspace();
   if (node) {
     showNode(node.id);
-    $('editSelectedNode')?.focus({preventScroll: true});
+    $('nodeTitle')?.focus({preventScroll: true});
   }
 }
 
@@ -1093,7 +1099,7 @@ function liveDragVisual() {
 }
 
 function onCardPointerDown(event) {
-  if (event.button !== 0 || drag || edgeDrag) return;
+  if (event.button !== 0 || drag || edgeDrag || resizeLane) return;
   cameraMotion++;
   const card = event.target.closest('[data-node-id]');
   if (!card || event.target.closest('[data-preview-image]')) return;
@@ -1103,36 +1109,58 @@ function onCardPointerDown(event) {
   const resize = event.target.closest('[data-resize]');
   hideTooltip();
   if (handle) {
-    if (session.canEditGraph() && handle.dataset.handle === 'right') {
+    if (handle.dataset.handle === 'right') {
       event.preventDefault();
-      edgeDrag = {from: node.id, pointer: event.pointerId};
-      handle.setPointerCapture(event.pointerId);
+      edgeDrag = {from: node.id, pointer: event.pointerId, startX: event.clientX, startY: event.clientY};
+      $('cards').setPointerCapture(event.pointerId);
     }
     return;
   }
   const type = resize ? 'resize' : 'move';
   drag = {
     type, id: node.id, startX: event.clientX, startY: event.clientY,
-    original: position(node),
-    layout: {snapY: node.snapY, freeX: node.freeX, freeY: node.freeY, freeW: node.freeW, freeH: node.freeH},
-    pointer: event.pointerId, el: card, active: false
+    pointer: event.pointerId, el: card
   };
-  card.setPointerCapture(event.pointerId);
+  $('cards').setPointerCapture(event.pointerId);
+}
+
+function trackGraphGesture(gesture, event, isCurrent, start, move) {
+  gesture.point = event;
+  if (gesture.permit && session.canEditGraph(gesture.permit)) { move(event); return; }
+  if (gesture.requested || Math.hypot(event.clientX - gesture.startX, event.clientY - gesture.startY) < 5) return;
+  gesture.requested = true;
+  session.startGraph(isCurrent).then(permit => {
+    if (!permit) return;
+    if (!isCurrent() || !session.canEditGraph(permit) || !start()) { session.finishGraph(permit); return; }
+    gesture.permit = permit;
+    move(gesture.point);
+  });
 }
 
 function onCardPointerMove(event) {
   if (edgeDrag?.pointer === event.pointerId) {
-    previewEdge(screenToWorld(event));
+    const gesture = edgeDrag;
+    trackGraphGesture(gesture, event, () => edgeDrag === gesture && !!find(gesture.from),
+      () => true, point => previewEdge(screenToWorld(point)));
     return;
   }
-  if (drag?.pointer !== event.pointerId || !session.canEditGraph()) return;
+  if (drag?.pointer !== event.pointerId) return;
+  const gesture = drag;
+  trackGraphGesture(gesture, event, () => drag === gesture && !!find(gesture.id), () => {
+    const node = find(gesture.id);
+    gesture.original = position(node);
+    const {snapY, freeX, freeY, freeW, freeH} = node;
+    gesture.layout = {snapY, freeX, freeY, freeW, freeH};
+    gesture.el = cardElement(gesture.id);
+    if (!gesture.el) return false;
+    gesture.el.classList.add(gesture.type === 'resize' ? 'resizing' : 'dragging');
+    return true;
+  }, moveCard);
+}
+
+function moveCard(event) {
   const dx = (event.clientX - drag.startX) / camera().zoom;
   const dy = (event.clientY - drag.startY) / camera().zoom;
-  if (!drag.active) {
-    if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) < 5) return;
-    drag.active = true;
-    drag.el.classList.add(drag.type === 'resize' ? 'resizing' : 'dragging');
-  }
   const node = find(drag.id), p = drag.original, layout = drag.layout;
   if (drag.type === 'resize') {
     layout.freeW = Math.max(Math.min(p.w, 140), Math.min(500, p.w + dx));
@@ -1148,38 +1176,45 @@ function onCardPointerMove(event) {
 
 function onCardPointerUp(event) {
   if (edgeDrag?.pointer === event.pointerId) {
-    const source = find(edgeDrag.from);
-    const target = magnetTarget(screenToWorld(event));
+    const finished = edgeDrag;
     edgeDrag = null;
     clearEdgePreview();
-    if (!target) {
-      toast('ลากจากจุดขวาไปที่จุดซ้ายของ Node ปลายทาง');
-      return;
-    }
-    addEdge(source, target.node);
+    if (!finished.permit) return;
+    const target = magnetTarget(screenToWorld(event));
+    if (target && session.canEditGraph(finished.permit)) addEdge(find(finished.from), target.node);
+    else toast('ลากจากจุดขวาไปที่จุดซ้ายของ Node ปลายทาง');
+    session.finishGraph(finished.permit);
     return;
   }
   if (drag?.pointer !== event.pointerId) return;
   const finished = drag;
   drag = null;
-  if (!finished.active && finished.type === 'move') selectNode(finished.id);
-  else if (finished.active && session.canEditGraph()) {
+  if (!finished.requested && finished.type === 'move') selectNode(finished.id);
+  if (!finished.permit) return;
+  const node = find(finished.id);
+  if (node && session.canEditGraph(finished.permit)) {
     saveUndo();
-    Object.assign(find(finished.id), finished.layout);
+    Object.assign(node, finished.layout);
     session.mark();
-    renderAll();
-  } else if (finished.active) renderAll();
+  }
+  renderAll();
+  session.finishGraph(finished.permit);
 }
 
 function cancelCardGesture(event) {
   if (edgeDrag?.pointer === event.pointerId) {
+    const {permit} = edgeDrag;
     edgeDrag = null;
     clearEdgePreview();
+    if (permit) session.finishGraph(permit);
   }
   if (drag?.pointer !== event.pointerId) return;
-  const changed = drag.active;
+  const {permit} = drag;
   drag = null;
-  if (changed) renderAll();
+  if (permit) {
+    renderAll();
+    session.finishGraph(permit);
+  }
 }
 
 
@@ -1249,16 +1284,48 @@ async function attachImage(event) {
   }
 }
 
-function onInspectorClick(event) {
-  const target = event.target.closest('button');
-  const node = find(selected);
-  if (!target || !node) return;
-  if (target.id === 'editSelectedNode') {
-    session.editNode(node.id);
+const editableField = '[data-edit], #nodeImage, #documentUrl';
+const attachmentAction = '[data-add-document], [data-remove-document], [data-remove-image]';
+
+async function activateField(field, event) {
+  const id = selected, fieldId = field.id;
+  event.preventDefault();
+  field.focus({ preventScroll: true });
+  if (!await session.editNode(id, () => drawerOpen && selected === id &&
+      document.activeElement?.id === fieldId)) return;
+  const active = $(fieldId);
+  if (!active || !drawerOpen || selected !== id) {
+    session.leaveInspector(undefined, () => {});
     return;
   }
-  if (target.matches('[data-add-document], [data-remove-document], [data-remove-image]') &&
-      !session.canEditNode(node.id)) return;
+  active.focus({ preventScroll: true });
+  if (active.matches('select, input[type=date], input[type=file]')) {
+    try { active.showPicker(); }
+    catch (error) {
+      if (!['NotAllowedError', 'NotSupportedError', 'SecurityError'].includes(error.name)) throw error;
+    }
+  }
+}
+
+async function onInspectorClick(event) {
+  const field = event.target.closest(editableField);
+  if (field && !session.canEditNode(selected)) {
+    await activateField(field, event);
+    return;
+  }
+  const target = event.target.closest('button');
+  let node = find(selected);
+  if (!target || !node) return;
+  if (target.matches(attachmentAction)) {
+    const id = node.id, index = Number(target.dataset.removeDocument);
+    const documentBefore = node.documents[index];
+    if (!await session.editNode(id, () => drawerOpen && selected === id)) return;
+    node = find(id);
+    if (target.hasAttribute('data-remove-document') && node.documents[index] !== documentBefore) {
+      $('attachmentError').textContent = 'ลิงก์เอกสารเปลี่ยนแล้ว กรุณาตรวจอีกครั้ง';
+      return;
+    }
+  }
   if (target.hasAttribute('data-add-document')) {
     const link = documentLink($('documentUrl').value);
     if (!link) {
@@ -1639,11 +1706,11 @@ function installWheelZoom() {
 }
 
 fillMenus();
-$('snapMode').addEventListener('click', () => switchMode('snap'));
-$('freeMode').addEventListener('click', () => switchMode('free'));
-$('autoArrange').addEventListener('click', graphArrange);
-$('undoLayout').addEventListener('click', undo);
-$('defaultView').addEventListener('click', defaultView);
+$('snapMode').addEventListener('click', () => session.runGraph(() => switchMode('snap')));
+$('freeMode').addEventListener('click', () => session.runGraph(() => switchMode('free')));
+$('autoArrange').addEventListener('click', () => session.runGraph(graphArrange));
+$('undoLayout').addEventListener('click', () => session.runGraph(undo));
+$('defaultView').addEventListener('click', () => session.runGraph(defaultView));
 $('themeToggle').addEventListener('click', () => {
   const dark = !isDark();
   document.documentElement.dataset.theme = dark ? 'dark' : 'light';
@@ -1676,9 +1743,17 @@ $('drawerContent').addEventListener('change', event => {
   else updateNodeField(event);
 });
 $('drawerContent').addEventListener('click', onInspectorClick);
+$('drawerContent').addEventListener('mousedown', event => {
+  if (event.target.matches('select[data-edit]') && !session.canEditNode(selected)) event.preventDefault();
+});
+$('drawerContent').addEventListener('keydown', event => {
+  const field = event.target;
+  if (!field.matches(editableField) || session.canEditNode(selected)) return;
+  if (event.key === 'Enter') activateField(field, event);
+  else if (field.matches('select, #nodeImage') && !['Tab', 'Escape'].includes(event.key)) event.preventDefault();
+});
 
 $('laneHeaderTrack').addEventListener('click', event => {
-  if (!session.canEditGraph()) return;
   const plus = event.target.closest('[data-add-cat]');
   if (plus) {
     addNode(Number(plus.dataset.addCat));
@@ -1687,34 +1762,51 @@ $('laneHeaderTrack').addEventListener('click', event => {
   const toggle = event.target.closest('[data-collapse]');
   if (!toggle) return;
   const index = Number(toggle.dataset.collapse);
-  const before = snapshotCardRects();
-  saveUndo();
-  cur().collapsed[index] = !cur().collapsed[index];
-  viewRevealCat = null;
-  session.mark('layout');
-  renderAll();
-  animateCardLayout(before);
+  session.runGraph(() => {
+    const before = snapshotCardRects();
+    saveUndo();
+    cur().collapsed[index] = !cur().collapsed[index];
+    viewRevealCat = null;
+    session.mark('layout');
+    renderAll();
+    animateCardLayout(before);
+  });
 });
 $('laneHeaderTrack').addEventListener('pointerdown', event => {
   const handle = event.target.closest('[data-resize-lane]');
-  if (!handle || !session.canEditGraph()) return;
+  if (event.button !== 0 || !handle || resizeLane || !session.canStart()) return;
   event.preventDefault();
   event.stopPropagation();
-  saveUndo();
-  const index = Number(handle.dataset.resizeLane);
-  resizeLane = { index, x: event.clientX, width: cur().widths[index], pointer: event.pointerId };
+  resizeLane = { index: Number(handle.dataset.resizeLane), startX: event.clientX,
+    startY: event.clientY, pointer: event.pointerId };
+  $('laneHeaderTrack').setPointerCapture(event.pointerId);
 });
 document.addEventListener('pointermove', event => {
-  if (resizeLane?.pointer !== event.pointerId || !session.canEditGraph()) return;
-  const delta = (event.clientX - resizeLane.x) / camera().zoom;
-  cur().widths[resizeLane.index] = Math.max(145, Math.min(370, resizeLane.width + delta));
-  renderAll();
-});
-for (const type of ['pointerup', 'pointercancel']) document.addEventListener(type, event => {
   if (resizeLane?.pointer !== event.pointerId) return;
-  if (!session.canEditGraph()) cur().widths[resizeLane.index] = resizeLane.width;
-  else if (cur().widths[resizeLane.index] !== resizeLane.width) session.mark('layout');
+  const gesture = resizeLane;
+  trackGraphGesture(gesture, event, () => resizeLane === gesture && cur().mode === 'snap', () => {
+    gesture.width = cur().widths[gesture.index];
+    return true;
+  }, point => {
+    const delta = (point.clientX - gesture.startX) / camera().zoom;
+    gesture.preview = Math.max(145, Math.min(370, gesture.width + delta));
+    cur().widths[gesture.index] = gesture.preview;
+    renderAll();
+    cur().widths[gesture.index] = gesture.width;
+  });
+});
+for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) document.addEventListener(type, event => {
+  if (resizeLane?.pointer !== event.pointerId) return;
+  const gesture = resizeLane;
   resizeLane = null;
+  if (!gesture.permit) return;
+  if (type === 'pointerup' && session.canEditGraph(gesture.permit) && gesture.preview !== gesture.width) {
+    saveUndo();
+    cur().widths[gesture.index] = gesture.preview;
+    session.mark('layout');
+  }
+  renderAll();
+  session.finishGraph(gesture.permit);
 });
 
 const cards = $('cards');
@@ -1752,7 +1844,7 @@ installEdgeControls();
 
 const newNode = $('newModal');
 $('addGeneral').addEventListener('click', () => {
-  if (!session.canEditGraph()) return;
+  if (!session.canStart()) return;
   $('createCategory').value = '3';
   $('createTitle').value = '';
   revealDialog(newNode);
@@ -1761,16 +1853,16 @@ $('addGeneral').addEventListener('click', () => {
 $('cancelCreate').addEventListener('click', () => dismissDialog(newNode));
 $('nodeForm').addEventListener('submit', event => {
   event.preventDefault();
-  newNode.close();
-  addNode(Number($('createCategory').value), $('createTitle').value.trim());
+  const cat = Number($('createCategory').value), title = $('createTitle').value.trim();
+  session.runGraph(() => {
+    newNode.close();
+    createNode(cat, title);
+  }, () => newNode.open);
 });
 document.addEventListener('keydown', event => {
   if (event.key === 'Escape' && page === 'canvas' && !document.querySelector('dialog[open]')) {
-    hideTooltip();
-    cameraMotion++;
-    drawerOpen = false;
-    renderDrawer();
-    paintMapView();
+    if (drawerOpen) $('closeDrawer').click();
+    else hideTooltip();
   }
 });
 
