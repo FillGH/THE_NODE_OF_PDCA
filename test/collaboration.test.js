@@ -1,11 +1,13 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
+import { once } from 'node:events';
 import { mkdtempSync, rmdirSync, unlinkSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { test } from 'node:test';
 import { collaboration } from '../src/collaboration.js';
+import { makeServer } from '../src/server.js';
 import { openStore } from '../src/store.js';
 import { diffGraph, graphSnapshot } from '../web/changes.js';
 
@@ -73,6 +75,57 @@ test('C-01/C-05/C-07: independent sessions, one tab per PDCA, one editor per Nod
   assert.deepEqual(h.snapshot().nodes.map(node => node.sideNote), ['a1', 'b1']);
   sessions.releaseTab(A, id, A1, a.tabToken);
   assert.ok(h.edit(A, A2, fact.id).nodeTokens[fact.id]);
+});
+
+test('E-02: the edit endpoint grants both permissions or leaves no new tab lease', async t => {
+  const h = setup(t);
+  const { A, B, A1, A2, B1, id, sessions, fact, action } = h;
+  const server = makeServer(h.store, sessions).listen(0, '127.0.0.1');
+  t.after(() => server.close());
+  await once(server, 'listening');
+  const root = 'http://127.0.0.1:' + server.address().port + '/api/pdca/' + id;
+  const edit = async (actor, tabId, nodeId) => {
+    const response = await fetch(root + '/edit/' + nodeId, {
+      method: 'POST', headers: { Authorization: 'Bearer ' + actor.token, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tabId }),
+    });
+    return { status: response.status, body: await response.json() };
+  };
+  const results = await Promise.all([edit(A, A1, fact.id), edit(B, B1, fact.id)]);
+  const winner = results[0].status === 200 ? A : B;
+  const winnerTab = winner === A ? A1 : B1;
+  const loser = winner === A ? B : A;
+  const loserTab = winner === A ? B1 : A1;
+  const [granted, rejected] = winner === A ? results : results.toReversed();
+  assert.equal(granted.status, 200);
+  assert.equal(granted.body.createdTab, true);
+  assert.equal(granted.body.createdNode, true);
+  assert.equal(granted.body.workspace.revision, h.snapshot().revision);
+  assert.equal(rejected.status, 409);
+  assert.equal(rejected.body.code, 'NODE_LOCKED');
+  assert.equal(sessions.state(loser, id, loserTab, false).editTab, null);
+  const different = await edit(loser, loser === A ? A2 : randomUUID(), action.id);
+  assert.equal(different.status, 200);
+  const occupied = await edit(loser, loserTab, action.id);
+  assert.equal(occupied.status, 409);
+  assert.equal(occupied.body.code, 'TAB_OCCUPIED');
+  const retry = await edit(winner, winnerTab, fact.id);
+  assert.equal(retry.body.editTab.token, granted.body.editTab.token);
+  assert.equal(retry.body.nodeToken, granted.body.nodeToken);
+  assert.equal(retry.body.createdTab, false);
+  assert.equal(retry.body.createdNode, false);
+  assert.equal((await edit(A, A2, randomUUID())).status, 404);
+});
+
+test('E-04: reading unaccepted edit permissions does not extend their lifetime', t => {
+  const { A, A1, A2, fact, id, sessions, advance } = setup(t);
+  sessions.startEdit(A, id, A1, fact.id);
+  advance(19);
+  assert.ok(sessions.state(A, id, A1, false).editTab.token);
+  advance(2);
+  assert.equal(sessions.state(A, id, A2, false).editTab, null);
+  assert.equal(sessions.state(A, id, A2, false).locks.length, 0);
+  assert.ok(sessions.startEdit(A, id, A2, fact.id).nodeToken);
 });
 
 test('C-02/C-03: failed transaction leaves no receipt, delayed and duplicate requests return the original committed revision', t => {

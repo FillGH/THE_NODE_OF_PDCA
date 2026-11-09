@@ -106,11 +106,17 @@ export function makeServer(store, sessions = collaboration(), allowRequest = () 
           reply(200, store.apply(id, body, actor, input => sessions.authorize(actor, id, input)));
         } else if (resource === 'state' && method === 'GET') {
           const revision = store.revision(id);
-          const info = sessions.state(actor, id, url.searchParams.get('tab'));
+          const info = sessions.state(actor, id, url.searchParams.get('tab'), url.searchParams.get('renew') !== '0');
           reply(200, { ...info, revision, ...(Number(url.searchParams.get('revision') ?? -1) !== revision &&
             { workspace: store.load(id) }) });
         } else if (resource === 'receipt' && subject && method === 'GET') {
           reply(200, { receipt: store.receipt(id, actor, subject) });
+        } else if (resource === 'edit' && subject && method === 'POST') {
+          const { tabId } = await readJson(req);
+          checkAccess();
+          if (!store.hasNode(id, subject)) throw new RequestError(404, 'ไม่พบ Node ใน PDCA นี้');
+          const workspace = store.load(id);
+          reply(200, { ...sessions.startEdit(actor, id, tabId, subject), workspace });
         } else if (['tab', 'lock'].includes(resource) && ['POST', 'DELETE'].includes(method)) {
           const body = await readJson(req);
           checkAccess();
@@ -134,7 +140,8 @@ export function makeServer(store, sessions = collaboration(), allowRequest = () 
       }
     } catch (error) {
       if (!(error instanceof RequestError)) console.error(error);
-      reply(error.status || 500, { error: error.status ? error.message : 'ที่เก็บข้อมูลในเครื่องขัดข้อง' });
+      reply(error.status || 500, { error: error.status ? error.message : 'ที่เก็บข้อมูลในเครื่องขัดข้อง',
+        ...(error.code && error.status === 409 && { code: error.code }) });
     }
   });
 }

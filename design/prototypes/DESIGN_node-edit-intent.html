@@ -1,0 +1,189 @@
+<!doctype html>
+<html lang="th">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>THE NODE OF PDCA · ต้นแบบแก้ Node</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; background: #f6f7fb; color: #17253a; font: 16px/1.5 system-ui, sans-serif; }
+  header, main { max-width: 1060px; margin: auto; padding: 20px 24px; }
+  header { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+  header strong { margin-right: auto; }
+  h1, h2, p { margin: 0 0 10px; }
+  h1 { font-size: 26px; }
+  h2 { font-size: 19px; }
+  small, .muted { color: #4a5870; }
+  button, textarea { font: inherit; }
+  button { cursor: pointer; border: 1px solid #aab5c6; border-radius: 9px; padding: 8px 13px; color: inherit; background: white; }
+  button:focus-visible, textarea:focus-visible { outline: 3px solid #155dbc; outline-offset: 2px; }
+  button[aria-pressed="true"] { border-color: #98254a; background: #fae9ef; color: #84163c; }
+  button:disabled { cursor: default; color: #516078; background: #ecf0f6; }
+  .primary { color: white; border-color: #98254a; background: #98254a; }
+  .tabs, .actions { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+  .grid { display: grid; grid-template-columns: 1fr minmax(280px, 43%); gap: 16px; }
+  .panel { min-width: 0; background: white; border: 1px solid #d7dfeb; border-radius: 14px; padding: 16px; }
+  .board { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-content: start; }
+  .lane { background: #edf4ff; border-radius: 10px; padding: 12px; min-height: 160px; }
+  .lane + .lane { background: #fff4df; }
+  .lane button { width: 100%; text-align: left; }
+  .badge { min-height: 24px; font-size: 13px; }
+  textarea { width: 100%; border: 1px solid #8b9aaf; border-radius: 8px; padding: 10px; resize: vertical; color: inherit; background: white; }
+  textarea[readonly] { background: #f4f6fa; }
+  #status { min-height: 1.5em; margin-top: 10px; }
+  #notice { color: #8c2345; min-height: 1.5em; }
+  dialog { border: 1px solid #8b9aaf; border-radius: 14px; width: min(550px, 94vw); padding: 20px; }
+  dialog::backdrop { background: #17253a66; }
+  .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .comparison p { white-space: pre-wrap; overflow-wrap: anywhere; }
+  @media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
+</style>
+<header><strong>THE NODE OF PDCA</strong><small>ต้นแบบ DESIGN · ข้อมูลสมมติ · จำลองในหน้านี้</small></header>
+<main>
+  <h1>ผังทดสอบการแก้ร่วมกัน</h1>
+  <p class="muted">ลองเปิด Fact ใน A1 แล้วกดแก้ จากนั้นสลับไปดู A2 หรือ B1</p>
+  <div class="tabs" aria-label="สลับมุมมองผู้ทดสอบ">
+    <button data-tab="A1">A1 · Session A</button><button data-tab="A2">A2 · Session A</button><button data-tab="B1">B1 · Session B</button>
+  </div>
+  <div class="grid">
+    <section class="panel board" aria-label="ผังสมมติ">
+      <div class="lane"><p>Fact</p><button data-node="fact">ผลทดสอบซีล</button><div class="badge" id="factBadge"></div></div>
+      <div class="lane"><p>Action</p><button data-node="action">ตรวจหัวซีล</button><div class="badge" id="actionBadge"></div></div>
+    </section>
+    <section class="panel" aria-label="Node Inspector">
+      <h2 id="title">ผลทดสอบซีล</h2>
+      <div class="actions"><button class="primary" id="edit">แก้ Node นี้</button><button id="review" hidden>ตรวจฉบับร่าง</button></div>
+      <p id="notice" role="status"></p>
+      <label for="content">Content · Side note</label>
+      <textarea id="content" rows="5" readonly></textarea>
+      <div id="status" role="status"></div>
+    </section>
+  </div>
+  <details open>
+    <summary>ตัวควบคุมสถานการณ์จำลอง</summary>
+    <p class="muted">กดจำลองบันทึกล้มเหลว แล้วพิมพ์ใน A1 เพื่อสร้างร่างค้าง ลองย้ายสิทธิ์ใน A2 ก่อนและหลังปิด A1</p>
+    <div class="actions"><button id="fail" aria-pressed="false">จำลองบันทึกล้มเหลว</button><button id="closeA1">ปิด A1 และจำลองสิทธิ์หมดอายุ</button><button id="reset">เริ่มใหม่</button></div>
+  </details>
+</main>
+<dialog id="draft" aria-labelledby="draftTitle">
+  <h2 id="draftTitle">ตรวจฉบับร่างก่อนบันทึก</h2>
+  <div class="comparison"><section><strong>ฉบับล่าสุดที่บันทึกแล้ว</strong><p id="latest"></p></section><section><strong>ฉบับร่างของ Session นี้</strong><p id="local"></p></section></div>
+  <div class="actions"><button id="back">กลับ</button><button id="confirm" class="primary">ยืนยันบันทึกฉบับร่าง</button></div>
+</dialog>
+<script>
+  const $ = id => document.getElementById(id);
+  const controls = [...document.querySelectorAll('[data-tab]')];
+  const cards = [...document.querySelectorAll('[data-node]')];
+  const names = { fact: 'ผลทดสอบซีล', action: 'ตรวจหัวซีล' };
+  const sessionOf = tab => tab[0];
+  const nodeByTab = { A1: 'fact', A2: 'fact', B1: 'fact' };
+  const edits = new Map();
+  const locks = new Map();
+  const drafts = new Map();
+  const saved = { fact: 'พบรอยรั่วในชุดแรก', action: 'ทดลองอุ่นหัวซีล' };
+  let tab = 'A1', fail = false, a1Closed = false;
+
+  function release(owner) {
+    const entry = edits.get(owner);
+    if (!entry) return;
+    locks.delete(entry.node);
+    edits.delete(owner);
+  }
+  function render(message = '') {
+    const node = nodeByTab[tab];
+    const entry = edits.get(tab);
+    const owner = locks.get(node);
+    const sibling = [...edits.keys()].find(key => key !== tab && sessionOf(key) === sessionOf(tab));
+    const mine = entry?.node === node;
+    const draft = drafts.get(sessionOf(tab));
+    controls.forEach(button => {
+      button.setAttribute('aria-pressed', button.dataset.tab === tab);
+      button.disabled = a1Closed && button.dataset.tab === 'A1';
+    });
+    cards.forEach(button => button.setAttribute('aria-pressed', button.dataset.node === node));
+    for (const [key, name] of Object.entries(names)) {
+      const editor = locks.get(key);
+      $(key + 'Badge').textContent = editor ? `${name} · กำลังแก้โดย ${editor}` : '';
+    }
+    $('title').textContent = names[node];
+    $('content').value = mine ? entry.value : saved[node];
+    $('content').readOnly = !mine || entry.failed;
+    $('edit').textContent = mine ? 'จบการแก้' : sibling ? 'ย้ายมาแก้ Node นี้' : 'แก้ Node นี้';
+    $('edit').disabled = !!(owner && sessionOf(owner) !== sessionOf(tab)) || !!draft && !sibling;
+    $('review').hidden = !draft || !!sibling || draft.node !== node;
+    $('review').disabled = !!owner && owner !== tab;
+    $('notice').textContent = message || (owner && owner !== tab ? `กำลังแก้โดย ${owner} · Session ${sessionOf(owner)}` : draft ? 'มีฉบับร่างที่ยังไม่ได้บันทึก' : '');
+    $('status').textContent = mine && entry.failed ? 'บันทึกไม่สำเร็จ' : mine && entry.timer ? 'กำลังบันทึก…' : 'บันทึกแล้ว';
+    $('closeA1').disabled = a1Closed;
+  }
+  controls.forEach(button => button.onclick = () => { tab = button.dataset.tab; render(); });
+  cards.forEach(button => button.onclick = () => {
+    const entry = edits.get(tab);
+    if (entry?.timer || entry?.failed) return render('จัดการงานค้างก่อนเปลี่ยน Node');
+    if (entry?.node !== button.dataset.node) release(tab);
+    nodeByTab[tab] = button.dataset.node;
+    render();
+  });
+  $('edit').onclick = () => {
+    const node = nodeByTab[tab];
+    const previous = [...edits.keys()].find(key => sessionOf(key) === sessionOf(tab));
+    const entry = edits.get(previous);
+    if (entry?.timer) return render('กำลังบันทึก · รอผลก่อนจบหรือย้ายการแก้');
+    if (drafts.has(sessionOf(tab))) return render('แท็บเดิมยังมีฉบับร่าง กรุณาตรวจในแท็บเดิมก่อน');
+    if (previous) release(previous);
+    if (previous === tab) return render();
+    locks.set(node, tab);
+    edits.set(tab, { node, value: saved[node] });
+    render();
+    $('content').focus();
+  };
+  $('content').oninput = () => {
+    const owner = tab;
+    const entry = edits.get(owner);
+    if (!entry) return;
+    clearTimeout(entry.timer);
+    entry.value = $('content').value;
+    $('status').textContent = 'กำลังบันทึก…';
+    entry.timer = setTimeout(() => {
+      entry.timer = undefined;
+      if (fail) {
+        entry.failed = true;
+        drafts.set(sessionOf(owner), { node: entry.node, value: entry.value });
+        render();
+      } else {
+        saved[entry.node] = entry.value;
+        if (tab === owner) $('status').textContent = 'บันทึกแล้ว';
+        else render();
+      }
+    }, 800);
+  };
+  $('fail').onclick = () => { fail = !fail; $('fail').setAttribute('aria-pressed', fail); };
+  $('closeA1').onclick = () => {
+    const entry = edits.get('A1');
+    if (entry?.timer) {
+      clearTimeout(entry.timer);
+      drafts.set('A', { node: entry.node, value: entry.value });
+    }
+    release('A1');
+    a1Closed = true;
+    if (tab === 'A1') tab = 'A2';
+    render();
+  };
+  $('review').onclick = () => {
+    const draft = drafts.get(sessionOf(tab));
+    $('latest').textContent = saved[draft.node];
+    $('local').textContent = draft.value;
+    $('draft').showModal();
+  };
+  $('back').onclick = () => $('draft').close();
+  $('confirm').onclick = () => {
+    const draft = drafts.get(sessionOf(tab));
+    saved[draft.node] = draft.value;
+    drafts.delete(sessionOf(tab));
+    release(tab);
+    $('draft').close();
+    render('บันทึกฉบับร่างแล้ว');
+  };
+  $('reset').onclick = () => location.reload();
+  render();
+</script>
+</html>

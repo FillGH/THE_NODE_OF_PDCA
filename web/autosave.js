@@ -1,7 +1,8 @@
 export class ApiError extends Error {
-  constructor(message, status) {
+  constructor(message, status, code) {
     super(message);
     this.status = status;
+    this.code = code;
   }
 }
 
@@ -18,7 +19,7 @@ export async function api(path, method = 'GET', body, { token, timeout = 15000, 
   });
   if (binary && response.ok) return response.blob();
   const result = await response.json();
-  if (!response.ok) throw new ApiError(result.error, response.status);
+  if (!response.ok) throw new ApiError(result.error, response.status, result.code);
   return result;
 }
 

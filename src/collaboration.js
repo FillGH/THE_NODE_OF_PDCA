@@ -3,7 +3,7 @@ import { RequestError } from './store.js';
 
 export const leaseMs = 20_000;
 const sessionMs = 60 * 60_000;
-const leaseConflict = message => new RequestError(409, message);
+const leaseConflict = (message, code) => Object.assign(new RequestError(409, message), { code });
 
 export function collaboration({ now = Date.now, duration = leaseMs, allow = () => true } = {}) {
   const sessions = new Map();
@@ -46,6 +46,18 @@ export function collaboration({ now = Date.now, duration = leaseMs, allow = () =
     }
     return lease;
   }
+  function validateTabId(tabId) {
+    if (typeof tabId !== 'string' || !/^[a-f0-9-]{36}$/.test(tabId)) {
+      throw new RequestError(400, 'รหัสแท็บไม่ถูกต้อง');
+    }
+  }
+  function newLease(actor, key, tabId) {
+    return { key, sessionId: actor.id, tabId, token: randomUUID(), expires: now() + duration };
+  }
+  function newLock(actor, workspace, lease, nodeId) {
+    return { workspace, nodeId, tabToken: lease.token, sessionId: actor.id,
+      displayName: actor.displayName, token: randomUUID() };
+  }
 
   return {
     create(rawName) {
@@ -59,32 +71,52 @@ export function collaboration({ now = Date.now, duration = leaseMs, allow = () =
     },
     authenticate(id) { return check(sessions.get(id)); },
     end,
-    state(actor, workspace, tabId) {
+    state(actor, workspace, tabId, renew = true) {
       check(actor);
       const lease = tabs.get(tabKey(actor, workspace));
-      if (lease?.tabId === tabId) lease.expires = now() + duration;
+      if (renew && lease?.tabId === tabId) lease.expires = now() + duration;
       return {
         editTab: lease ? (lease.tabId === tabId ? { token: lease.token } : { occupied: true }) : null,
         locks: [...locks.values()].filter(lock => lock.workspace === workspace).map(lock => ({
           nodeId: lock.nodeId, displayName: lock.displayName,
-          editor: lock.sessionId.slice(0, 8), mine: lease?.tabId === tabId && lock.tabToken === lease.token,
+          editor: lock.sessionId.slice(0, 8), sameSession: lock.sessionId === actor.id,
+          mine: lease?.tabId === tabId && lock.tabToken === lease.token,
           ...(lease?.tabId === tabId && lock.tabToken === lease.token && { token: lock.token }),
         })),
       };
     },
     takeTab(actor, workspace, tabId, rotate = false) {
       check(actor);
-      if (typeof tabId !== 'string' || !/^[a-f0-9-]{36}$/.test(tabId)) {
-        throw new RequestError(400, 'รหัสแท็บไม่ถูกต้อง');
-      }
+      validateTabId(tabId);
       const key = tabKey(actor, workspace);
       let previous = tabs.get(key);
       if (previous && previous.tabId !== tabId) throw leaseConflict('แท็บอื่นใน Session นี้กำลังแก้ผัง');
       if (previous && rotate) { clearTab(previous); previous = undefined; }
-      const lease = previous || { key, sessionId: actor.id, tabId, token: randomUUID() };
+      const lease = previous || newLease(actor, key, tabId);
       lease.expires = now() + duration;
       tabs.set(key, lease);
       return this.state(actor, workspace, tabId);
+    },
+    startEdit(actor, workspace, tabId, nodeId) {
+      check(actor);
+      validateTabId(tabId);
+      const key = tabKey(actor, workspace);
+      const existingTab = tabs.get(key);
+      const lockKey = nodeKey(workspace, nodeId);
+      const existingLock = locks.get(lockKey);
+      if (existingLock && existingLock.sessionId !== actor.id) {
+        throw leaseConflict('Node นี้กำลังแก้โดย ' + existingLock.displayName, 'NODE_LOCKED');
+      }
+      if (existingTab && existingTab.tabId !== tabId) {
+        throw leaseConflict('แท็บอื่นใน Session นี้กำลังแก้ผัง', 'TAB_OCCUPIED');
+      }
+      const lease = existingTab || newLease(actor, key, tabId);
+      const lock = existingLock || newLock(actor, workspace, lease, nodeId);
+      // Both conflicts have been checked before publishing either permission.
+      tabs.set(key, lease);
+      locks.set(lockKey, lock);
+      return { ...this.state(actor, workspace, tabId), nodeToken: lock.token,
+        createdTab: !existingTab, createdNode: !existingLock };
     },
     releaseTab(actor, workspace, tabId, token) {
       clearTab(requireTab(actor, workspace, tabId, token));
@@ -97,8 +129,7 @@ export function collaboration({ now = Date.now, duration = leaseMs, allow = () =
         throw leaseConflict('Node นี้กำลังแก้โดย ' + previous.displayName);
       }
       if (previous) return { token: previous.token };
-      const lock = { workspace, nodeId, tabToken: lease.token, sessionId: actor.id,
-        displayName: actor.displayName, token: randomUUID() };
+      const lock = newLock(actor, workspace, lease, nodeId);
       locks.set(key, lock);
       return { token: lock.token };
     },
