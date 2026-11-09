@@ -4,6 +4,12 @@
 
 A lightweight, risk-based starter for engineering and software projects. It is designed to be reusable across web apps, dashboards, automations, AlgoTrade systems, industrial tools, scripts, and other technical projects without forcing heavyweight process onto small work.
 
+## THE NODE OF PDCA · BUILD ช่วงที่ 4
+
+เปิด PowerShell ใน worktree นี้ด้วย Node.js 24 รัน `npm.cmd ci` แล้ว `npm.cmd start` เปิด [แอปบนเครื่อง](http://127.0.0.1:4173) และใช้ข้อมูลสมมติ การเริ่มบริการจะสร้าง Backup รอบแรกทันที และนัดรอบถัดไปทุก 2 ชั่วโมง ดูรายการที่ตรวจแล้วใน `.pdca-dev/backups` และเหตุการณ์ใน `.pdca-dev/operations.jsonl`
+
+รัน `npm.cmd test` เพื่อตรวจทั้งสี่ช่วง ใช้ [คู่มือ BUILD 4](design/BUILD4_HOST_RUNBOOK.md) สำหรับสิทธิ์จำลอง การเลือก snapshot การตรวจชุดกู้ในพื้นที่แยก และการซ้อมย้าย Host พร้อมทางย้อนกลับ
+
 ## THE NODE OF PDCA · BUILD ช่วงที่ 3
 
 ใช้ Node.js 24 ใน worktree นี้ รัน `npm.cmd ci` แล้ว `npm.cmd start` เปิด [แอปบนเครื่อง](http://127.0.0.1:4173) ด้วยชื่อและข้อมูลสมมติ ฐานเริ่มต้นอยู่ใน `.pdca-dev/pdca.sqlite` และกำหนดไฟล์ทดสอบแยกได้ด้วย `PDCA_DB` ใช้ `Ctrl+C` เพื่อหยุดแอป

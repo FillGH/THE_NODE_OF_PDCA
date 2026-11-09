@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
 import { once } from 'node:events';
-import { mkdtempSync, rmdirSync, unlinkSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -22,7 +22,7 @@ function setup(t) {
   const file = join(directory, 'test.sqlite');
   const store = openStore(file);
   const db = new DatabaseSync(file);
-  t.after(() => { db.close(); store.close(); unlinkSync(file); rmdirSync(directory); });
+  t.after(() => { db.close(); store.close(); rmSync(directory, { recursive: true }); });
   let time = 0;
   const revoked = new Set();
   const sessions = collaboration({ now: () => time, duration: 20, allow: actor => !revoked.has(actor.id) });

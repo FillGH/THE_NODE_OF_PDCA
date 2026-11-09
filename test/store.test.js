@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { randomUUID } from 'node:crypto';
-import { mkdtempSync, rmdirSync, unlinkSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
@@ -22,8 +22,7 @@ function setup(t) {
   t.after(() => {
     db.close();
     store.close();
-    unlinkSync(file);
-    rmdirSync(dir);
+    rmSync(dir, { recursive: true });
   });
   const history = id => db.prepare('SELECT * FROM history WHERE pdca_id = ? ORDER BY seq').all(id);
   return { file, store, db, history };

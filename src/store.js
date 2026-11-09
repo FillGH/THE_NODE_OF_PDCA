@@ -4,6 +4,7 @@ import {
   categoryNames, documentLink, edgeColors, statuses, widthsDefault,
 } from '../web/model.js';
 import { applyGraphOps, graphSnapshot, scope } from '../web/changes.js';
+import { attachAudit, auditPath, stagedApplicationId, transaction as sqliteTransaction } from './audit.js';
 
 export class RequestError extends Error {
   constructor(status, message) {
@@ -20,6 +21,7 @@ const isId = value => typeof value === 'string' && /^[a-f0-9]{8}-(?:[a-f0-9]{4}-
 const isText = value => typeof value === 'string';
 const inRange = (value, min, max) => Number.isFinite(value) && value >= min && value <= max;
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+export const trashLifetime = 7 * 86_400_000;
 
 function requiredText(value, label) {
   requireValue(isText(value) && value.trim(), label);
@@ -48,7 +50,7 @@ function normalizeNode(node) {
   return { id, cat, title, sideNote, pic, due, status, snapY, freeX, freeY, freeW, freeH, images, documents };
 }
 
-function normalizeWorkspace(input) {
+export function normalizeWorkspace(input) {
   requireValue(input && Array.isArray(input.nodes) && Array.isArray(input.edges), 'ผังไม่ถูกต้อง');
   const title = requiredText(input.title, 'กรุณากรอกชื่อ PDCA');
   const nodes = input.nodes.map(normalizeNode);
@@ -107,7 +109,7 @@ function graphChanges(previous, next, record) {
   }
 }
 
-function imageType(bytes) {
+export function imageType(bytes) {
   if (bytes.subarray(0, 8).equals(Buffer.from('89504e470d0a1a0a', 'hex'))) return 'image/png';
   if (bytes.subarray(0, 3).equals(Buffer.from('ffd8ff', 'hex'))) return 'image/jpeg';
   if (['GIF87a', 'GIF89a'].includes(bytes.toString('ascii', 0, 6))) return 'image/gif';
@@ -115,8 +117,80 @@ function imageType(bytes) {
   return null;
 }
 
-export function openStore(file, { now = Date.now } = {}) {
+function removePurged(db, id, subject, saved, graph) {
+  const removeNode = nodeId => {
+    db.prepare('DELETE FROM images WHERE node_id = ?').run(nodeId);
+    db.prepare('DELETE FROM node_ids WHERE id = ?').run(nodeId);
+    db.prepare('DELETE FROM trash WHERE pdca_id = ? AND subject_id = ?').run(id, nodeId);
+  };
+  if (subject === id) {
+    for (const node of graph.nodes) removeNode(node.id);
+    for (const table of ['history', 'scope_versions', 'save_receipts', 'trash']) {
+      db.prepare('DELETE FROM ' + table + ' WHERE pdca_id = ?').run(id);
+    }
+    db.prepare('DELETE FROM workspaces WHERE id = ?').run(id);
+    return;
+  }
+  removeNode(subject);
+  const edgeIds = new Set(graph.edges.filter(edge => edge.from === subject || edge.to === subject).map(edge => edge.id));
+  for (const entry of db.prepare('SELECT * FROM history WHERE pdca_id = ?').all(id)) {
+    const edge = entry.kind.startsWith('edge-') && (JSON.parse(entry.after_json) || JSON.parse(entry.before_json));
+    if (entry.subject_id === subject || edge.from === subject || edge.to === subject) {
+      if (edge) edgeIds.add(entry.subject_id);
+      db.prepare('DELETE FROM history WHERE seq = ?').run(entry.seq);
+    }
+  }
+  const deleteScope = db.prepare('DELETE FROM scope_versions WHERE pdca_id = ? AND scope = ?');
+  for (const prefix of ['content:', 'position:']) deleteScope.run(id, prefix + subject);
+  for (const edgeId of edgeIds) deleteScope.run(id, 'edge:' + edgeId);
+  graph.nodes = graph.nodes.filter(node => node.id !== subject);
+  graph.edges = graph.edges.filter(edge => !edgeIds.has(edge.id));
+  db.prepare('UPDATE workspaces SET graph = ?, revision = ?, last_save_id = NULL WHERE id = ?')
+    .run(JSON.stringify(graph), saved.revision + 1, id);
+}
+
+export function reconcileWorkspace(db, { events, tip }) {
+  const workspace = db.prepare('SELECT graph, revision FROM workspaces WHERE id = ?');
+  const trash = db.prepare('SELECT deleted, expires FROM trash WHERE pdca_id = ? AND subject_id = ?');
+  const counts = { delete: 0, restore: 0, purge: 0, absent: 0 };
+  return sqliteTransaction(db, () => {
+    for (const { pdca_id: id, subject_id: subject, event, at, expires, kind } of events) {
+      if (kind !== (subject === id ? 'PDCA' : 'Node') || !['delete', 'restore', 'purge'].includes(event)) {
+        throw new Error('Invalid Audit event');
+      }
+      const saved = workspace.get(id);
+      const graph = saved && JSON.parse(saved.graph);
+      if (!graph || (id !== subject && !graph.nodes.some(node => node.id === subject))) {
+        counts.absent++;
+        continue;
+      }
+      const item = trash.get(id, subject);
+      if (event === 'purge') {
+        if (!item || item.expires !== expires || expires > at) throw new Error('Purge does not match Trash');
+        removePurged(db, id, subject, saved, graph);
+      } else {
+        if (event === 'delete') {
+          if (item || expires !== at + trashLifetime) throw new Error('Delete does not match Trash');
+          db.prepare('INSERT INTO trash VALUES (?, ?, ?, ?)').run(id, subject, at, expires);
+        } else {
+          if (!item || item.expires !== expires || expires <= at) throw new Error('Restore does not match Trash');
+          db.prepare('DELETE FROM trash WHERE pdca_id = ? AND subject_id = ?').run(id, subject);
+        }
+        db.prepare('UPDATE workspaces SET revision = revision + 1, last_save_id = NULL WHERE id = ?').run(id);
+      }
+      counts[event]++;
+    }
+    db.prepare('UPDATE recovery_cut SET seq = ?, head = ? WHERE singleton = 1').run(tip.seq, tip.head);
+    return counts;
+  });
+}
+
+export function openStore(file, { now = Date.now, auditFile = auditPath(file) } = {}) {
   const db = new DatabaseSync(file);
+  if (db.prepare('PRAGMA application_id').get().application_id === stagedApplicationId) {
+    db.close();
+    throw new Error('An isolated snapshot or restore cannot be started as a live Workspace');
+  }
   db.exec(`
     PRAGMA busy_timeout = 3000;
     CREATE TABLE IF NOT EXISTS workspaces (
@@ -146,12 +220,14 @@ export function openStore(file, { now = Date.now } = {}) {
       pdca_id TEXT NOT NULL, subject_id TEXT NOT NULL, deleted INTEGER NOT NULL,
       expires INTEGER NOT NULL, PRIMARY KEY (pdca_id, subject_id)
     ) STRICT;
-    CREATE TABLE IF NOT EXISTS deletion_audit (
-      seq INTEGER PRIMARY KEY, operation_id TEXT NOT NULL, pdca_id TEXT NOT NULL,
-      subject_id TEXT NOT NULL, kind TEXT NOT NULL, event TEXT NOT NULL, at INTEGER NOT NULL,
-      expires INTEGER, display_name TEXT NOT NULL, session_id TEXT, retain_until INTEGER
-    ) STRICT;
   `);
+  let addAudit;
+  try {
+    addAudit = attachAudit(db, auditFile);
+  } catch (error) {
+    db.close();
+    throw error;
+  }
   const workspaceById = db.prepare('SELECT graph, revision, last_save_id FROM workspaces WHERE id = ?');
   const addWorkspace = db.prepare('INSERT INTO workspaces VALUES (?, ?, 0, NULL)');
   const putWorkspace = db.prepare('UPDATE workspaces SET graph = ?, revision = ?, last_save_id = ? WHERE id = ?');
@@ -170,31 +246,17 @@ export function openStore(file, { now = Date.now } = {}) {
   const getReceipt = db.prepare('SELECT digest, revision FROM save_receipts WHERE pdca_id = ? AND session_id = ? AND save_id = ?');
   const addReceipt = db.prepare('INSERT INTO save_receipts VALUES (?, ?, ?, ?, ?)');
 
-  function transaction(write) {
-    db.exec('BEGIN IMMEDIATE');
-    try {
-      const result = write();
-      db.exec('COMMIT');
-      return result;
-    } catch (error) {
-      db.exec('ROLLBACK');
-      throw error;
-    }
-  }
+  const transaction = write => sqliteTransaction(db, write);
 
   const trashFor = db.prepare('SELECT subject_id, deleted, expires FROM trash WHERE pdca_id = ?');
   const getTrash = db.prepare('SELECT expires FROM trash WHERE pdca_id = ? AND subject_id = ?');
   const listHistory = db.prepare('SELECT * FROM history WHERE pdca_id = ? ORDER BY seq DESC');
   const setTrash = db.prepare('INSERT INTO trash VALUES (?, ?, ?, ?)');
   const removeTrash = db.prepare('DELETE FROM trash WHERE pdca_id = ? AND subject_id = ?');
-  const addAudit = db.prepare(`INSERT INTO deletion_audit
-    (operation_id, pdca_id, subject_id, kind, event, at, expires, display_name, session_id, retain_until)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`);
   const missing = message => Object.assign(new RequestError(409, message), { code: 'TRASHED' });
-  const expiresAfter = 7 * 86_400_000;
 
   function audit(operation, id, subject, event, time, expires, actor, retainUntil = null) {
-    addAudit.run(operation, id, subject, id === subject ? 'PDCA' : 'Node', event, time, expires,
+    addAudit(operation, id, subject, id === subject ? 'PDCA' : 'Node', event, time, expires,
       actor?.displayName ?? 'System Operation', actor?.id ?? null, retainUntil);
   }
 
@@ -249,8 +311,8 @@ export function openStore(file, { now = Date.now } = {}) {
       if (expected !== saved.revision) throw new RequestError(409, 'ผังเปลี่ยนแล้ว กรุณาตรวจรายการอีกครั้ง');
       const revision = saved.revision + 1;
       if (restore) removeTrash.run(id, subject);
-      else setTrash.run(id, subject, time, time + expiresAfter);
-      audit(randomUUID(), id, subject, restore ? 'restore' : 'delete', time, item?.expires ?? time + expiresAfter, actor);
+      else setTrash.run(id, subject, time, time + trashLifetime);
+      audit(randomUUID(), id, subject, restore ? 'restore' : 'delete', time, item?.expires ?? time + trashLifetime, actor);
       putWorkspace.run(saved.graph, revision, null, id);
       if (subject !== id) {
         for (const scope of ['content:', 'position:']) setVersion.run(id, scope + subject, revision);
@@ -276,11 +338,11 @@ export function openStore(file, { now = Date.now } = {}) {
 
   function purge() {
     const time = now();
-    const due = db.prepare('SELECT * FROM trash WHERE expires <= ? ORDER BY pdca_id != subject_id').all(time);
-    if (!due.length && !db.prepare('SELECT 1 FROM deletion_audit WHERE retain_until <= ? LIMIT 1').get(time)) return;
+    const findDue = db.prepare('SELECT * FROM trash WHERE expires <= ? ORDER BY pdca_id != subject_id');
+    if (!findDue.get(time) && !db.prepare('SELECT 1 FROM audit.events WHERE retain_until <= ? LIMIT 1').get(time)) return;
     transaction(() => {
-      db.prepare('DELETE FROM deletion_audit WHERE retain_until <= ?').run(time);
-      for (const {pdca_id: id, subject_id: subject, expires} of due) {
+      db.prepare('DELETE FROM audit.events WHERE retain_until <= ?').run(time);
+      for (const {pdca_id: id, subject_id: subject, expires} of findDue.all(time)) {
         if (!getTrash.get(id, subject)) continue;
         const saved = row(id, true), graph = JSON.parse(saved.graph);
         const operation = randomUUID();
@@ -290,35 +352,15 @@ export function openStore(file, { now = Date.now } = {}) {
         const lastDay = new Date(Date.UTC(nextYear, month, 0)).getUTCDate();
         const retainUntil = Date.UTC(nextYear, month - 1, Math.min(date, lastDay)) - 7 * 3_600_000;
         function recordPurge(target, deadline) {
-          db.prepare('UPDATE deletion_audit SET retain_until = ? WHERE pdca_id = ? AND subject_id = ?')
+          db.prepare('UPDATE audit.events SET retain_until = ? WHERE pdca_id = ? AND subject_id = ?')
             .run(retainUntil, id, target);
           audit(operation, id, target, 'purge', time, deadline, null, retainUntil);
         }
-        function removeNode(node) {
-          recordPurge(node.id, getTrash.get(id, node.id)?.expires ?? expires);
-          db.prepare('DELETE FROM images WHERE node_id = ?').run(node.id);
-          db.prepare('DELETE FROM node_ids WHERE id = ?').run(node.id);
-          removeTrash.run(id, node.id);
-        }
+        recordPurge(subject, expires);
         if (subject === id) {
-          recordPurge(id, expires);
-          graph.nodes.forEach(removeNode);
-          for (const table of ['history', 'scope_versions', 'save_receipts', 'trash']) {
-            db.prepare('DELETE FROM ' + table + ' WHERE pdca_id = ?').run(id);
-          }
-          db.prepare('DELETE FROM workspaces WHERE id = ?').run(id);
-        } else {
-          removeNode(graph.nodes.find(node => node.id === subject));
-          for (const entry of listHistory.all(id).map(decodeHistory)) {
-            const edge = entry.kind.startsWith('edge-') && (entry.after || entry.before);
-            if (entry.subject === subject || edge.from === subject || edge.to === subject) {
-              db.prepare('DELETE FROM history WHERE seq = ?').run(entry.seq);
-            }
-          }
-          graph.nodes = graph.nodes.filter(node => node.id !== subject);
-          graph.edges = graph.edges.filter(edge => edge.from !== subject && edge.to !== subject);
-          putWorkspace.run(JSON.stringify(graph), saved.revision + 1, null, id);
+          for (const node of graph.nodes) recordPurge(node.id, getTrash.get(id, node.id)?.expires ?? expires);
         }
+        removePurged(db, id, subject, saved, graph);
       }
     });
   }
@@ -348,6 +390,8 @@ export function openStore(file, { now = Date.now } = {}) {
     const retainedImages = new Set();
     for (const node of graph.nodes) {
       if (!previousIds.has(node.id)) {
+        requireValue(!db.prepare("SELECT 1 FROM audit.events WHERE subject_id = ? AND event = 'purge' LIMIT 1").get(node.id),
+          'รหัส Node นี้เคยถูกลบถาวร');
         requireValue(addNodeId.run(node.id, id).changes === 1, 'Node นี้อยู่ใน PDCA อื่น');
       }
       for (const imageId of node.images) {
@@ -489,7 +533,7 @@ export function openStore(file, { now = Date.now } = {}) {
       return { id, revision: 0, ...graph };
     },
     load, save, apply, search, history, restoreOperation, trash, setVisibility, purge,
-    auditLog: () => db.prepare('SELECT * FROM deletion_audit ORDER BY seq DESC').all(),
+    auditLog: () => db.prepare('SELECT * FROM audit.events ORDER BY seq DESC').all(),
     imageMetadata: id => imageMeta.get(id),
     revision: id => row(id).revision,
     hasNode: (id, nodeId) => !getTrash.get(id, nodeId) && JSON.parse(row(id).graph).nodes.some(node => node.id === nodeId),

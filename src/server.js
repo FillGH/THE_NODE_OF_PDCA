@@ -1,11 +1,14 @@
 import { exportData, exportFormats } from './exports.js';
 import { randomUUID } from 'node:crypto';
+import { appendFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { mkdir, readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { openStore, RequestError } from './store.js';
 import { collaboration } from './collaboration.js';
+import { operationsConfig, secretMatches } from './ops.js';
+import { runRecovery, startBackups } from './recovery.js';
 
 const files = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
@@ -45,7 +48,8 @@ async function readJson(req) {
   }
 }
 
-export function makeServer(store, sessions = collaboration(), allowRequest = () => true, allowAudit = () => false) {
+export function makeServer(store, sessions = collaboration(), allowRequest = () => true, allowAudit = () => false,
+  operations = {}) {
   const server = createServer(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -55,19 +59,12 @@ export function makeServer(store, sessions = collaboration(), allowRequest = () 
       res.end(JSON.stringify(data));
     };
     try {
-      const expectedHost = '127.0.0.1:' + req.socket.localPort;
-      if (req.headers.host !== expectedHost || (req.headers.origin && req.headers.origin !== 'http://' + expectedHost)) {
-        throw new RequestError(403, 'ใช้ที่อยู่ localhost ที่แสดงเมื่อเริ่มโปรแกรม');
+      const origin = operations.origin || 'http://127.0.0.1:' + req.socket.localPort;
+      if (req.headers.host !== new URL(origin).host || (req.headers.origin && req.headers.origin !== origin)) {
+        throw new RequestError(403, 'ที่อยู่หรือ Origin ไม่ตรงกับที่กำหนด');
       }
-      const url = new URL(req.url, 'http://' + expectedHost);
+      const url = new URL(req.url, origin);
       const path = url.pathname;
-      if (req.method === 'GET' && files.has(path)) {
-        const [file, mime] = files.get(path);
-        const body = await readFile(new URL('../web/' + file, import.meta.url));
-        res.writeHead(200, { 'Content-Type': mime });
-        res.end(body);
-        return;
-      }
       const token = req.headers.authorization?.replace(/^Bearer /, '');
       const checkAccess = () => {
         if (allowRequest(req)) return;
@@ -77,6 +74,25 @@ export function makeServer(store, sessions = collaboration(), allowRequest = () 
         throw new RequestError(403, 'ไม่มีสิทธิ์เข้าถึง');
       };
       checkAccess();
+      if (req.method === 'GET' && files.has(path)) {
+        const [file, mime] = files.get(path);
+        const body = await readFile(new URL('../web/' + file, import.meta.url));
+        res.writeHead(200, { 'Content-Type': mime });
+        res.end(body);
+        return;
+      }
+      if (path === '/api/operations/restore' && req.method === 'POST' && operations.restore) {
+        const role = operations.role(req);
+        if (!role) throw new RequestError(403, 'เฉพาะ IT และ Phil เริ่มกู้ Backup ได้');
+        const { snapshot } = await readJson(req);
+        checkAccess();
+        if (typeof snapshot !== 'string' || !/^\d{13}-[a-f0-9-]{36}$/.test(snapshot)) {
+          throw new RequestError(400, 'รหัส Backup ไม่ถูกต้อง');
+        }
+        const report = await operations.restore(snapshot, role);
+        reply(report.status === 'held' ? 409 : 200, report);
+        return;
+      }
       if (path === '/api/session' && req.method === 'POST') {
         const body = await readJson(req);
         checkAccess();
@@ -192,14 +208,60 @@ export function makeServer(store, sessions = collaboration(), allowRequest = () 
   return server;
 }
 
-if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
-  const port = Number(process.env.PDCA_PORT || 4173);
-  const file = resolve(process.env.PDCA_DB || '.pdca-dev/pdca.sqlite');
-  await mkdir(dirname(file), { recursive: true });
-  const store = openStore(file);
-  const server = makeServer(store);
-  server.listen(port, '127.0.0.1', () => {
-    console.log('PDCA BUILD 3 · fictional data only · http://127.0.0.1:' + server.address().port);
-    console.log('Development database: ' + file);
+export async function startHost(env = process.env) {
+  const port = Number(env.PDCA_PORT || 4173);
+  const { file, auditFile, root, recoveryRoot, origin, ingress, authorize } = operationsConfig(env);
+  const log = resolve(env.PDCA_OPS_LOG || resolve(dirname(file), 'operations.jsonl'));
+  const lowSpaceBytes = Number(env.PDCA_LOW_SPACE_BYTES ?? 1024 ** 3);
+  if (!Number.isSafeInteger(lowSpaceBytes) || lowSpaceBytes < 0) throw new Error('Invalid low-space threshold');
+  const role = req => authorize(req.headers['x-pdca-operator-key']);
+  const notify = event => {
+    const line = JSON.stringify(event);
+    try { appendFileSync(log, line + '\n'); } catch (error) { console.error('Operations log unavailable', error.message); }
+    if (event.event !== 'backup-verified') console.error(line);
+  };
+  for (const path of [file, auditFile, log]) await mkdir(dirname(path), { recursive: true });
+  const store = openStore(file, { auditFile });
+  const allowRequest = req => !origin || secretMatches(req.headers['x-pdca-ingress-key'], ingress);
+  let restoring = false;
+  const server = makeServer(store, undefined, allowRequest, req => role(req) === 'IT', {
+    origin, role,
+    async restore(id, role) {
+      if (restoring) throw new RequestError(409, 'กำลังกู้ Backup อีกชุด');
+      restoring = true;
+      try {
+        const report = await runRecovery('restore', { id, role, root, recoveryRoot, file, auditFile });
+        notify({ event: 'restore-' + report.status, stageId: report.stageId, role, at: report.completedAt });
+        return report;
+      } finally {
+        restoring = false;
+      }
+    },
   });
+  try {
+    store.purge();
+    await new Promise((ready, reject) => {
+      server.once('error', reject);
+      server.listen(port, '127.0.0.1', () => {
+        server.off('error', reject);
+        ready();
+      });
+    });
+  } catch (error) {
+    store.close();
+    throw error;
+  }
+  const backups = startBackups({ file, auditFile, root, notify, lowSpaceBytes,
+    snapshot: () => runRecovery('backup', { file, auditFile, root }),
+  });
+  return { server, backups, async stop() {
+    await Promise.all([backups.stop(), new Promise(done => server.close(done))]);
+    store.close();
+  } };
+}
+
+if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
+  const host = await startHost();
+  console.log('PDCA BUILD 4 · http://127.0.0.1:' + host.server.address().port);
+  for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => host.stop());
 }
