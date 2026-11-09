@@ -139,6 +139,10 @@ export function collaboration({ now = Date.now, duration = leaseMs, allow = () =
       const lock = locks.get(key);
       if (lock?.tabToken === lease.token && lock.token === nodeToken) locks.delete(key);
     },
+    invalidate(workspace, nodeId) {
+      if (nodeId) locks.delete(nodeKey(workspace, nodeId));
+      else for (const lease of tabs.values()) if (lease.key === tabKey({ id: lease.sessionId }, workspace)) clearTab(lease);
+    },
     authorize(actor, workspace, input) {
       const lease = requireTab(actor, workspace, input.tabId, input.tabToken);
       for (const op of input.ops) {

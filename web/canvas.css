@@ -219,3 +219,10 @@ dialog .draft-panel { width: min(93vw, 760px); max-width: none; }
   .canvas-name { gap: 4px; }
   #canvasToolbar { height: auto; min-height: 74px; }
 }
+
+.record-panel { width: min(880px, 85vw); max-height: 80vh; overflow: auto; }
+.record-panel article { border-top: 1px solid var(--line); padding: 10px 0; overflow-wrap: anywhere; }
+.record-panel table { width: 100%; border-collapse: collapse; text-align: left; }
+.record-panel th, .record-panel td { border-bottom: 1px solid var(--line); padding: 8px; }
+.record-actions, #recordFilters { margin-bottom: 12px; }
+.record-actions button, #recordList > button { margin-inline-end: 6px; }

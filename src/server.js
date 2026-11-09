@@ -1,3 +1,5 @@
+import { exportData, exportFormats } from './exports.js';
+import { randomUUID } from 'node:crypto';
 import { createServer } from 'node:http';
 import { mkdir, readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
@@ -14,6 +16,7 @@ const files = new Map([
   ['/session.js', ['session.js', 'text/javascript; charset=utf-8']],
   ['/autosave.js', ['autosave.js', 'text/javascript; charset=utf-8']],
   ['/workspaces.js', ['workspaces.js', 'text/javascript; charset=utf-8']],
+  ['/build3.js', ['build3.js', 'text/javascript; charset=utf-8']],
   ['/inspector.js', ['inspector.js', 'text/javascript; charset=utf-8']],
   ['/favicon.ico', ['favicon.svg', 'image/svg+xml']],
 ]);
@@ -42,8 +45,8 @@ async function readJson(req) {
   }
 }
 
-export function makeServer(store, sessions = collaboration(), allowRequest = () => true) {
-  return createServer(async (req, res) => {
+export function makeServer(store, sessions = collaboration(), allowRequest = () => true, allowAudit = () => false) {
+  const server = createServer(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('Content-Security-Policy', "default-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob:; object-src 'none'; frame-ancestors 'none'");
@@ -77,15 +80,22 @@ export function makeServer(store, sessions = collaboration(), allowRequest = () 
       if (path === '/api/session' && req.method === 'POST') {
         const body = await readJson(req);
         checkAccess();
-        reply(201, sessions.create(body.displayName));
+        const created = sessions.create(body.displayName);
+        reply(201, { ...created, canReadAudit: allowAudit(req, created) });
         return;
       }
       const actor = sessions.authenticate(token);
+      store.purge();
       if (path === '/api/session' && req.method === 'GET') {
-        reply(200, { id: actor.id, displayName: actor.displayName });
+        reply(200, { id: actor.id, displayName: actor.displayName, canReadAudit: allowAudit(req, actor) });
       } else if (path === '/api/session' && req.method === 'DELETE') {
         sessions.end(actor);
         reply(200, {});
+      } else if (path === '/api/trash' && req.method === 'GET') {
+        reply(200, store.trash());
+      } else if (path === '/api/deletion-audit' && req.method === 'GET') {
+        if (!allowAudit(req, actor)) throw new RequestError(403, 'สำหรับ IT เท่านั้น');
+        reply(200, store.auditLog());
       } else if (path === '/api/pdca' && req.method === 'GET') {
         reply(200, store.search(url.searchParams.get('q') || ''));
       } else if (path === '/api/pdca' && req.method === 'POST') {
@@ -104,6 +114,36 @@ export function makeServer(store, sessions = collaboration(), allowRequest = () 
           checkAccess();
           sessions.authenticate(actor.token);
           reply(200, store.apply(id, body, actor, input => sessions.authorize(actor, id, input)));
+        } else if (resource === 'export' && method === 'GET' && Object.hasOwn(exportFormats, subject)) {
+          const [mime, render] = exportFormats[subject];
+          const data = exportData(store, id);
+          const bytes = await render(data);
+          checkAccess();
+          sessions.authenticate(actor.token);
+          if (store.revision(id) !== data.pdca.revision) {
+            throw new RequestError(409, 'ผังเปลี่ยนระหว่างส่งออก กรุณาลองอีกครั้ง');
+          }
+          res.writeHead(200, { 'Content-Type': mime,
+            'Content-Disposition': 'attachment; filename="PDCA-' + id + '.' + subject + '"' });
+          res.end(bytes);
+        } else if (resource === 'history' && method === 'GET') {
+          reply(200, { revision: store.revision(id), entries: store.history(id) });
+        } else if (resource === 'history' && subject && method === 'POST') {
+          const { revision, tabId, tabToken, nodeTokens } = await readJson(req);
+          checkAccess();
+          sessions.authenticate(actor.token);
+          const op = store.restoreOperation(id, Number(subject), revision);
+          const input = { saveId: randomUUID(), guard: revision, ops: [op], uploads: [], tabId, tabToken, nodeTokens };
+          reply(200, store.apply(id, input, actor, input => sessions.authorize(actor, id, input),
+            op.kind === 'edge-add' ? op.id : undefined));
+        } else if (resource === 'trash' && ['POST', 'DELETE'].includes(method)) {
+          const { revision } = await readJson(req);
+          checkAccess();
+          sessions.authenticate(actor.token);
+          const target = subject || id;
+          const result = store.setVisibility(id, target, revision, method === 'DELETE', actor);
+          if (result.revision === revision + 1) sessions.invalidate(id, subject);
+          reply(200, result);
         } else if (resource === 'state' && method === 'GET') {
           const revision = store.revision(id);
           const info = sessions.state(actor, id, url.searchParams.get('tab'), url.searchParams.get('renew') !== '0');
@@ -144,6 +184,12 @@ export function makeServer(store, sessions = collaboration(), allowRequest = () 
         ...(error.code && error.status === 409 && { code: error.code }) });
     }
   });
+  const timer = setInterval(() => {
+    try { store.purge(); } catch (error) { console.error(error); }
+  }, 60_000);
+  timer.unref();
+  server.once('close', () => clearInterval(timer));
+  return server;
 }
 
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
@@ -153,7 +199,7 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
   const store = openStore(file);
   const server = makeServer(store);
   server.listen(port, '127.0.0.1', () => {
-    console.log('PDCA BUILD 2 · fictional data only · http://127.0.0.1:' + server.address().port);
+    console.log('PDCA BUILD 3 · fictional data only · http://127.0.0.1:' + server.address().port);
     console.log('Development database: ' + file);
   });
 }

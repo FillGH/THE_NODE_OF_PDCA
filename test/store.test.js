@@ -153,7 +153,7 @@ test('five history groups, rollback on write failure, identical retry and no-op 
   assert.deepEqual(changes.map(row => row.kind),
     ['node-text', 'node-category', 'action-status', 'action-due-date', 'edge-deleted']);
   assert.deepEqual(changes.map(row => row.subject_id), [action.id, action.id, action.id, action.id, initialEdge.id]);
-  assert.equal(changes[4].before_json, JSON.stringify({ from: problem.id, to: action.id }));
+  assert.equal(changes[4].before_json, JSON.stringify({ from: problem.id, to: action.id, label: '', color: 'slate' }));
   assert.ok(changes.every(row => row.display_name === 'ผู้ทดสอบ' && !Number.isNaN(Date.parse(row.saved_at))));
   action.cat = 3;
   action.status = 'Blocked';

@@ -4,6 +4,17 @@
 
 A lightweight, risk-based starter for engineering and software projects. It is designed to be reusable across web apps, dashboards, automations, AlgoTrade systems, industrial tools, scripts, and other technical projects without forcing heavyweight process onto small work.
 
+## THE NODE OF PDCA · BUILD ช่วงที่ 3
+
+ใช้ Node.js 24 ใน worktree นี้ รัน `npm.cmd ci` แล้ว `npm.cmd start` เปิด [แอปบนเครื่อง](http://127.0.0.1:4173) ด้วยชื่อและข้อมูลสมมติ ฐานเริ่มต้นอยู่ใน `.pdca-dev/pdca.sqlite` และกำหนดไฟล์ทดสอบแยกได้ด้วย `PDCA_DB` ใช้ `Ctrl+C` เพื่อหยุดแอป
+
+- **History** เปิดจาก Canvas หรือ Inspector เพื่อดูประวัติและกู้ข้อความ ประเภท หรือเส้น
+- **Trash** เปิดจาก Workspaces รายการ Node และ PDCA กู้ได้ภายใน 7 วัน
+- **Action Overview** แสดงเฉพาะ Action ในผังที่เปิด คำนวณวันเกินกำหนดตาม Asia/Bangkok
+- **Export** ดาวน์โหลด PDF, Excel หรือ JSON จากฉบับที่บันทึก [สัญญาข้อมูล Export](design/BUILD3_EXPORT_CONTRACT.md)
+
+รัน `npm.cmd test` เพื่อตรวจ History, Trash/Audit, วันโรงงาน และไฟล์ Export บนฐานแยก ใช้ PDFKit และ ExcelJS ใบอนุญาต MIT พร้อมฟอนต์ Sarabun ใบอนุญาต OFL ที่รวมไว้ในโครงการ
+
 ## THE NODE OF PDCA · BUILD ช่วงที่ 2
 
 เปิด PowerShell ที่โฟลเดอร์สาขานี้ ใช้ Node.js 24 แล้วรัน `npm.cmd start` จากนั้นเปิด [แอปบนเครื่อง](http://127.0.0.1:4173) ใช้ชื่อและข้อมูลสมมติ ฐานข้อมูลเริ่มต้นอยู่ที่ `.pdca-dev/pdca.sqlite` ของโฟลเดอร์นี้ ใช้ `Ctrl+C` เพื่อหยุดแอป

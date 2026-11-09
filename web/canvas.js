@@ -1,3 +1,4 @@
+import { installRecords } from './build3.js';
 // Canvas interactions adapted from the accepted DESIGN v0.10 (684bc50).
 import { edgeColors, documentLink, widthsDefault } from './model.js';
 import { installWorkspaces, defaultCamera, escapeHTML, imageUrl } from './workspaces.js';
@@ -652,7 +653,9 @@ function renderDrawer() {
   drawer.inert = !open;
   if (open) $('drawerContent').innerHTML =
     '<span id="nodeLockLabel" role="status" hidden></span>' +
-    inspectorFields(node, cats, session.imageAvailable, overdue(node)) + inspectorLinks(node);
+    '<div class="record-actions"><button class="btn" data-record-action="history" data-node="' + node.id +
+      '">History</button><button class="btn" data-record-action="trash" data-node="' + node.id +
+      '">ย้าย Node เข้า Trash</button></div>' + inspectorFields(node, cats, session.imageAvailable, overdue(node)) + inspectorLinks(node);
   updateAccess();
 }
 
@@ -692,6 +695,7 @@ function updateAccess() {
 function syncWorkspace(redraw) {
   if (page !== 'canvas') { $('canvasNav').disabled = !session.lastWorkspace(); return; }
   if (!redraw) { updateAccess(); return; }
+  if (selected && !find(selected)) { selected = null; drawerOpen = false; }
   layoutUndo = null;
   const active = document.activeElement;
   const focusId = active?.closest('#drawerContent') ? active.id : '';
@@ -1868,7 +1872,8 @@ document.addEventListener('keydown', event => {
 
 document.documentElement.dataset.theme = 'light';
 const session = installWorkspaces({
-  onOpen: openWorkspace, onHome: openWorkspaces, onSync: syncWorkspace, onImagesSaved: refreshImages,
+  onOpen: openWorkspace, onHome: openWorkspaces, onSync: redraw => { syncWorkspace(redraw); records.refresh(); }, onImagesSaved: refreshImages,
   canvasBusy: () => !!(drag || edgeDrag || resizeLane || $('edgeDialog').open),
 });
-setInterval(refreshOverdue, 1000);
+const records = installRecords(session, cur, selectNode);
+setInterval(() => { refreshOverdue(); records.refresh(); }, 1000);

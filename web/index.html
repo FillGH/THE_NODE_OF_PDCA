@@ -24,7 +24,7 @@
       <span id="saveStatus" role="status" aria-live="polite"></span>
       <button class="btn" id="retrySave" hidden>ตรวจฉบับร่าง</button>
     </div>
-    <span class="tag training">BUILD 2 · ข้อมูลสมมติ</span>
+    <span class="tag training">BUILD 3 · ข้อมูลสมมติ</span>
     <button class="iconbutton" id="themeToggle" aria-label="Toggle dark mode">☾</button>
     <div class="font-size-controls" id="canvasFontControls" aria-label="Text size" hidden>
       <button data-size="0.9">A−</button><button class="active" data-size="1">A</button><button data-size="1.15">A+</button>
@@ -35,6 +35,10 @@
     <div class="subhead" id="canvasToolbar" hidden>
       <div class="canvas-name"><strong id="canvasTitle"></strong><button class="btn" id="renamePdca">เปลี่ยนชื่อ</button></div>
       <div class="tools">
+        <button class="btn" id="showOverview">Action Overview</button>
+        <button class="btn" id="showHistory">History</button>
+        <button class="btn" id="showExport">Export</button>
+        <button class="btn" id="trashPdca">ย้ายผังเข้า Trash</button>
         <div class="segments" aria-label="Layout mode"><button class="active" id="snapMode">▦ Snap</button><button id="freeMode">⬚ Free Float</button></div>
         <button class="btn" id="autoArrange">↗ Auto Arrange</button><button class="btn" id="undoLayout">↶ Undo</button>
         <button class="btn" id="defaultView">⟲ Default View</button>
@@ -68,6 +72,8 @@
           <button class="btn primary" id="createPdca">＋ สร้าง PDCA</button>
           <label for="search" class="sr-only">ค้นหา PDCA หรือ Node</label>
           <input class="workspace-search" id="search" type="search" placeholder="ค้นหาชื่อ PDCA, Title หรือ Content">
+          <button class="btn" id="showTrash">Trash</button>
+          <button class="btn" id="showAudit" hidden>Deletion Audit</button>
           <button class="btn" id="clearSearch" disabled>ล้างคำค้น</button>
         </div>
         <div class="workspace-cards" id="workspaceCards" aria-live="polite"></div>
@@ -76,9 +82,19 @@
   </main></div>
 </div>
 
+<dialog id="recordDialog" aria-labelledby="recordTitle">
+  <section class="modal record-panel">
+    <h2 id="recordTitle"></h2>
+    <div id="recordFilters"></div>
+    <p id="recordError" class="field-error" role="alert"></p>
+    <div id="recordList"></div>
+    <div class="modal-footer"><button type="button" class="btn" id="closeRecords">ปิด</button></div>
+  </section>
+</dialog>
+
 <dialog id="identityDialog" aria-labelledby="identityTitle">
   <form class="modal" id="identityForm">
-    <span class="tag training">BUILD 2 · ข้อมูลสมมติเท่านั้น</span>
+    <span class="tag training">BUILD 3 · ข้อมูลสมมติเท่านั้น</span>
     <h2 id="identityTitle">เริ่มใช้งาน THE NODE OF PDCA</h2>
     <div class="field"><label for="displayName">Display Name สำหรับ History</label><input id="displayName" placeholder="เช่น ผู้ทดสอบ A" autofocus></div>
     <p class="fieldhelp">ใช้ชื่อสมมติสำหรับระบุผู้แก้ในประวัติการบันทึก</p>

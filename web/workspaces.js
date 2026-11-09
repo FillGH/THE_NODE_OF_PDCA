@@ -244,16 +244,51 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
         editing = undefined;
         block('สิทธิ์แก้ไขสิ้นสุด กรุณาตรวจฉบับร่าง');
       }
+      const hiddenDraft = info.workspace && removeHiddenDraft(info.workspace);
       if (info.workspace) committed = info.workspace;
       // Keep the editor's local baseline while a batch is outstanding. Every
       // other tab sees the committed revision without waiting for the reply.
-      const redraw = !saver?.dirty() && !canvasBusy() && replaceGraph(committed);
+      const redraw = (hiddenDraft || (!saver?.dirty() && !canvasBusy())) && replaceGraph(committed);
       refreshControls(redraw);
     } catch (error) {
       if (seq !== checking || id !== current?.id || !control.active()) return;
+      if (id && (error.code === 'TRASHED' || error.status === 404)) {
+        forgetWorkspace(error.message);
+        return;
+      }
       disconnect(error);
     }
   }
+  function forgetWorkspace(message) {
+    if (current) clearDraft(current.id);
+    cancelEditIntent();
+    saver?.stop();
+    current = lastId = committed = saver = blocked = review = tab = editing = graphAction = undefined;
+    locks = [];
+    uploads.clear();
+    if (reviewDialog.open) reviewDialog.close();
+    showHome();
+    showError(new Error(message));
+  }
+  function removeHiddenDraft(latest) {
+    const draft = blocked || makeDraft() || drafts.get(current.id);
+    if (!draft) return;
+    const known = new Set(draft.base.nodes.map(node => node.id));
+    const active = new Set(latest.nodes.map(node => node.id));
+    const removed = id => known.has(id) && !active.has(id);
+    const hiddenEdges = new Set(draft.base.edges.filter(edge => removed(edge.from) || removed(edge.to)).map(edge => edge.id));
+    const affected = diffGraph(draft.base, draft.graph).some(op =>
+      removed(op.id) || hiddenEdges.has(op.id) || removed(op.value?.from) || removed(op.value?.to));
+    if (!affected) return;
+    blocked = review = undefined;
+    clearDraft(current.id);
+    uploads.clear();
+    if (reviewDialog.open) reviewDialog.close();
+    startSaver(latest);
+    show('error', 'ฉบับร่างใช้ไม่ได้ เพราะ Node ถูกย้ายออกจากผัง');
+    return true;
+  }
+
   function disconnect(error) {
     if (error instanceof ApiError) { showError(error); return; }
     online = false;
@@ -577,6 +612,13 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
       await takeTab(true);
       uncertainNodes.delete(current.id);
       editing = undefined;
+      const latest = (await readState(true)).workspace;
+      removeHiddenDraft(latest);
+      if (!draftForCurrent()) {
+        committed = latest;
+        refreshControls(replaceGraph(latest));
+        return;
+      }
       const receipt = draft.pending ? (await request(url('/receipt/' + draft.pending.body.saveId)).then(result => result.receipt)) : null;
       const base = receipt ? draft.pending.local : draft.base;
       const ops = diffGraph(base, draft.graph);
@@ -689,6 +731,7 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     online = true;
     stopping = false;
     $('editorMenu').open = false;
+    $('showAudit').hidden = !actor.canReadAudit;
     $('editorName').textContent = actor.displayName + ' · ' + actor.id.slice(0, 8);
     $('app').hidden = false;
     if (identity.open) identity.close();
@@ -885,13 +928,54 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     finally { submit.disabled = false; }
   });
 
+  async function restoreHistory(entry, revision, isCurrent) {
+    if (editing && editing !== entry.subject && !await finishTab()) return false;
+    const workspace = current;
+    const send = async () => {
+      if (current !== workspace || !isCurrent()) return false;
+      try {
+        await settleEdits();
+        if (current !== workspace || !isCurrent()) return false;
+        await request(url('/history/' + entry.seq), 'POST', { revision, ...credentials(),
+          nodeTokens: Object.fromEntries(locks.filter(lock => lock.mine).map(lock => [lock.nodeId, lock.token])) });
+        return true;
+      } catch (error) { showError(error); return false; }
+    };
+    if (entry.kind === 'edge-deleted') {
+      const permit = await startGraph(isCurrent);
+      if (!permit) return false;
+      try { return await send(); }
+      finally { await finishGraph(permit); }
+    }
+    if (!await editNode(entry.subject, isCurrent)) return false;
+    try { return await send(); }
+    finally { await finishTab(); }
+  }
+
+  async function moveToTrash(subject) {
+    if (!current || busy || startingEdit || reconciling || !online) return;
+    const workspace = current;
+    busy = true;
+    checking++;
+    try {
+      await settleEdits();
+      if (current !== workspace) return;
+      await request(url('/trash' + (subject ? '/' + subject : '')), 'POST', { revision: current.revision });
+      if (subject) {
+        if (editing === subject) editing = undefined;
+      } else forgetWorkspace('ย้าย PDCA เข้า Trash แล้ว');
+    } catch (error) { showError(error); }
+    finally { busy = false; refreshControls(); poll(); }
+  }
+
   // Let Canvas finish installing its callbacks before a joined tab renders.
   $('app').hidden = true;
   setTimeout(control.discover, 0);
   return {
     mark, markNode, editNode, leaveInspector, requestingNode, canEditNode, canEditGraph, canStart, lockFor,
-    startGraph, runGraph, finishGraph,
+    startGraph, runGraph, finishGraph, request, restoreHistory, moveToTrash, refreshSearch,
     lastWorkspace: () => lastId,
+    savedWorkspace: () => committed,
     addImage(node, file) {
       const pending = saveImage(node, file).finally(() => {
         if (attachmentPending === pending) attachmentPending = undefined;
