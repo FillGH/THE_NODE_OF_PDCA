@@ -1,8 +1,9 @@
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import {
   categoryNames, documentLink, edgeColors, statuses, widthsDefault,
 } from '../web/model.js';
+import { applyGraphOps, scope } from '../web/changes.js';
 
 export class RequestError extends Error {
   constructor(status, message) {
@@ -128,6 +129,14 @@ export function openStore(file) {
       id TEXT PRIMARY KEY, node_id TEXT NOT NULL REFERENCES node_ids(id), name TEXT NOT NULL,
       mime TEXT NOT NULL, bytes BLOB NOT NULL
     ) STRICT;
+    CREATE TABLE IF NOT EXISTS scope_versions (
+      pdca_id TEXT NOT NULL REFERENCES workspaces(id), scope TEXT NOT NULL,
+      revision INTEGER NOT NULL, PRIMARY KEY (pdca_id, scope)
+    ) STRICT;
+    CREATE TABLE IF NOT EXISTS save_receipts (
+      pdca_id TEXT NOT NULL REFERENCES workspaces(id), session_id TEXT NOT NULL, save_id TEXT NOT NULL,
+      digest TEXT NOT NULL, revision INTEGER NOT NULL, PRIMARY KEY (pdca_id, session_id, save_id)
+    ) STRICT;
     CREATE TABLE IF NOT EXISTS history (
       seq INTEGER PRIMARY KEY, pdca_id TEXT NOT NULL REFERENCES workspaces(id), revision INTEGER NOT NULL,
       kind TEXT NOT NULL, subject_id TEXT NOT NULL, before_json TEXT NOT NULL, after_json TEXT NOT NULL,
@@ -146,6 +155,24 @@ export function openStore(file) {
     (pdca_id, revision, kind, subject_id, before_json, after_json, display_name, saved_at)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`);
 
+  const getVersion = db.prepare('SELECT revision FROM scope_versions WHERE pdca_id = ? AND scope = ?');
+  const setVersion = db.prepare(`INSERT INTO scope_versions VALUES (?, ?, ?)
+    ON CONFLICT(pdca_id, scope) DO UPDATE SET revision = excluded.revision`);
+  const getReceipt = db.prepare('SELECT digest, revision FROM save_receipts WHERE pdca_id = ? AND session_id = ? AND save_id = ?');
+  const addReceipt = db.prepare('INSERT INTO save_receipts VALUES (?, ?, ?, ?, ?)');
+
+  function transaction(write) {
+    db.exec('BEGIN IMMEDIATE');
+    try {
+      const result = write();
+      db.exec('COMMIT');
+      return result;
+    } catch (error) {
+      db.exec('ROLLBACK');
+      throw error;
+    }
+  }
+
   function row(id) {
     const found = workspaceById.get(id);
     if (!found) throw new RequestError(404, 'ไม่พบ PDCA');
@@ -161,63 +188,111 @@ export function openStore(file) {
     return { id, revision: saved.revision, ...graph };
   }
 
+  function persist(id, saved, previous, graph, files, displayName, saveId) {
+    requireValue(Array.isArray(files) && files.every(item => item && isId(item.id)), 'รายการอัปโหลดไม่ถูกต้อง');
+    const uploads = new Map(files.map(item => [item.id, item]));
+    const previousIds = new Set(previous.nodes.map(node => node.id));
+    const nextIds = new Set(graph.nodes.map(node => node.id));
+    requireValue([...previousIds].every(id => nextIds.has(id)), 'การลบ Node อยู่ในช่วงถัดไป');
+    const retainedImages = new Set();
+    for (const node of graph.nodes) {
+      if (!previousIds.has(node.id)) {
+        requireValue(addNodeId.run(node.id, id).changes === 1, 'Node นี้อยู่ใน PDCA อื่น');
+      }
+      for (const imageId of node.images) {
+        const existing = imageMeta.get(imageId);
+        if (existing) {
+          requireValue(existing.node_id === node.id, 'รูปนี้อยู่ใน Node อื่น');
+        } else {
+          const upload = uploads.get(imageId);
+          requireValue(upload && isText(upload.name) && isText(upload.data), 'ไม่พบข้อมูลรูป');
+          const bytes = Buffer.from(upload.data, 'base64');
+          const mime = imageType(bytes);
+          requireValue(mime && bytes.length <= 16 * 1024 * 1024, 'รองรับ PNG, JPEG, GIF และ WebP ขนาดไม่เกิน 16 MiB ต่อรูป');
+          addImage.run(imageId, node.id, upload.name, mime, bytes);
+        }
+        retainedImages.add(imageId);
+      }
+    }
+    for (const node of previous.nodes) {
+      for (const imageId of node.images) {
+        if (!retainedImages.has(imageId)) removeImage.run(imageId);
+      }
+    }
+    const revision = saved.revision + Number(!same(previous, graph));
+    const savedAt = new Date().toISOString();
+    graphChanges(previous, graph, (kind, subject, before, after) =>
+      addHistory.run(id, revision, kind, subject, JSON.stringify(before), JSON.stringify(after), displayName, savedAt));
+    putWorkspace.run(JSON.stringify(graph), revision, saveId, id);
+    return revision;
+  }
+
+  // Used for constructing development fixtures. HTTP writes use scoped changes.
   function save(id, input) {
     requireValue(input && isId(input.saveId) && Number.isInteger(input.revision), 'ข้อมูลการบันทึกไม่ถูกต้อง');
     const displayName = requiredText(input.displayName, 'กรุณากรอก Display Name');
     const graph = normalizeWorkspace(input.graph);
-    requireValue(Array.isArray(input.uploads) && input.uploads.every(item => item && isId(item.id)), 'รายการอัปโหลดไม่ถูกต้อง');
-    const uploads = new Map(input.uploads.map(item => [item.id, item]));
-
-    db.exec('BEGIN IMMEDIATE');
-    try {
+    return transaction(() => {
       const saved = row(id);
-      if (saved.last_save_id === input.saveId) {
-        db.exec('COMMIT');
-        return { revision: saved.revision };
-      }
+      if (saved.last_save_id === input.saveId) return { revision: saved.revision };
       if (saved.revision !== input.revision) {
         throw new RequestError(409, 'ผังนี้มีฉบับบันทึกใหม่ กรุณาเปิดผังใหม่');
       }
+      return { revision: persist(id, saved, JSON.parse(saved.graph), graph, input.uploads, displayName, input.saveId) };
+    });
+  }
+
+  function apply(id, input, actor, authorize) {
+    requireValue(input && isId(input.saveId) && Array.isArray(input.ops), 'ข้อมูลการบันทึกไม่ถูกต้อง');
+    const digest = createHash('sha256').update(JSON.stringify(input)).digest('hex');
+    return transaction(() => {
+      const saved = row(id);
+      const receipt = getReceipt.get(id, actor.id, input.saveId);
+      if (receipt) {
+        requireValue(receipt.digest === digest, 'รหัสคำขอนี้ใช้กับข้อมูลชุดอื่นแล้ว');
+        return { revision: receipt.revision };
+      }
+      const seen = new Set();
+      for (const op of input.ops) {
+        requireValue(op && ['rename', 'layout', 'node-add', 'content', 'position', 'edge-add', 'edge', 'edge-remove'].includes(op.kind)
+          && (['rename', 'layout'].includes(op.kind) ? op.id === null : isId(op.id))
+          && Number.isInteger(op.base) && op.base >= 0 && op.base <= saved.revision
+          && (op.kind === 'edge-remove' || op.value && typeof op.value === 'object'), 'รายการแก้ไขไม่ถูกต้อง');
+        const key = scope(op);
+        requireValue(!seen.has(key), 'รายการแก้ไขซ้ำในคำขอเดียวกัน');
+        seen.add(key);
+        if ((getVersion.get(id, key)?.revision ?? 0) > op.base) {
+          throw new RequestError(409, 'รายการนี้มีการเปลี่ยนแปลงหลังฉบับที่คุณเปิด');
+        }
+      }
+      authorize(input);
+      if (input.ops.some(op => op.kind === 'layout') || input.ops.filter(op => op.kind === 'position').length > 1) {
+        requireValue(Number.isInteger(input.guard), 'ต้องระบุฉบับผังก่อนจัดผัง');
+      }
+      if (input.guard != null && input.guard !== saved.revision) {
+        throw new RequestError(409, 'ผังมีฉบับใหม่ กรุณาตรวจการแก้ไขอีกครั้ง');
+      }
       const previous = JSON.parse(saved.graph);
-      const previousIds = new Set(previous.nodes.map(node => node.id));
-      const nextIds = new Set(graph.nodes.map(node => node.id));
-      requireValue([...previousIds].every(id => nextIds.has(id)), 'การลบ Node อยู่ในช่วงถัดไป');
-      const retainedImages = new Set();
-      for (const node of graph.nodes) {
-        if (!previousIds.has(node.id)) {
-          requireValue(addNodeId.run(node.id, id).changes === 1, 'Node นี้อยู่ใน PDCA อื่น');
-        }
-        for (const imageId of node.images) {
-          const existing = imageMeta.get(imageId);
-          if (existing) {
-            requireValue(existing.node_id === node.id, 'รูปนี้อยู่ใน Node อื่น');
-          } else {
-            const upload = uploads.get(imageId);
-            requireValue(upload && isText(upload.name) && isText(upload.data), 'ไม่พบข้อมูลรูป');
-            const bytes = Buffer.from(upload.data, 'base64');
-            const mime = imageType(bytes);
-            requireValue(mime && bytes.length <= 16 * 1024 * 1024, 'รองรับ PNG, JPEG, GIF และ WebP ขนาดไม่เกิน 16 MiB ต่อรูป');
-            addImage.run(imageId, node.id, upload.name, mime, bytes);
+      let merged;
+      try {
+        merged = applyGraphOps(previous, input.ops);
+      } catch (error) {
+        throw new RequestError(409, error.message);
+      }
+      const graph = normalizeWorkspace(merged);
+      const revision = persist(id, saved, previous, graph, input.uploads, actor.displayName, input.saveId);
+      if (revision !== saved.revision) {
+        for (const op of input.ops) {
+          setVersion.run(id, scope(op), revision);
+          if (op.kind === 'node-add') {
+            setVersion.run(id, 'content:' + op.id, revision);
+            setVersion.run(id, 'position:' + op.id, revision);
           }
-          retainedImages.add(imageId);
         }
       }
-      for (const node of previous.nodes) {
-        for (const imageId of node.images) {
-          if (!retainedImages.has(imageId)) removeImage.run(imageId);
-        }
-      }
-      const revision = saved.revision + Number(!same(previous, graph));
-      const savedAt = new Date().toISOString();
-      graphChanges(previous, graph, (kind, subject, before, after) =>
-        addHistory.run(id, revision, kind, subject, JSON.stringify(before), JSON.stringify(after), displayName, savedAt));
-      putWorkspace.run(JSON.stringify(graph), revision, input.saveId, id);
-      db.exec('COMMIT');
+      addReceipt.run(id, actor.id, input.saveId, digest, revision);
       return { revision };
-    } catch (error) {
-      db.exec('ROLLBACK');
-      throw error;
-    }
+    });
   }
 
   function search(term) {
@@ -249,7 +324,13 @@ export function openStore(file) {
       addWorkspace.run(id, JSON.stringify(graph));
       return { id, revision: 0, ...graph };
     },
-    load, save, search,
+    load, save, apply, search,
+    revision: id => row(id).revision,
+    hasNode: (id, nodeId) => JSON.parse(row(id).graph).nodes.some(node => node.id === nodeId),
+    receipt(id, actor, saveId) {
+      const receipt = getReceipt.get(id, actor.id, saveId);
+      return receipt ? { revision: receipt.revision } : null;
+    },
     image(id) {
       const image = readImage.get(id);
       if (!image) throw new RequestError(404, 'ไม่พบรูป');

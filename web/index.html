@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="/canvas.css">
 </head>
 <body>
-<div class="app" id="app">
+<div class="app" id="app" hidden>
   <div class="topbar">
     <div class="logo">N</div>
     <div class="brand">THE NODE OF PDCA<small>VISUAL THINKING SYSTEM</small></div>
@@ -17,10 +17,13 @@
       <button class="navbtn" id="canvasNav" disabled>Canvas</button>
     </nav>
     <div class="editor"><span id="editorName"></span>
+      <span id="connectionState" role="status"></span>
       <span id="saveStatus" role="status" aria-live="polite"></span>
-      <button class="btn" id="retrySave" hidden>ลองบันทึกอีกครั้ง</button>
+      <button class="btn" id="retrySave" hidden>ตรวจฉบับร่าง</button>
+      <button class="btn" id="claimTab" hidden>แก้ในแท็บนี้</button>
+      <button class="btn" id="sessionEnd" hidden>จบ Session</button>
     </div>
-    <span class="tag training">BUILD 1 · ข้อมูลสมมติ</span>
+    <span class="tag training">BUILD 2 · ข้อมูลสมมติ</span>
     <button class="iconbutton" id="themeToggle" aria-label="Toggle dark mode">☾</button>
     <div class="font-size-controls" id="canvasFontControls" aria-label="Text size" hidden>
       <button data-size="0.9">A−</button><button class="active" data-size="1">A</button><button data-size="1.15">A+</button>
@@ -74,13 +77,29 @@
 
 <dialog id="identityDialog" aria-labelledby="identityTitle">
   <form class="modal" id="identityForm">
-    <span class="tag training">BUILD 1 · ข้อมูลสมมติเท่านั้น</span>
+    <span class="tag training">BUILD 2 · ข้อมูลสมมติเท่านั้น</span>
     <h2 id="identityTitle">เริ่มใช้งาน THE NODE OF PDCA</h2>
     <div class="field"><label for="displayName">Display Name สำหรับ History</label><input id="displayName" placeholder="เช่น ผู้ทดสอบ A" autofocus></div>
     <p class="fieldhelp">ใช้ชื่อสมมติสำหรับระบุผู้แก้ในประวัติการบันทึก</p>
     <p class="field-error" id="identityError" role="alert"></p>
     <div class="modal-footer"><button type="submit" class="btn primary">เข้า Workspaces</button></div>
   </form>
+</dialog>
+<dialog id="draftDialog" aria-labelledby="draftTitle">
+  <section class="modal draft-panel">
+    <h2 id="draftTitle">ตรวจฉบับร่างก่อนบันทึก</h2>
+    <p>เทียบกับฉบับที่บันทึกไว้ล่าสุด ระบบจะตรวจสิทธิ์และฉบับอีกครั้งเมื่อยืนยัน</p>
+    <div class="draft-columns">
+      <section><h3>ฉบับล่าสุดที่บันทึกแล้ว</h3><pre id="reviewLatest"></pre></section>
+      <section><h3>ฉบับร่างของ Session นี้</h3><pre id="reviewLocal"></pre></section>
+    </div>
+    <p class="field-error" id="reviewError" role="alert"></p>
+    <div class="modal-footer">
+      <button class="btn" id="cancelDraft">กลับ</button>
+      <button class="btn" id="discardDraft">ทิ้งฉบับร่าง</button>
+      <button class="btn primary" id="confirmDraft">ยืนยันบันทึกฉบับร่าง</button>
+    </div>
+  </section>
 </dialog>
 <dialog id="pdcaDialog" aria-labelledby="pdcaDialogTitle">
   <form class="modal" id="pdcaForm">

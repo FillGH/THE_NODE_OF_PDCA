@@ -202,6 +202,15 @@ dialog h2 { font-size: 18px; margin: 0 0 15px; }
 .action-head .action-pic { flex: 1 1 auto; min-width: 0; }
 .node .node-figure { flex: 0 0 auto; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
+#connectionState { font-size: 11px; color: var(--muted); }
+#nodeEditPanel { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+.node-editor { position: absolute; top: -15px; left: 6px; max-width: 95%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; border-radius: 6px; background: var(--panel); color: var(--ink); font-size: 9px; padding: 2px 4px; pointer-events: none; }
+.app.read-only .node { cursor: default; }
+.app.read-only .handle, .app.read-only .resize-card { pointer-events: none; }
+dialog .draft-panel { width: min(93vw, 760px); max-width: none; }
+.draft-columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.draft-columns h3 { font-size: 13px; }
+.draft-columns pre { max-height: 45vh; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; padding: 10px; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; font: inherit; }
 @media (max-width: 950px) {
   #editorName, .topbar > .training { display: none; }
   .canvas-name { gap: 4px; }

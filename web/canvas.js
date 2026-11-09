@@ -23,6 +23,8 @@ let current = null, selected = null, drawerOpen = false;
 let font = 1, drag = null, edgeDrag = null, tooltipTimer = 0;
 let page = 'workspace', toastTimer, resizeLane = null, layoutUndo = null, uploading = false;
 const cur = () => current;
+let viewRevealCat = null;
+const isCollapsed = cat => cur().collapsed[cat] && cat !== viewRevealCat;
 const find = id => current?.nodes.find(node => node.id === id);
 const isDark = () => document.documentElement.dataset.theme === 'dark';
 const factoryCalendar = new Intl.DateTimeFormat('en-CA', {timeZone: 'Asia/Bangkok', year: 'numeric', month: '2-digit', day: '2-digit'});
@@ -33,7 +35,7 @@ function fillMenus() {
   $('createCategory').innerHTML = cats.map((category, index) =>
     `<option value="${index}">${escapeHTML(category.kind)}</option>`).join('');
 }
-function metrics(){let x=14;let arr=cur().widths.map((w,k)=>{let ww=cur().mode==='snap'&&cur().collapsed[k]?collapsedWidth:w;let out={x,w:ww};x+=ww+gap;return out});return {lanes:arr,width:x+14};}
+function metrics(){let x=14;let arr=cur().widths.map((w,k)=>{let ww=cur().mode==='snap'&&isCollapsed(k)?collapsedWidth:w;let out={x,w:ww};x+=ww+gap;return out});return {lanes:arr,width:x+14};}
 const titleMeasure = document.createElement('div');
 titleMeasure.setAttribute('aria-hidden', 'true');
 document.body.append(titleMeasure);
@@ -70,14 +72,14 @@ function position(node) {
   }
   return {x: layout.freeX ?? lane.x + 13, y: layout.freeY ?? layout.snapY, w: layout.freeW, h: layout.freeH};
 }
-function boxDim(){let m=metrics(),maxX=m.width+5,maxY=790;for(const n of cur().nodes){if(cur().mode==='snap'&&cur().collapsed[n.cat])continue;let p=position(n);maxY=Math.max(maxY,p.y+p.h+85);maxX=Math.max(maxX,p.x+p.w+26)}return {width:Math.max(maxX,970),height:Math.max(790,maxY)};}
+function boxDim(){let m=metrics(),maxX=m.width+5,maxY=790;for(const n of cur().nodes){if(cur().mode==='snap'&&isCollapsed(n.cat))continue;let p=position(n);maxY=Math.max(maxY,p.y+p.h+85);maxX=Math.max(maxX,p.x+p.w+26)}return {width:Math.max(maxX,970),height:Math.max(790,maxY)};}
 const clearance = 7;
 const svgNS = 'http://www.w3.org/2000/svg';
 let edgeBeingEdited = null;
 
 function visibleBoxes() {
   return new Map(cur().nodes
-    .filter(node => cur().mode === 'free' || !cur().collapsed[node.cat])
+    .filter(node => cur().mode === 'free' || !isCollapsed(node.cat))
     .map(node => [node.id, position(node)]));
 }
 
@@ -361,6 +363,7 @@ function clearEdgePreview() {
 }
 
 function editEdge(index) {
+  if (!session.canEditGraph()) return;
   const edge = cur().edges[index];
   if (!edge) return;
   edgeBeingEdited = edge;
@@ -402,6 +405,7 @@ function edgeProblem(source, target) {
 }
 
 function addEdge(source, target) {
+  if (!session.canEditGraph()) return;
   const error = edgeProblem(source, target);
   if (error) {
     toast(error);
@@ -446,7 +450,7 @@ function installEdgeControls() {
   });
   $('edgeDialog').querySelector('form').addEventListener('submit', event => {
     event.preventDefault();
-    if (!edgeBeingEdited) return;
+    if (!session.canEditGraph() || !cur().edges.includes(edgeBeingEdited)) return;
     edgeBeingEdited.label = $('edgeLabel').value.trim();
     edgeBeingEdited.color = draftEdgeColor;
     dismissDialog($('edgeDialog'));
@@ -456,6 +460,7 @@ function installEdgeControls() {
   });
   $('cancelEdge').addEventListener('click', () => dismissDialog($('edgeDialog')));
   $('deleteEdge').addEventListener('click', () => {
+    if (!session.canEditGraph()) return;
     const index = cur().edges.indexOf(edgeBeingEdited);
     if (index < 0) return;
     cur().edges.splice(index, 1);
@@ -477,7 +482,7 @@ function renderLanes(dim) {
   if (!snap) { renderOrbs(dim); return; }
   $('orbs').replaceChildren();
   metrics().lanes.forEach((lane, i) => {
-    const category = cats[i], collapsed = workspace.collapsed[i];
+    const category = cats[i], collapsed = isCollapsed(i);
     const tint = isDark() ? category.dark : category.light;
     const common = `left:${lane.x}px;width:${lane.w}px;--lane-bg:${tint};--lane-border:${isDark() ? '#ffffff19' : category.c + '23'};--c:${category.c}`;
     const body = document.createElement('div');
@@ -562,7 +567,7 @@ function renderCards() {
   cards.replaceChildren();
   let shown = 0;
   for (const node of workspace.nodes) {
-    if (workspace.mode === 'snap' && workspace.collapsed[node.cat]) continue;
+    if (workspace.mode === 'snap' && isCollapsed(node.cat)) continue;
     shown++;
     const box = position(node);
     const category = cats[node.cat];
@@ -592,6 +597,10 @@ function renderCards() {
       <span class="handle left" data-handle="left" title="Incoming link"></span>
       <span class="handle right" data-handle="right" title="Drag connector to another node"></span>
       <span class="resize-card" data-resize="1" title="Resize card in Free Float mode">◢</span>`;
+    const badge = document.createElement('span');
+    badge.className = 'node-editor';
+    card.append(badge);
+    paintEditorBadge(badge, session.lockFor(node.id));
     cards.append(card);
   }
   $('footerLeft').textContent = `${shown} visible / ${workspace.nodes.length} Nodes · ${workspace.edges.length} Links`;
@@ -605,7 +614,7 @@ function renderAll() {
   $('laneHeader').hidden = !onCanvas || workspace.mode !== 'snap';
   $('minimap').hidden = !onCanvas;
   $('canvasFontControls').hidden = !onCanvas;
-  $('canvasNav').disabled = !workspace;
+  $('canvasNav').disabled = !session.lastWorkspace();
   $('canvasNav').classList.toggle('active', onCanvas);
   $('home').classList.toggle('active', !onCanvas);
   $('overlay').classList.toggle('open', !onCanvas);
@@ -617,6 +626,7 @@ function renderAll() {
   $('emptyCanvas').hidden = workspace.nodes.length > 0;
   redrawCanvas();
   renderDrawer();
+  updateAccess();
 }
 
 function redrawCanvas() {
@@ -634,7 +644,59 @@ function renderDrawer() {
   drawer.classList.toggle('open', open);
   drawer.inert = !open;
   if (open) $('drawerContent').innerHTML =
+    '<div id="nodeEditPanel"><button id="editSelectedNode" type="button" class="btn"></button><span id="nodeLockLabel"></span></div>' +
     inspectorFields(node, cats, session.imageAvailable, overdue(node)) + inspectorLinks(node);
+  updateAccess();
+}
+
+function paintEditorBadge(element, lock) {
+  element.hidden = !lock;
+  const label = lock ? (lock.mine ? 'คุณกำลังแก้' : 'กำลังแก้ · ' + lock.displayName + ' · ' + lock.editor) : '';
+  if (element.textContent !== label) element.textContent = label;
+}
+
+function updateAccess() {
+  if (page !== 'canvas') return;
+  const editable = session.canEditGraph();
+  const nodeEditable = session.canEditNode(selected);
+  $('app').classList.toggle('read-only', !editable);
+  for (const id of ['renamePdca', 'addGeneral', 'snapMode', 'freeMode', 'autoArrange', 'undoLayout', 'defaultView']) {
+    $(id).disabled = !editable;
+  }
+  for (const button of $('laneHeaderTrack').querySelectorAll('button')) button.disabled = !editable;
+  for (const card of $('cards').children) {
+    paintEditorBadge(card.querySelector('.node-editor'), session.lockFor(card.dataset.nodeId));
+  }
+  if (!drawerOpen || !$('editSelectedNode')) return;
+  const lock = session.lockFor(selected);
+  const button = $('editSelectedNode');
+  const label = nodeEditable ? 'จบการแก้ Node' : 'แก้ Node นี้';
+  if (button.textContent !== label) button.textContent = label;
+  button.disabled = !editable || !!(lock && !lock.mine);
+  paintEditorBadge($('nodeLockLabel'), lock);
+  for (const field of $('drawerContent').querySelectorAll('[data-edit], #nodeImage, #documentUrl, [data-add-document], [data-remove-document], [data-remove-image]')) {
+    field.disabled = !nodeEditable || (field.id === 'nodeImage' && uploading);
+  }
+  for (const field of $('drawerContent').querySelectorAll('[data-edit-edge], [data-add-edge], #inspectorTarget')) {
+    field.disabled = !editable;
+  }
+}
+
+function syncWorkspace(redraw) {
+  if (page !== 'canvas') { $('canvasNav').disabled = !session.lastWorkspace(); return; }
+  if (!redraw) { updateAccess(); return; }
+  layoutUndo = null;
+  const active = document.activeElement;
+  const focusId = active?.closest('#drawerContent') ? active.id : '';
+  const start = active?.selectionStart, end = active?.selectionEnd;
+  const scroll = $('drawerContent').scrollTop;
+  renderAll();
+  $('drawerContent').scrollTop = scroll;
+  const field = focusId && $(focusId);
+  if (field && !field.disabled) {
+    field.focus({preventScroll: true});
+    if (Number.isInteger(start)) field.setSelectionRange(start, end);
+  }
 }
 
 function refreshOverdue() {
@@ -660,27 +722,29 @@ function overdue(node) {
 function updateNodeField(event) {
   const field = event.target.dataset.edit;
   const node = find(selected);
-  if (!field || !node) return;
+  if (!field || !node || !session.canEditNode(node.id)) return;
   const value = field === 'cat' ? Number(event.target.value) : event.target.value;
   if (node[field] === value) return;
   node[field] = value;
-  session.mark();
   if (field === 'cat') {
     const peers = cur().nodes.filter(other => other !== node && other.cat === value);
     node.snapY = Math.max(70, ...peers.map(peer => {
       const width = cur().widths[value] - 26;
       return peer.snapY + snapHeight(peer, width) + 25;
     }));
-    cur().collapsed[value] = false;
+    viewRevealCat = value;
+    session.mark();
     // A layout undo from before the category change would reintroduce old lane positions.
     layoutUndo = null;
     renderAll();
     $('nodeCategory').focus();
     revealNodeInView(node.id);
   } else if (field === 'sideNote') {
+    session.mark();
     hideTooltip();
   } else {
-    if (field === 'title') redrawCanvas();
+    session.mark();
+    if (field === 'title') { redrawCanvas(); updateAccess(); }
     else renderCards();
     const badge = $('inspectorOverdue');
     if (badge) badge.hidden = !overdue(node);
@@ -688,6 +752,7 @@ function updateNodeField(event) {
 }
 
 function addNode(cat, title = '') {
+  if (!session.canEditGraph()) return;
   const workspace = cur();
   const peers = workspace.nodes.filter(node => node.cat === cat);
   const node = {
@@ -697,7 +762,7 @@ function addNode(cat, title = '') {
       peer.snapY + snapHeight(peer, workspace.widths[cat] - 26) + 25)),
     freeX: null, freeY: null, freeW: 200, freeH: cat === 3 ? 126 : 98,
   };
-  workspace.collapsed[cat] = false;
+  viewRevealCat = cat;
   if (workspace.mode === 'free') {
     node.freeX = peers[0]?.freeX ?? metrics().lanes[cat].x + 13;
     node.freeY = Math.max(90, ...workspace.nodes.map(position)
@@ -710,8 +775,7 @@ function addNode(cat, title = '') {
   drawerOpen = true;
   renderAll();
   revealNodeInView(node.id);
-  $('nodeTitle').focus({preventScroll: true});
-  $('nodeTitle').select();
+  $('editSelectedNode').focus({preventScroll: true});
 }
 
 function openWorkspace(workspace, nodeId) {
@@ -721,10 +785,7 @@ function openWorkspace(workspace, nodeId) {
   selected = null;
   drawerOpen = false;
   const node = find(nodeId);
-  if (node && cur().collapsed[node.cat]) {
-    cur().collapsed[node.cat] = false;
-    session.mark();
-  }
+  viewRevealCat = node?.cat ?? null;
   renderAll();
   enterWorkspace();
   if (node) {
@@ -737,19 +798,27 @@ function openWorkspaces() {
   cameraMotion++;
   document.querySelector('.topbar').classList.remove('hidden');
   page = 'workspace';
+  current = null;
+  drag = edgeDrag = resizeLane = layoutUndo = null;
+  routeCache = {key: null, routes: []};
+  titleMeasure.textContent = '';
+  viewRevealCat = null;
   selected = null;
   drawerOpen = false;
   renderAll();
 }
 
 function selectNode(id) {
-  if (!find(id)) return;
+  const node = find(id);
+  if (!node) return;
+  const reveal = isCollapsed(node.cat) || (viewRevealCat !== node.cat && cur().collapsed[viewRevealCat]);
+  viewRevealCat = node.cat;
   const focused = document.activeElement?.dataset.nodeId === id;
   selected = id;
   drawerOpen = true;
   hideTooltip();
-  renderCards();
-  drawLinks();
+  if (reveal) redrawCanvas();
+  else { renderCards(); drawLinks(); }
   renderDrawer();
   if (focused) cardElement(id)?.focus({preventScroll: true});
   revealNodeInView(id);
@@ -757,6 +826,7 @@ function selectNode(id) {
 function hideTooltip(){clearTimeout(tooltipTimer);$('tooltip').classList.remove('show');}
 function showTooltip(n,clientX,clientY){if(!n||!n.sideNote)return;const el=$('tooltip');el.innerHTML=`<b>Side note</b>${escapeHTML(n.sideNote)}`;el.classList.add('show');const w=350;el.style.left=Math.min(Math.max(8,clientX+16),innerWidth-w-12)+'px';el.style.top=Math.min(Math.max(10,clientY+16),innerHeight-230)+'px';}
 function switchMode(next) {
+  if (!session.canEditGraph()) return;
   const workspace = cur();
   if (workspace.mode === next) return;
   const before = snapshotCardRects();
@@ -772,7 +842,7 @@ function switchMode(next) {
     workspace.collapsed = collapsed;
   }
   workspace.mode = next;
-  session.mark();
+  session.mark('layout');
   renderAll();
   animateCardLayout(before);
 }
@@ -788,6 +858,7 @@ function saveUndo() {
 }
 
 function undo() {
+  if (!session.canEditGraph()) return;
   if (!layoutUndo) { toast('ยังไม่มีการจัดผังให้ย้อนกลับ'); return; }
   const before = snapshotCardRects();
   const {positions, ...view} = layoutUndo;
@@ -797,12 +868,13 @@ function undo() {
     if (node) Object.assign(node, position);
   }
   layoutUndo = null;
-  session.mark();
+  session.mark('layout');
   renderAll();
   animateCardLayout(before);
 }
 
 function defaultView() {
+  if (!session.canEditGraph()) return;
   saveUndo();
   const workspace = cur();
   workspace.mode = 'snap';
@@ -816,7 +888,8 @@ function defaultView() {
   packSnap(workspace);
   selected = null;
   drawerOpen = false;
-  session.mark();
+  viewRevealCat = null;
+  session.mark('layout');
   renderAll();
 }
 
@@ -948,6 +1021,7 @@ function animateCardLayout(before) {
 }
 
 function graphArrange() {
+  if (!session.canEditGraph()) return;
   const workspace = cur();
   if (!workspace.nodes.length) return;
   const before = snapshotCardRects();
@@ -958,7 +1032,7 @@ function graphArrange() {
   arrangeAroundActions(workspace, workspace.mode === 'free');
   renderAll();
   animateCardLayout(before);
-  session.mark();
+  session.mark('layout');
   toast('จัดการ์ดตามระดับของ Action และปรับขนาดตามข้อความแล้ว · 100%');
 }
 
@@ -982,7 +1056,7 @@ function drawMovingLinks(id, box) {
     if (edge.from !== id && edge.to !== id) return;
     svg.querySelector(`[data-edge="${index}"]`)?.classList.add('moving-endpoint');
     const other = find(edge.from === id ? edge.to : edge.from);
-    if (!other || (cur().mode === 'snap' && cur().collapsed[other.cat])) return;
+    if (!other || (cur().mode === 'snap' && isCollapsed(other.cat))) return;
     const neighbor = position(other), movingIsSource = edge.from === id;
     const a = movingIsSource ? box : neighbor, b = movingIsSource ? neighbor : box;
     const x = a.x + a.w, y = a.y + a.h / 2, targetY = b.y + b.h / 2;
@@ -1020,7 +1094,7 @@ function onCardPointerDown(event) {
   const resize = event.target.closest('[data-resize]');
   hideTooltip();
   if (handle) {
-    if (handle.dataset.handle === 'right') {
+    if (session.canEditGraph() && handle.dataset.handle === 'right') {
       event.preventDefault();
       edgeDrag = {from: node.id, pointer: event.pointerId};
       handle.setPointerCapture(event.pointerId);
@@ -1042,7 +1116,7 @@ function onCardPointerMove(event) {
     previewEdge(screenToWorld(event));
     return;
   }
-  if (drag?.pointer !== event.pointerId) return;
+  if (drag?.pointer !== event.pointerId || !session.canEditGraph()) return;
   const dx = (event.clientX - drag.startX) / camera().zoom;
   const dy = (event.clientY - drag.startY) / camera().zoom;
   if (!drag.active) {
@@ -1080,12 +1154,12 @@ function onCardPointerUp(event) {
   const finished = drag;
   drag = null;
   if (!finished.active && finished.type === 'move') selectNode(finished.id);
-  else if (finished.active) {
+  else if (finished.active && session.canEditGraph()) {
     saveUndo();
     Object.assign(find(finished.id), finished.layout);
     session.mark();
     renderAll();
-  }
+  } else if (finished.active) renderAll();
 }
 
 function cancelCardGesture(event) {
@@ -1146,7 +1220,7 @@ async function attachImage(event) {
   if (event.target.id !== 'nodeImage' || !event.target.files.length) return;
   const input = event.target;
   const workspace = cur(), node = find(selected);
-  if (uploading) {
+  if (uploading || !session.canEditNode(node?.id)) {
     input.value = '';
     return;
   }
@@ -1161,8 +1235,8 @@ async function attachImage(event) {
     }
   } finally {
     input.value = '';
-    input.disabled = false;
     uploading = false;
+    updateAccess();
   }
 }
 
@@ -1170,6 +1244,12 @@ function onInspectorClick(event) {
   const target = event.target.closest('button');
   const node = find(selected);
   if (!target || !node) return;
+  if (target.id === 'editSelectedNode') {
+    session.editNode(node.id);
+    return;
+  }
+  if (target.matches('[data-add-document], [data-remove-document], [data-remove-image]') &&
+      !session.canEditNode(node.id)) return;
   if (target.hasAttribute('data-add-document')) {
     const link = documentLink($('documentUrl').value);
     if (!link) {
@@ -1188,11 +1268,6 @@ function onInspectorClick(event) {
     return;
   } else if (target.dataset.traceNode) {
     const peer = find(target.dataset.traceNode);
-    if (cur().collapsed[peer.cat]) {
-      cur().collapsed[peer.cat] = false;
-      session.mark();
-      renderAll();
-    }
     selectNode(peer.id);
     $('nodeTitle').focus({preventScroll: true});
     return;
@@ -1206,7 +1281,7 @@ function onInspectorClick(event) {
 
 function refreshImages() {
   if (page !== 'canvas') return;
-  if (!drag && !edgeDrag) redrawCanvas();
+  if (!drag && !edgeDrag) { redrawCanvas(); updateAccess(); }
   for (const button of $('drawerContent').querySelectorAll('[data-preview-image]')) {
     button.disabled = !session.imageAvailable(button.dataset.previewImage);
   }
@@ -1592,6 +1667,7 @@ $('drawerContent').addEventListener('change', event => {
 $('drawerContent').addEventListener('click', onInspectorClick);
 
 $('laneHeaderTrack').addEventListener('click', event => {
+  if (!session.canEditGraph()) return;
   const plus = event.target.closest('[data-add-cat]');
   if (plus) {
     addNode(Number(plus.dataset.addCat));
@@ -1603,13 +1679,14 @@ $('laneHeaderTrack').addEventListener('click', event => {
   const before = snapshotCardRects();
   saveUndo();
   cur().collapsed[index] = !cur().collapsed[index];
-  session.mark();
+  viewRevealCat = null;
+  session.mark('layout');
   renderAll();
   animateCardLayout(before);
 });
 $('laneHeaderTrack').addEventListener('pointerdown', event => {
   const handle = event.target.closest('[data-resize-lane]');
-  if (!handle) return;
+  if (!handle || !session.canEditGraph()) return;
   event.preventDefault();
   event.stopPropagation();
   saveUndo();
@@ -1617,14 +1694,15 @@ $('laneHeaderTrack').addEventListener('pointerdown', event => {
   resizeLane = { index, x: event.clientX, width: cur().widths[index], pointer: event.pointerId };
 });
 document.addEventListener('pointermove', event => {
-  if (resizeLane?.pointer !== event.pointerId) return;
+  if (resizeLane?.pointer !== event.pointerId || !session.canEditGraph()) return;
   const delta = (event.clientX - resizeLane.x) / camera().zoom;
   cur().widths[resizeLane.index] = Math.max(145, Math.min(370, resizeLane.width + delta));
   renderAll();
 });
 for (const type of ['pointerup', 'pointercancel']) document.addEventListener(type, event => {
   if (resizeLane?.pointer !== event.pointerId) return;
-  if (cur().widths[resizeLane.index] !== resizeLane.width) session.mark();
+  if (!session.canEditGraph()) cur().widths[resizeLane.index] = resizeLane.width;
+  else if (cur().widths[resizeLane.index] !== resizeLane.width) session.mark('layout');
   resizeLane = null;
 });
 
@@ -1663,6 +1741,7 @@ installEdgeControls();
 
 const newNode = $('newModal');
 $('addGeneral').addEventListener('click', () => {
+  if (!session.canEditGraph()) return;
   $('createCategory').value = '3';
   $('createTitle').value = '';
   revealDialog(newNode);
@@ -1685,5 +1764,8 @@ document.addEventListener('keydown', event => {
 });
 
 document.documentElement.dataset.theme = 'light';
-const session = installWorkspaces({ onOpen: openWorkspace, onHome: openWorkspaces, onImagesSaved: refreshImages });
+const session = installWorkspaces({
+  onOpen: openWorkspace, onHome: openWorkspaces, onSync: syncWorkspace, onImagesSaved: refreshImages,
+  canvasBusy: () => !!(drag || edgeDrag || resizeLane || $('edgeDialog').open),
+});
 setInterval(refreshOverdue, 1000);
