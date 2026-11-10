@@ -29,6 +29,7 @@ export function installRecords(session, workspace, openNode) {
 
   function show(title, kind) {
     view = { kind, workspace: workspace() };
+    dialog.dataset.view = kind;
     $('recordTitle').textContent = title;
     filters.replaceChildren();
     list.replaceChildren();
@@ -44,30 +45,46 @@ export function installRecords(session, workspace, openNode) {
     if (!dialog.open || view?.kind !== 'overview') return;
     if (view.workspace !== workspace()) { dialog.close(); return; }
     const rows = actionOverview(session.savedWorkspace() ?? view.workspace);
-    const filter = $('actionFilter').value;
-    const key = JSON.stringify([rows, filter]);
+    const selected = [...$('actionFilter').querySelectorAll('[data-status]:checked')].map(box => box.value);
+    const key = JSON.stringify([rows, selected]);
     if (key === overviewKey) return;
     overviewKey = key;
-    const summaries = statuses.map(status => {
+    const summaries = statuses.map((status, index) => {
       const count = rows.filter(row => row.status === status).length;
-      return html(status) + ' ' + count + ' (' + (rows.length ? Math.round(count * 1000 / rows.length) / 10 : 0) + '%)';
+      const percent = rows.length ? Math.round(count * 1000 / rows.length) / 10 : 0;
+      return '<div class="action-summary action-tone-' + index + '"><span>' + html(status) + '</span><strong>' +
+        count + '</strong><span>' + percent + '%</span></div>';
     });
-    list.innerHTML = '<p>' + summaries.join(' · ') + '</p><p>Action ทั้งหมด ' + rows.length +
-      ' · เกินกำหนด ' + rows.filter(row => row.overdue).length + '</p><table><thead><tr>' +
-      '<th>Title</th><th>PIC</th><th>Due Date</th><th>Status</th></tr></thead><tbody>' +
-      rows.filter(row => !filter || row.status === filter).map(row =>
+    const visible = rows.filter(row => selected.includes(row.status));
+    list.innerHTML = '<div class="action-summaries">' + summaries.join('') + '</div><p class="overview-totals">Action ทั้งหมด ' + rows.length +
+      ' · <span class="overdue">เกินกำหนด ' + rows.filter(row => row.overdue).length + '</span></p>' +
+      (visible.length ? '<div class="action-table"><table><thead><tr>' +
+      '<th scope="col">Title</th><th scope="col">PIC</th><th scope="col">Due Date</th><th scope="col">Status</th></tr></thead><tbody>' +
+      visible.map(row =>
         '<tr><td><button class="btn" data-open-action="' + row.id + '">' + html(row.title || 'Node ไม่มีชื่อ') +
-        '</button></td><td>' + html(row.pic || '—') + '</td><td>' + html(row.due || '—') +
-        (row.overdue ? ' <span class="overdue">Overdue</span>' : '') + '</td><td>' + html(row.status) + '</td></tr>').join('') +
-      '</tbody></table>';
+        '</button></td><td>' + html(row.pic || '—') + '</td><td class="action-due">' +
+        (row.due ? '<time datetime="' + html(row.due) + '">' + html(row.due) + '</time>' : '—') +
+        (row.overdue ? ' <span class="overdue">Overdue</span>' : '') + '</td><td><span class="action-status-pill action-tone-' +
+        statuses.indexOf(row.status) + '">' + html(row.status) + '</span></td></tr>').join('') +
+      '</tbody></table></div>' : '<p class="fieldhelp">' + (rows.length ? 'ไม่มี Action ในสถานะที่เลือก' : 'ผังนี้ยังไม่มี Action') + '</p>');
   }
 
   $('showOverview').addEventListener('click', () => {
     show('Action Overview · ' + workspace().title, 'overview');
     overviewKey = undefined;
-    filters.innerHTML = '<label for="actionFilter">Status </label><select id="actionFilter">' +
-      '<option value="">ทั้งหมด</option>' + statuses.map(status => '<option>' + html(status) + '</option>').join('') + '</select>';
-    $('actionFilter').addEventListener('change', renderOverview);
+    filters.innerHTML = '<fieldset id="actionFilter"><legend>Status</legend>' +
+      '<label><input type="checkbox" data-all-statuses checked> ทั้งหมด</label>' + statuses.map(status =>
+        '<label><input type="checkbox" data-status value="' + html(status) + '" checked> ' + html(status) + '</label>').join('') + '</fieldset>';
+    const filter = $('actionFilter');
+    const all = filter.querySelector('[data-all-statuses]');
+    const choices = [...filter.querySelectorAll('[data-status]')];
+    filter.addEventListener('change', event => {
+      if (event.target === all) for (const box of choices) box.checked = all.checked;
+      const count = choices.filter(box => box.checked).length;
+      all.checked = count === choices.length;
+      all.indeterminate = count > 0 && count < choices.length;
+      renderOverview();
+    });
     renderOverview();
   });
   list.addEventListener('click', event => {
@@ -158,6 +175,7 @@ export function installRecords(session, workspace, openNode) {
   });
   $('trashPdca').addEventListener('click', () => {
     const ws = workspace();
+    $('pdcaMore').open = false;
     if (confirm('ย้าย PDCA “' + ws.title + '” เข้า Trash? กู้คืนได้ภายใน 7 วัน')) session.moveToTrash();
   });
   $('drawerContent').addEventListener('click', event => {

@@ -4,6 +4,21 @@
 
 A lightweight, risk-based starter for engineering and software projects. It is designed to be reusable across web apps, dashboards, automations, AlgoTrade systems, industrial tools, scripts, and other technical projects without forcing heavyweight process onto small work.
 
+## THE NODE OF PDCA · Pilot package สำหรับ LAN Test
+
+ใช้ PowerShell และ Node.js 24 จากโฟลเดอร์ repo ที่ checkout สาขา `codex/build-increment-4`
+
+```powershell
+npm.cmd ci
+npm.cmd test
+npm.cmd run demo:seed
+npm.cmd run demo:start
+```
+
+เปิด [Demo บน Laptop](http://127.0.0.1:4175) แล้วใช้ชื่อทดสอบ จะเห็น Demo สามผังพร้อมภาพ เอกสาร ประวัติ และข้อมูลสำหรับซ้อม Trash กับ Restore สร้าง Demo หนึ่งครั้งต่อโฟลเดอร์ แล้วใช้ `demo:start` เพื่อเปิดข้อมูลชุดเดิม
+
+สำหรับ IT ให้เริ่มจาก [คู่มือ VERIFY และ LAN Test](design/PILOT_VERIFY.md) ซึ่งมีขั้นตอน HTTPS proxy, การทดสอบสิทธิ์ การแก้พร้อมกัน การซ้อมกู้ และแบบบันทึกผล ใช้ [คู่มือปฏิบัติการ BUILD 4](design/BUILD4_HOST_RUNBOOK.md) สำหรับ Task Scheduler, Backup, Restore และการย้าย Host
+
 ## THE NODE OF PDCA · BUILD ช่วงที่ 4
 
 เปิด PowerShell ใน worktree นี้ด้วย Node.js 24 รัน `npm.cmd ci` แล้ว `npm.cmd start` เปิด [แอปบนเครื่อง](http://127.0.0.1:4173) และใช้ข้อมูลสมมติ การเริ่มบริการจะสร้าง Backup รอบแรกทันที และนัดรอบถัดไปทุก 2 ชั่วโมง ดูรายการที่ตรวจแล้วใน `.pdca-dev/backups` และเหตุการณ์ใน `.pdca-dev/operations.jsonl`

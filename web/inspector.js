@@ -4,6 +4,12 @@ import { escapeHTML as html, imageUrl } from './workspaces.js';
 export function inspectorFields(node, cats, imageAvailable, overdue) {
   return `
     <span class="drawer-kind" style="--c:${cats[node.cat].c}"><i></i>${html(cats[node.cat].kind)}</span>
+    <div class="card-size-control">
+      <button id="toggleCardSize" class="btn" type="button" aria-pressed="${!!node.sizeLocked}">
+        <span aria-hidden="true">${node.sizeLocked ? '🔒' : '🔓'}</span> ล็อกขนาด Card
+      </button>
+      <span class="fieldhelp">ล็อกเฉพาะขนาด · ยังลากย้ายได้</span>
+    </div>
     <div class="field"><label for="nodeCategory">ประเภท Node</label>
       <select id="nodeCategory" data-edit="cat">${cats.map((cat, index) =>
         `<option value="${index}" ${node.cat === index ? 'selected' : ''}>${html(cat.kind)}</option>`).join('')}</select></div>

@@ -424,6 +424,12 @@ On 2026-11-08, the Project Owner explicitly accepted [DESIGN v0.10 at commit `68
 
 **Requirements boundary:** D-001–D-107 and Closure-01–05 remain the product baseline. The demo's all-Workspaces Action Overview is outside D-092; its forward-category link restriction and arrowless rendering do not supersede D-060/D-105.
 
+**Owner-approved polish after the BUILD 4 demo:** Restore v0.10's optional Workspace categories for topics in the shared collection, including create, rename, assign, filter and remove. Removing a category leaves its PDCAs uncategorized. D-084 continues to govern department grouping. Allow collaborators to lock a Node Card's displayed width and height in both modes as part of its saved layout. Auto Arrange and dragging can still move locked Cards. Snap columns accommodate their locked widths. The same round covers closing dialogs from the backdrop, scalable image previews, a wider Action Overview, Canvas action placement and three browser-local font choices.
+
+Development acceptance for this polish uses fictional Workspaces. Close image, History, Action Overview, Export and an empty New Node dialog by clicking outside. Confirm that a populated New Node dialog asks before discarding. Resize a Card with an image and check that the whole preview grows. Lock the size, drag, run Auto Arrange in both modes, and reopen to check the same dimensions. Check that Action Overview keeps its close button and status filter available during scrolling, uses labeled status colors, and displays the due date on one line. Create, rename, assign, filter and delete a Workspace category, then confirm its PDCAs remain discoverable. Switch all three fonts and reload to check the browser preference. Confirm Action Overview, History and Export are in the top bar and the PDCA Trash command is in the overflow menu.
+
+The follow-up polish adds multi-select status checkboxes to Action Overview, direct title editing on Card double-click or F2 with the existing Node edit permission and Autosave, and two larger text sizes at 130% and 145%. Show the Action reference at the upper right, assigned in order per PDCA when a Node first becomes an Action. Existing Actions receive references in saved Node order. Verify that saving, reordering, reclassification, Trash and reopening do not renumber retained Actions.
+
 ### DESIGN closeout — 2026-11-08
 
 The [pre-BUILD design and gate review](design/DESIGN_PRE_BUILD.md) records Phil’s accepted workflows, the four BUILD increments, their entry conditions and acceptance checks. [Collaboration acceptance](design/qa/COLLABORATION_ACCEPTANCE.md) covers late save responses, stale locks/revisions, reconnect and draft review, tab handoff, browser closure and ending a Session. The single-page mock exercises the supported states and provides no evidence of separate browser Sessions or of Host persistence. The PDF, two-sheet Excel and JSON samples use the same [synthetic PDCA](design/examples/PDCA-SYN-01.json). Overdue compares date-only deadlines against the factory calendar, using Asia/Bangkok for the design.
@@ -986,8 +992,10 @@ This file records confirmed requirements and the owner-authorized move to **DESI
 
 **Before Official Pilot — VERIFY evidence:** Restricted access on the actual factory LAN (G-07/G-11), a complete restore drill meeting RPO ≤4 hours and RTO ≤1 working day (G-09/G-10), and a representative concurrent exercise with about 200 Nodes and ten editors in the same PDCA (D-058/G-05/G-12) are all **NOT TESTED**. See the [verification plan](design/DESIGN_PRE_BUILD.md#verify-ก่อน-official-pilot).
 
+**BUILD 4 closed by the Project Owner on 2026-11-10.** The owner approved handoff of the Pilot package for factory LAN Test using fictional Demo data. Start with the [VERIFY runbook and evidence sheet](design/PILOT_VERIFY.md). Factory host, access, recovery and collaboration gates remain pending IT evidence. Official Pilot approval and the post-Pilot GO decision are separate gates.
+
 ## Ready to Release — NOT APPLICABLE YET
-Production implementation, integrated-system testing, Pilot and production release have not been authorized or performed.
+Production release remains pending VERIFY, Official Pilot results, the Project Owner decision and applicable IT approval.
 
 ---
 

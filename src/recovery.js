@@ -67,7 +67,12 @@ export function inspectWorkspace(db) {
   });
   check(!nodeIds.size && !imageIds.size, 'Orphan Node or image');
   check(!db.prepare('SELECT 1 FROM trash WHERE pdca_id NOT IN (SELECT id FROM workspaces)').get(), 'Orphan Trash entry');
-  return { cut, workspaces };
+  // Older snapshots predate Workspace categories and restore with no assignments.
+  const hasCategories = db.prepare("SELECT 1 FROM sqlite_schema WHERE name = 'workspace_categories'").get();
+  const categories = hasCategories ? db.prepare('SELECT id, name FROM workspace_categories ORDER BY id').all() : [];
+  const categoryAssignments = hasCategories
+    ? db.prepare('SELECT pdca_id, category_id FROM workspace_category_assignments ORDER BY pdca_id').all() : [];
+  return { cut, workspaces, categories, categoryAssignments };
 }
 
 export function inspectWorkspaceFile(file) {

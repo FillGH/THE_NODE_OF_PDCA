@@ -2,6 +2,7 @@ import { ApiError, autosave } from './autosave.js';
 import { categoryNames } from './model.js';
 import { applyGraphOps, diffGraph, graphSnapshot, scope } from './changes.js';
 import { browserSession } from './session.js';
+import { confirmAction } from './dialogs.js';
 
 const $ = id => document.getElementById(id);
 const imageUrls = new Map();
@@ -19,6 +20,9 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
   let tab, locks = [], editing, blocked, review, layoutGuard = false;
   let graphAction, startingEdit, handoff, finishing, draining, reconciling;
   let stopping = false;
+  let categories = [], categoryBusy = false;
+  const categoryDialog = $('categoryDialog'), categoryFilter = $('workspaceCategory');
+  const categoryPath = '/api/workspace-categories';
   const drafts = new Map();
   const versions = new Map();
   const uploads = new Map();
@@ -65,21 +69,115 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     results.textContent = 'กำลังค้นหา…';
     try {
       const query = $('search').value.trim();
-      const records = await request('/api/pdca?q=' + encodeURIComponent(query));
+      const [records, groups] = await Promise.all([request('/api/pdca?q=' + encodeURIComponent(query)), request(categoryPath)]);
       if (seq !== searching) return;
-      results.innerHTML = records.map(record => `
+      categories = groups;
+      const selected = categoryFilter.value;
+      categoryFilter.innerHTML = '<option value="">ทุกหมวด</option>' + categoryOptions(null, 'none');
+      categoryFilter.value = [...categoryFilter.options].some(option => option.value === selected) ? selected : '';
+      const filter = categoryFilter.value;
+      const visible = records.filter(record => !filter || (record.categoryId ?? 'none') === filter);
+      results.innerHTML = visible.map(record => `
+        <article class="workspace-tile">
         <button type="button" class="workspace-card" data-pdca="${record.id}" data-node="${record.nodeId || ''}">
           <span class="workspace-type">${record.nodeId ? escapeHTML(categoryNames[record.cat]) + ' · NODE' : 'PDCA'}</span>
           <strong>${escapeHTML(record.nodeId ? record.nodeTitle || 'Node ไม่มีชื่อ' : record.title)}</strong>
           <span class="workspace-count">${record.nodeId ? escapeHTML(record.title) + ' · ' + record.nodeId :
             record.nodeCount + ' Nodes · ' + record.edgeCount + ' เส้น'}</span>
           <span class="workspace-id">${record.id}</span><span class="workspace-open">เปิด Canvas ↗</span>
-        </button>`).join('');
-      if (!records.length) results.textContent = query ? 'ไม่พบรายการที่ตรงกับคำค้น' : 'ยังไม่มี PDCA · เริ่มด้วยการสร้างผังเปล่า';
+        </button>
+        ${record.nodeId ? '' : `<label class="workspace-card-category">หมวด Workspace
+          <select data-assign-category="${record.id}" data-current-category="${record.categoryId ?? ''}"
+            aria-label="หมวดของ ${escapeHTML(record.title)}">${categoryOptions(record.categoryId)}</select>
+        </label>`}
+        </article>`).join('');
+      if (!visible.length) results.textContent = query ? 'ไม่พบรายการที่ตรงกับคำค้น' :
+        filter ? 'ยังไม่มี PDCA ในหมวดนี้' : 'ยังไม่มี PDCA · เริ่มด้วยการสร้างผังเปล่า';
     } catch (error) {
       if (seq === searching && control.active()) results.textContent = 'อ่านรายการไม่สำเร็จ · ' + error.message;
     }
   }
+  function categoryOptions(selected, none = '') {
+    return [{ id: none, name: 'ไม่มีหมวด' }, ...categories].map(({ id, name }) =>
+      '<option value="' + id + '"' + ((selected ?? none) === id ? ' selected' : '') + '>' +
+      escapeHTML(name) + '</option>').join('');
+  }
+
+  function renderCategoryManager() {
+    $('categoryList').innerHTML = categories.map(({ id, name }) => `
+      <form class="category-line" data-category="${id}" data-expected-name="${escapeHTML(name)}">
+        <input name="name" aria-label="ชื่อหมวด ${escapeHTML(name)}" value="${escapeHTML(name)}" maxlength="50" required>
+        <button class="btn" type="submit">เปลี่ยนชื่อ</button>
+        <button class="btn danger" type="button" data-remove-category>ลบหมวด</button>
+      </form>`).join('') || '<p class="fieldhelp">ยังไม่มีหมวด Workspace</p>';
+  }
+
+  async function updateCategory(method, body, message) {
+    if (categoryBusy) return;
+    categoryBusy = true;
+    const controls = [...categoryDialog.querySelectorAll('button, input')];
+    controls.forEach(element => { element.disabled = true; });
+    try {
+      await request(categoryPath, method, body);
+      await refreshSearch();
+      if (categoryDialog.open) {
+        renderCategoryManager();
+        if (method === 'POST') $('categoryName').value = '';
+        $('categoryMessage').textContent = message;
+      }
+    } catch (error) {
+      if (categoryDialog.open) $('categoryMessage').textContent = error.message;
+    } finally {
+      categoryBusy = false;
+      controls.forEach(element => { element.disabled = false; });
+      if (categoryDialog.open && method === 'POST' && !$('categoryName').value) $('categoryName').focus();
+    }
+  }
+
+  $('manageCategories').addEventListener('click', async () => {
+    try {
+      categories = await request(categoryPath);
+      if (!control.active() || !$('overlay').classList.contains('open')) return;
+      $('categoryName').value = '';
+      $('categoryMessage').textContent = '';
+      renderCategoryManager();
+      if (!categoryDialog.open) categoryDialog.showModal();
+    } catch (error) { showError(error); }
+  });
+  async function closeCategoryManager() {
+    if (categoryBusy) return;
+    const dirty = [...categoryDialog.querySelectorAll('input')].some(input => input.value !== input.defaultValue);
+    if (!dirty || await confirmAction('ทิ้งการแก้ชื่อหมวดที่ยังไม่ได้บันทึกหรือไม่?', 'ทิ้งการแก้ไข')) categoryDialog.close();
+  }
+  $('closeCategories').addEventListener('click', closeCategoryManager);
+  categoryDialog.addEventListener('cancel', event => { event.preventDefault(); closeCategoryManager(); });
+  $('createCategoryForm').addEventListener('submit', event => {
+    event.preventDefault();
+    updateCategory('POST', { name: $('categoryName').value }, 'เพิ่มหมวดแล้ว');
+  });
+  $('categoryList').addEventListener('submit', event => {
+    event.preventDefault();
+    const { category: id, expectedName } = event.target.dataset;
+    updateCategory('PUT', { id, expectedName, name: event.target.elements.namedItem('name').value }, 'เปลี่ยนชื่อหมวดแล้ว');
+  });
+  $('categoryList').addEventListener('click', async event => {
+    const form = event.target.closest('[data-remove-category]')?.form;
+    if (form && await confirmAction('ลบหมวด “' + form.dataset.expectedName + '”? ผังในหมวดนี้จะอยู่ใน “ไม่มีหมวด”', 'ลบหมวดนี้') &&
+        categoryDialog.open) {
+      updateCategory('DELETE', { id: form.dataset.category, expectedName: form.dataset.expectedName }, 'ลบหมวดแล้ว');
+    }
+  });
+  categoryFilter.addEventListener('change', refreshSearch);
+  $('workspaceCards').addEventListener('change', async event => {
+    const input = event.target.closest('[data-assign-category]');
+    if (!input) return;
+    input.disabled = true;
+    try {
+      await request('/api/pdca/' + input.dataset.assignCategory + '/workspace-category', 'PUT',
+        { categoryId: input.value || null, expectedCategoryId: input.dataset.currentCategory || null });
+    } catch (error) { showError(error); }
+    finally { await refreshSearch(); }
+  });
   function showError(error) {
     if (control.active()) $('navigationError').textContent = error.message;
   }
@@ -122,7 +220,8 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
   }
 
   function replaceGraph(saved) {
-    const equal = JSON.stringify(graphSnapshot(current)) === JSON.stringify(graphSnapshot(saved));
+    const equal = current.lastActionNumber === saved.lastActionNumber &&
+      JSON.stringify(graphSnapshot(current)) === JSON.stringify(graphSnapshot(saved));
     if (!equal) Object.assign(current, saved);
     else current.revision = saved.revision;
     baseline = graphSnapshot(saved);
@@ -756,6 +855,11 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     imageUrls.clear();
     imageLoads.clear();
     $('workspaceCards').replaceChildren();
+    categories = [];
+    categoryFilter.innerHTML = '<option value="">ทุกหมวด</option>';
+    $('categoryName').value = '';
+    $('categoryList').replaceChildren();
+    $('categoryMessage').textContent = '';
     $('cards').replaceChildren();
     $('links').replaceChildren();
     $('drawerContent').replaceChildren();
@@ -879,13 +983,19 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     renameFrom = rename ? current.title : undefined;
     $('pdcaDialogTitle').textContent = rename ? 'เปลี่ยนชื่อ PDCA' : 'สร้าง PDCA';
     $('pdcaName').value = rename ? current.title : '';
+    $('pdcaName').defaultValue = $('pdcaName').value;
     $('pdcaError').textContent = '';
     nameDialog.showModal();
     $('pdcaName').select();
   }
   $('createPdca').addEventListener('click', () => openNameDialog(false));
   $('renamePdca').addEventListener('click', () => openNameDialog(true));
-  $('cancelPdca').addEventListener('click', () => nameDialog.close());
+  async function cancelPdcaName() {
+    if ($('confirmPdca').disabled) return;
+    const input = $('pdcaName');
+    if (input.value === input.defaultValue || await confirmAction('ทิ้งชื่อ PDCA ที่ยังไม่ได้บันทึกหรือไม่?', 'ทิ้งชื่อ')) nameDialog.close();
+  }
+  $('cancelPdca').addEventListener('click', cancelPdcaName);
   $('pdcaForm').addEventListener('submit', async event => {
     event.preventDefault();
     const title = $('pdcaName').value.trim();
@@ -917,7 +1027,7 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     } catch (error) { $('pdcaError').textContent = error.message; showError(error); }
     finally { submit.disabled = false; $('cancelPdca').disabled = false; }
   });
-  nameDialog.addEventListener('cancel', event => { if ($('confirmPdca').disabled) event.preventDefault(); });
+  nameDialog.addEventListener('cancel', event => { event.preventDefault(); cancelPdcaName(); });
   identity.addEventListener('cancel', event => event.preventDefault());
   $('identityForm').addEventListener('submit', async event => {
     event.preventDefault();

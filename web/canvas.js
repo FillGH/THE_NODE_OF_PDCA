@@ -3,6 +3,7 @@ import { installRecords } from './build3.js';
 import { edgeColors, documentLink, widthsDefault } from './model.js';
 import { installWorkspaces, defaultCamera, escapeHTML, imageUrl } from './workspaces.js';
 import { inspectorFields, previewFigure } from './inspector.js';
+import { confirmAction } from './dialogs.js';
 
 const $=id=>document.getElementById(id);
 const cats=[
@@ -21,8 +22,9 @@ const statusStyles={
 'Canceled':{color:'#c43e53',bg:'#fff0f0',dark:'#522932',title:'Canceled'}};
 const gap = 18, collapsedWidth = 40;
 let current = null, selected = null, drawerOpen = false;
-let font = 1, drag = null, edgeDrag = null, tooltipTimer = 0;
+let font = 1, fontMeasureVersion = 0, drag = null, edgeDrag = null, tooltipTimer = 0;
 let page = 'workspace', toastTimer, resizeLane = null, layoutUndo = null, uploading = false;
+let lastCardClick, inlineTitleId;
 const cur = () => current;
 let viewRevealCat = null;
 const isCollapsed = cat => cur().collapsed[cat] && cat !== viewRevealCat;
@@ -36,7 +38,18 @@ function fillMenus() {
   $('createCategory').innerHTML = cats.map((category, index) =>
     `<option value="${index}">${escapeHTML(category.kind)}</option>`).join('');
 }
-function metrics(){let x=14;let arr=cur().widths.map((w,k)=>{let ww=cur().mode==='snap'&&isCollapsed(k)?collapsedWidth:w;let out={x,w:ww};x+=ww+gap;return out});return {lanes:arr,width:x+14};}
+const lockedLaneWidths = cats.map(() => 0);
+const laneWidth = (width, cat) => Math.max(width, lockedLaneWidths[cat]);
+function metrics() {
+  let x = 14;
+  const lanes = cur().widths.map((width, cat) => {
+    const w = cur().mode === 'snap' && isCollapsed(cat) ? collapsedWidth : laneWidth(width, cat);
+    const lane = { x, w };
+    x += w + gap;
+    return lane;
+  });
+  return { lanes, width: x + 14 };
+}
 const titleMeasure = document.createElement('div');
 titleMeasure.setAttribute('aria-hidden', 'true');
 document.body.append(titleMeasure);
@@ -45,7 +58,7 @@ document.body.append(titleMeasure);
 function snapHeight(node, width) {
   const isAction = node.cat === 3;
   const hasImage = node.images.some(image => session.imageAvailable(image.id));
-  const key = JSON.stringify([node.title, width, font, node.cat, hasImage]);
+  const key = JSON.stringify([node.title, width, font, fontMeasureVersion, node.cat, hasImage]);
   if (node.titleMeasure?.key === key) return node.titleMeasure.height;
   titleMeasure.className = 'title-measure' + (isAction ? ' action' : '');
   titleMeasure.style.width = (width - (isAction ? 20 : 24)) + 'px';
@@ -68,8 +81,9 @@ function position(node) {
   const lane = metrics().lanes[node.cat];
   const layout = drag?.id === node.id && drag.permit ? drag.layout : node;
   if (cur().mode === 'snap') {
-    const width = Math.max(119, lane.w - 26);
-    return {x: lane.x + (lane.w - width) / 2, y: layout.snapY, w: width, h: snapHeight(node, width)};
+    const width = node.sizeLocked ? node.freeW : Math.max(119, lane.w - 26);
+    return {x: lane.x + (lane.w - width) / 2, y: layout.snapY, w: width,
+      h: node.sizeLocked ? node.freeH : snapHeight(node, width)};
   }
   return {x: layout.freeX ?? lane.x + 13, y: layout.freeY ?? layout.snapY, w: layout.freeW, h: layout.freeH};
 }
@@ -419,17 +433,7 @@ function addEdge(source, target) {
 
 function installEdgeControls() {
   const dialog = $('edgeDialog');
-  let downOnBackdrop = false;
-  const onBackdrop = event => {
-    const r = dialog.getBoundingClientRect();
-    return event.target === dialog &&
-      (event.clientX < r.left || event.clientX > r.right || event.clientY < r.top || event.clientY > r.bottom);
-  };
-  dialog.addEventListener('pointerdown', event => { downOnBackdrop = onBackdrop(event); });
-  dialog.addEventListener('click', event => {
-    if (downOnBackdrop && onBackdrop(event)) dismissDialog(dialog);
-    downOnBackdrop = false;
-  });
+  closeOnBackdrop(dialog, () => dismissDialog(dialog));
   dialog.addEventListener('cancel', event => { event.preventDefault(); dismissDialog(dialog); });
   $('edgePalette').addEventListener('change', event => {
     if (edgeColors.some(([id]) => id === event.target.value)) draftEdgeColor = event.target.value;
@@ -590,33 +594,40 @@ function renderCards() {
     else if (selected) card.classList.add(trace.nodes.has(node.id) ? 'trace-node' : 'trace-muted');
     card.dataset.nodeId = node.id;
     card.tabIndex = 0;
-    card.setAttribute('aria-label', title);
+    card.setAttribute('aria-label', node.sizeLocked ? title + ' · ล็อกขนาด' : title);
     card.style.cssText = `left:${box.x}px;top:${box.y}px;width:${box.w}px;height:${box.h}px;
       --nodecolor:${category.c};--nodeborder:${tint}${action ? '77' : '61'};
       --selectedcolor:${tint};--halo:${tint}${action ? '44' : '33'};--glow:${tint}${action ? '77' : '66'};
       --statusink:${status.color};--statuscolor:${status.color};--picbg:${isDark() ? status.dark : status.bg};
       --cardbg:${action ? (isDark() ? status.dark + 'd9' : status.bg + 'ed') : 'var(--card)'};`;
     const actionHeader = action ? `<div class="action-head">
-      <span class="status" title="${node.status}"><span class="dot"></span><span>${node.status}</span></span>
-      ${overdue(node) ? '<span class="overdue">Overdue</span>' : ''}
+      <div class="action-state">
+        <span class="status" title="${node.status}"><span class="dot"></span><span>${node.status}</span></span>
+        ${overdue(node) ? '<span class="overdue">Overdue</span>' : ''}
+      </div>
       <span class="action-pic" title="PIC: ${escapeHTML(node.pic || 'Not assigned')}">${escapeHTML(node.pic || '—')}</span>
+      <span class="action-ref">#${node.actionNumber ?? '…'}</span>
     </div>` : '';
     card.innerHTML = `${actionHeader}<div class="card-title">${escapeHTML(title)}</div>${cardFigure(node)}
       <span class="handle left" data-handle="left" title="Incoming link"></span>
       <span class="handle right" data-handle="right" title="Drag connector to another node"></span>
-      <span class="resize-card" data-resize="1" title="Resize card in Free Float mode">◢</span>`;
+      ${node.sizeLocked ? '<span class="size-lock-badge" aria-hidden="true" title="ล็อกขนาด · ยังลากย้ายได้">🔒</span>' :
+        '<span class="resize-card" data-resize="1" title="Resize card in Free Float mode">◢</span>'}`;
     const badge = document.createElement('span');
     badge.className = 'node-editor';
     card.append(badge);
     paintEditorBadge(badge, session.lockFor(node.id));
     cards.append(card);
   }
+  positionInlineTitle();
   $('footerLeft').textContent = `${shown} visible / ${workspace.nodes.length} Nodes · ${workspace.edges.length} Links`;
   $('footerPdcaName').textContent = workspace.title;
 }
 
 function renderAll() {
   const workspace = cur(), onCanvas = page === 'canvas';
+  $('canvasActions').hidden = !onCanvas;
+  if (!onCanvas) $('pdcaMore').open = false;
   $('canvasToolbar').hidden = !onCanvas;
   $('canvasPanel').hidden = !onCanvas;
   $('laneHeader').hidden = !onCanvas || workspace.mode !== 'snap';
@@ -638,6 +649,10 @@ function renderAll() {
 }
 
 function redrawCanvas() {
+  lockedLaneWidths.fill(0);
+  for (const node of cur().nodes) {
+    if (node.sizeLocked) lockedLaneWidths[node.cat] = laneWidth(node.freeW + 26, node.cat);
+  }
   const dim = boxDim();
   renderLanes(dim);
   layoutStage(dim);
@@ -669,6 +684,7 @@ function updateAccess() {
   if (page !== 'canvas') return;
   const available = session.canStart() && !session.canEditGraph();
   const nodeEditable = session.canEditNode(selected);
+  if (inlineTitleId) $('inlineCardTitle').readOnly = !nodeEditable;
   for (const id of ['renamePdca', 'addGeneral', 'snapMode', 'freeMode', 'autoArrange', 'undoLayout', 'defaultView']) {
     $(id).disabled = !available;
   }
@@ -690,6 +706,7 @@ function updateAccess() {
   for (const field of $('drawerContent').querySelectorAll('[data-edit-edge], [data-add-edge], #inspectorTarget')) {
     field.disabled = !available;
   }
+  if ($('toggleCardSize')) $('toggleCardSize').disabled = !available;
 }
 
 function syncWorkspace(redraw) {
@@ -793,6 +810,8 @@ function createNode(cat, title) {
 }
 
 function openWorkspace(workspace, nodeId) {
+  endInlineTitle();
+  lastCardClick = undefined;
   current = workspace;
   page = 'canvas';
   layoutUndo = null;
@@ -809,6 +828,8 @@ function openWorkspace(workspace, nodeId) {
 }
 
 function openWorkspaces() {
+  endInlineTitle();
+  lastCardClick = undefined;
   cameraMotion++;
   document.querySelector('.topbar').classList.remove('hidden');
   page = 'workspace';
@@ -829,6 +850,7 @@ function selectNode(id, focusTitle = false) {
 function showNode(id, focusTitle) {
   const node = find(id);
   if (!node) return;
+  if (inlineTitleId && inlineTitleId !== id) endInlineTitle();
   const reveal = isCollapsed(node.cat) || (viewRevealCat !== node.cat && cur().collapsed[viewRevealCat]);
   viewRevealCat = node.cat;
   const focused = document.activeElement?.dataset.nodeId === id;
@@ -882,9 +904,11 @@ function undo() {
   const before = snapshotCardRects();
   const {positions, ...view} = layoutUndo;
   Object.assign(cur(), view);
-  for (const position of positions) {
-    const node = find(position.id);
-    if (node) Object.assign(node, position);
+  for (const {id, freeW, freeH, ...placement} of positions) {
+    const node = find(id);
+    if (!node) continue;
+    Object.assign(node, placement);
+    if (!node.sizeLocked) Object.assign(node, {freeW, freeH});
   }
   layoutUndo = null;
   session.mark('layout');
@@ -902,7 +926,8 @@ function defaultView() {
   workspace.camera = defaultCamera();
   cameraMotion++;
   for (const node of workspace.nodes) {
-    Object.assign(node, {freeX: null, freeY: null, freeW: 200, freeH: node.cat === 3 ? 126 : 98});
+    Object.assign(node, {freeX: null, freeY: null});
+    if (!node.sizeLocked) Object.assign(node, {freeW: 200, freeH: node.cat === 3 ? 126 : 98});
   }
   packSnap(workspace);
   selected = null;
@@ -960,7 +985,8 @@ function arrangeAroundActions(workspace, free) {
   const groups = cats.map((_, cat) => workspace.nodes.filter(node => node.cat === cat));
   const lanes = metrics().lanes;
   const sizes = new Map(workspace.nodes.map(node => {
-    const width = workspace.widths[node.cat] - 26;
+    if (node.sizeLocked) return [node.id, {w: node.freeW, h: node.freeH}];
+    const width = laneWidth(workspace.widths[node.cat], node.cat) - 26;
     const compact = free ? preferredWidth(node, width) : width;
     return [node.id, {w: compact, h: snapHeight(node, compact)}];
   }));
@@ -969,7 +995,7 @@ function arrangeAroundActions(workspace, free) {
     const {w, h} = sizes.get(node.id);
     if (free) {
       const lane = lanes[node.cat];
-      const spare = Math.max(0, workspace.widths[node.cat] - w - 26);
+      const spare = Math.max(0, lane.w - w - 26);
       node.freeW = w;
       node.freeH = h;
       node.freeX = lane.x + 13 + Math.min(spare, index % 2 ? 18 : 0);
@@ -1052,7 +1078,7 @@ function graphArrange() {
   renderAll();
   animateCardLayout(before);
   session.mark('layout');
-  toast('จัดการ์ดตามระดับของ Action และปรับขนาดตามข้อความแล้ว · 100%');
+  toast('จัดผังแล้ว · คงขนาดการ์ดที่ล็อกไว้');
 }
 
 
@@ -1060,12 +1086,70 @@ function packSnap(workspace) {
   const nextY = cats.map(() => 102);
   for (const node of workspace.nodes) {
     node.snapY = nextY[node.cat];
-    nextY[node.cat] += snapHeight(node, workspace.widths[node.cat] - 26) + 44;
+    const height = node.sizeLocked ? node.freeH : snapHeight(node, laneWidth(workspace.widths[node.cat], node.cat) - 26);
+    nextY[node.cat] += height + 44;
   }
 }
 
 function cardElement(id) {
   return $('cards').querySelector(`[data-node-id="${CSS.escape(id)}"]`);
+}
+
+function positionInlineTitle() {
+  if (!inlineTitleId) return;
+  const card = cardElement(inlineTitleId);
+  const title = card?.querySelector('.card-title');
+  if (!title) { endInlineTitle(); return; }
+  card.classList.add('editing-title');
+  Object.assign($('inlineCardTitle').style, {
+    left: card.offsetLeft + title.offsetLeft + 'px',
+    top: card.offsetTop + title.offsetTop + 'px',
+    width: title.offsetWidth + 'px',
+    height: Math.max(27, title.offsetHeight) + 'px',
+  });
+}
+
+function endInlineTitle(restoreFocus = false) {
+  if (!inlineTitleId) return;
+  const card = cardElement(inlineTitleId);
+  inlineTitleId = undefined;
+  $('inlineCardTitle').hidden = true;
+  $('inlineCardTitle').value = '';
+  card?.classList.remove('editing-title');
+  if (restoreFocus) card?.focus({preventScroll: true});
+}
+
+async function editTitleOnCard(workspace, id) {
+  const currentCard = () => cur() === workspace && selected === id && drawerOpen && !!cardElement(id) &&
+    !document.querySelector('dialog[open]');
+  if (!currentCard()) return;
+  if (!await session.editNode(id, currentCard)) {
+    if (currentCard()) toast('ยังแก้ Title ไม่ได้ · ตรวจสิทธิ์แก้ Node');
+    return;
+  }
+  if (!currentCard() || !session.canEditNode(id)) return;
+  const input = $('inlineCardTitle');
+  inlineTitleId = id;
+  input.value = find(id).title;
+  input.readOnly = false;
+  input.hidden = false;
+  positionInlineTitle();
+  input.focus({preventScroll: true});
+  input.select();
+}
+
+function clickCard(id, event) {
+  const previous = lastCardClick;
+  const { timeStamp, clientX, clientY, pointerType } = event;
+  const workspace = cur();
+  if (pointerType === 'mouse' && previous?.id === id && previous.workspace === workspace &&
+      timeStamp - previous.timeStamp <= 500 && Math.hypot(clientX - previous.clientX, clientY - previous.clientY) <= 8) {
+    lastCardClick = undefined;
+    previous.selection.then(() => editTitleOnCard(workspace, id));
+  } else {
+    const selection = Promise.resolve(selectNode(id));
+    lastCardClick = pointerType === 'mouse' ? { id, workspace, timeStamp, clientX, clientY, selection } : undefined;
+  }
 }
 
 function drawMovingLinks(id, box) {
@@ -1193,7 +1277,8 @@ function onCardPointerUp(event) {
   if (drag?.pointer !== event.pointerId) return;
   const finished = drag;
   drag = null;
-  if (!finished.requested && finished.type === 'move') selectNode(finished.id);
+  if (!finished.requested && finished.type === 'move') clickCard(finished.id, event);
+  else lastCardClick = undefined;
   if (!finished.permit) return;
   const node = find(finished.id);
   if (node && session.canEditGraph(finished.permit)) {
@@ -1320,6 +1405,21 @@ async function onInspectorClick(event) {
   const target = event.target.closest('button');
   let node = find(selected);
   if (!target || !node) return;
+  if (target.id === 'toggleCardSize') {
+    const id = node.id, workspace = cur();
+    await session.runGraph(() => {
+      const currentNode = find(id);
+      if (!currentNode.sizeLocked) {
+        const {w, h} = position(currentNode);
+        Object.assign(currentNode, {freeW: w, freeH: h});
+      }
+      currentNode.sizeLocked = !currentNode.sizeLocked;
+      session.mark();
+      renderAll();
+      $('toggleCardSize')?.focus({preventScroll: true});
+    }, () => cur() === workspace && drawerOpen && selected === id && !!find(id));
+    return;
+  }
   if (target.matches(attachmentAction)) {
     const id = node.id, index = Number(target.dataset.removeDocument);
     const documentBefore = node.documents[index];
@@ -1384,6 +1484,21 @@ function dismissDialog(dialog) {
     delete dialog.dataset.closing;
     dialog.close();
     dialog.getAnimations().forEach(animation => animation.cancel());
+  });
+}
+
+function closeOnBackdrop(dialog, close = () => dialog.close()) {
+  let pressedOutside = false;
+  function outside(event) {
+    const bounds = dialog.getBoundingClientRect();
+    return event.target === dialog && (event.clientX < bounds.left || event.clientX > bounds.right ||
+      event.clientY < bounds.top || event.clientY > bounds.bottom);
+  }
+  dialog.addEventListener('pointerdown', event => { pressedOutside = event.button === 0 && outside(event); });
+  dialog.addEventListener('pointercancel', () => { pressedOutside = false; });
+  dialog.addEventListener('click', event => {
+    if (pressedOutside && event.detail && outside(event)) close();
+    pressedOutside = false;
   });
 }
 
@@ -1660,13 +1775,6 @@ function installCanvasPan() {
         drawLinks();
         renderDrawer();
         paintMapView();
-      } else if (completed.moved) {
-        const dy = event.clientY - completed.y;
-        if (Math.abs(dy) > 80 && Math.abs(dy) > Math.abs(event.clientX - completed.x)) {
-          const state = $('saveStatus').dataset.state;
-          document.querySelector('.topbar').classList.toggle('hidden',
-            dy < 0 && camera().y < -80 && !['saving', 'error'].includes(state));
-        }
       }
     });
   }
@@ -1724,9 +1832,48 @@ $('themeToggle').addEventListener('click', () => {
 document.querySelectorAll('[data-size]').forEach(button => button.addEventListener('click', () => {
   font = Number(button.dataset.size);
   document.documentElement.style.setProperty('--fontscale', font);
-  document.querySelectorAll('[data-size]').forEach(item => item.classList.toggle('active', item === button));
+  document.querySelectorAll('[data-size]').forEach(item => {
+    item.classList.toggle('active', item === button);
+    item.setAttribute('aria-pressed', String(item === button));
+  });
   renderAll();
 }));
+const fontFamily = $('fontFamily');
+function applyFont() {
+  const selection = fontFamily.value;
+  document.documentElement.dataset.font = selection;
+  fontMeasureVersion++;
+  if (page === 'canvas') redrawCanvas();
+  document.fonts.load('16px ' + ({sarabun: 'Sarabun', plex: '"IBM Plex Sans Thai"', 'noto-serif': '"Noto Serif Thai"'}[selection]),
+    'ก Aa').then(() => {
+      if (selection !== fontFamily.value) return;
+      fontMeasureVersion++;
+      if (page === 'canvas') redrawCanvas();
+    }).catch(() => {});
+}
+try {
+  const saved = localStorage.getItem('pdca.fontFamily');
+  if ([...fontFamily.options].some(option => option.value === saved)) fontFamily.value = saved;
+} catch {}
+applyFont();
+fontFamily.addEventListener('change', () => {
+  try { localStorage.setItem('pdca.fontFamily', fontFamily.value); } catch {}
+  applyFont();
+});
+document.addEventListener('click', event => {
+  for (const menu of document.querySelectorAll('.topbar details[open]')) {
+    if (!menu.contains(event.target)) menu.open = false;
+  }
+});
+document.addEventListener('keydown', event => {
+  const menu = event.target.closest('.topbar details[open]');
+  if (menu && event.key === 'Escape') {
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    menu.open = false;
+    menu.querySelector('summary').focus();
+  }
+});
 $('zoomOut').addEventListener('click', () => updateZoom(camera().zoom - .1));
 $('zoomIn').addEventListener('click', () => updateZoom(camera().zoom + .1));
 $('zoomFit').addEventListener('click', fit);
@@ -1789,14 +1936,16 @@ document.addEventListener('pointermove', event => {
   if (resizeLane?.pointer !== event.pointerId) return;
   const gesture = resizeLane;
   trackGraphGesture(gesture, event, () => resizeLane === gesture && cur().mode === 'snap', () => {
-    gesture.width = cur().widths[gesture.index];
+    gesture.width = laneWidth(cur().widths[gesture.index], gesture.index);
+    gesture.savedWidth = cur().widths[gesture.index];
     return true;
   }, point => {
     const delta = (point.clientX - gesture.startX) / camera().zoom;
-    gesture.preview = Math.max(145, Math.min(370, gesture.width + delta));
+    const minimum = laneWidth(145, gesture.index);
+    gesture.preview = Math.max(minimum, Math.min(Math.max(370, minimum), gesture.width + delta));
     cur().widths[gesture.index] = gesture.preview;
     renderAll();
-    cur().widths[gesture.index] = gesture.width;
+    cur().widths[gesture.index] = gesture.savedWidth;
   });
 });
 for (const type of ['pointerup', 'pointercancel', 'lostpointercapture']) document.addEventListener(type, event => {
@@ -1825,10 +1974,30 @@ cards.addEventListener('click', event => {
 });
 cards.addEventListener('keydown', event => {
   const card = event.target.closest('[data-node-id]');
+  if (card && event.target === card && event.key === 'F2') {
+    event.preventDefault();
+    const workspace = cur(), id = card.dataset.nodeId;
+    Promise.resolve(selectNode(id)).then(() => editTitleOnCard(workspace, id));
+    return;
+  }
   if (card && !event.target.closest('button') && ['Enter', ' '].includes(event.key)) {
     event.preventDefault();
     selectNode(card.dataset.nodeId);
   }
+});
+const inlineTitle = $('inlineCardTitle');
+inlineTitle.addEventListener('input', event => {
+  if (selected !== inlineTitleId || !session.canEditNode(inlineTitleId)) return;
+  updateNodeField(event);
+  if ($('nodeTitle')) $('nodeTitle').value = inlineTitle.value;
+});
+inlineTitle.addEventListener('blur', () => endInlineTitle());
+inlineTitle.addEventListener('pointerdown', event => event.stopPropagation());
+inlineTitle.addEventListener('keydown', event => {
+  if (event.isComposing || !['Enter', 'Escape'].includes(event.key)) return;
+  event.preventDefault();
+  event.stopPropagation();
+  endInlineTitle(true);
 });
 cards.addEventListener('pointerover', event => {
   if (drag || edgeDrag) return;
@@ -1841,6 +2010,13 @@ cards.addEventListener('pointerout', event => {
   if (event.target.closest('[data-node-id]')) hideTooltip();
 });
 $('closeFigure').addEventListener('click', () => dismissDialog($('figureDialog')));
+closeOnBackdrop($('figureDialog'), () => dismissDialog($('figureDialog')));
+closeOnBackdrop($('recordDialog'));
+closeOnBackdrop($('confirmDialog'));
+for (const [dialog, cancel] of [['pdcaDialog', 'cancelPdca'], ['categoryDialog', 'closeCategories'],
+  ['draftDialog', 'cancelDraft']]) {
+  closeOnBackdrop($(dialog), () => $(cancel).click());
+}
 installCanvasPan();
 installMiniMap();
 installWheelZoom();
@@ -1854,7 +2030,14 @@ $('addGeneral').addEventListener('click', () => {
   revealDialog(newNode);
   $('createTitle').focus();
 });
-$('cancelCreate').addEventListener('click', () => dismissDialog(newNode));
+async function cancelNewNode() {
+  if (($('createTitle').value || $('createCategory').value !== '3') &&
+      !await confirmAction('ทิ้งข้อมูล Node ที่ยังไม่ได้สร้างหรือไม่?', 'ทิ้งข้อมูล Node')) return;
+  dismissDialog(newNode);
+}
+$('cancelCreate').addEventListener('click', cancelNewNode);
+closeOnBackdrop(newNode, cancelNewNode);
+newNode.addEventListener('cancel', event => { event.preventDefault(); cancelNewNode(); });
 $('nodeForm').addEventListener('submit', event => {
   event.preventDefault();
   const cat = Number($('createCategory').value), title = $('createTitle').value.trim();

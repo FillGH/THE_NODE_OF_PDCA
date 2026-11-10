@@ -48,7 +48,7 @@ test('H-01–H-05: history restores text, category and edge as new saves while r
   write([restoredEdge], restoredEdge.id);
   const current = store.load(id);
   assert.deepEqual(current.edges, [link]);
-  assert.deepEqual(current.nodes[1], { ...action, status: 'Blocked' });
+  assert.deepEqual(current.nodes[1], { ...action, status: 'Blocked', actionNumber: 1 });
   assert.equal(store.history(id).filter(row => row.kind === 'node-text' && row.subject === action.id).length, 3);
   assert.deepEqual(new Set(store.history(id).map(row => row.kind)),
     new Set(['node-text','node-category','edge-created','edge-deleted','edge-restored','action-status','action-due-date']));

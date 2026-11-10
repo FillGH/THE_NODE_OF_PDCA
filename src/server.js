@@ -21,6 +21,10 @@ const files = new Map([
   ['/workspaces.js', ['workspaces.js', 'text/javascript; charset=utf-8']],
   ['/build3.js', ['build3.js', 'text/javascript; charset=utf-8']],
   ['/inspector.js', ['inspector.js', 'text/javascript; charset=utf-8']],
+  ['/dialogs.js', ['dialogs.js', 'text/javascript; charset=utf-8']],
+  ['/fonts/sarabun.ttf', ['../assets/fonts/Sarabun-Regular.ttf', 'font/ttf']],
+  ['/fonts/ibm-plex-sans-thai.ttf', ['../assets/fonts/IBM-Plex-Sans-Thai-Regular.ttf', 'font/ttf']],
+  ['/fonts/noto-serif-thai.ttf', ['../assets/fonts/Noto-Serif-Thai.ttf', 'font/ttf']],
   ['/favicon.ico', ['favicon.svg', 'image/svg+xml']],
 ]);
 const maxBody = 32 * 1024 * 1024;
@@ -74,6 +78,12 @@ export function makeServer(store, sessions = collaboration(), allowRequest = () 
         throw new RequestError(403, 'ไม่มีสิทธิ์เข้าถึง');
       };
       checkAccess();
+      if (req.method === 'GET' && path === '/demo/evidence' && operations.demoEvidence) {
+        const body = await readFile(new URL('../demo/evidence.html', import.meta.url));
+        res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
+        res.end(body);
+        return;
+      }
       if (req.method === 'GET' && files.has(path)) {
         const [file, mime] = files.get(path);
         const body = await readFile(new URL('../web/' + file, import.meta.url));
@@ -112,6 +122,18 @@ export function makeServer(store, sessions = collaboration(), allowRequest = () 
       } else if (path === '/api/deletion-audit' && req.method === 'GET') {
         if (!allowAudit(req, actor)) throw new RequestError(403, 'สำหรับ IT เท่านั้น');
         reply(200, store.auditLog());
+      } else if (path === '/api/workspace-categories' && req.method === 'GET') {
+        reply(200, store.listCategories());
+      } else if (path === '/api/workspace-categories' && ['POST', 'PUT', 'DELETE'].includes(req.method)) {
+        const { id, name, expectedName } = await readJson(req);
+        checkAccess();
+        sessions.authenticate(actor.token);
+        if (req.method === 'POST') reply(201, store.changeCategory(null, name));
+        else {
+          if (typeof id !== 'string' || typeof expectedName !== 'string') throw new RequestError(400, 'หมวด Workspace ไม่ถูกต้อง');
+          if (req.method === 'PUT') reply(200, store.changeCategory(id, name, expectedName));
+          else { store.removeCategory(id, expectedName); reply(200, {}); }
+        }
       } else if (path === '/api/pdca' && req.method === 'GET') {
         reply(200, store.search(url.searchParams.get('q') || ''));
       } else if (path === '/api/pdca' && req.method === 'POST') {
@@ -130,6 +152,12 @@ export function makeServer(store, sessions = collaboration(), allowRequest = () 
           checkAccess();
           sessions.authenticate(actor.token);
           reply(200, store.apply(id, body, actor, input => sessions.authorize(actor, id, input)));
+        } else if (resource === 'workspace-category' && !subject && method === 'PUT') {
+          const { categoryId, expectedCategoryId } = await readJson(req);
+          checkAccess();
+          sessions.authenticate(actor.token);
+          store.assignCategory(id, categoryId, expectedCategoryId);
+          reply(200, {});
         } else if (resource === 'export' && method === 'GET' && Object.hasOwn(exportFormats, subject)) {
           const [mime, render] = exportFormats[subject];
           const data = exportData(store, id);
@@ -208,7 +236,7 @@ export function makeServer(store, sessions = collaboration(), allowRequest = () 
   return server;
 }
 
-export async function startHost(env = process.env) {
+export async function startHost(env = process.env, { demoEvidence = false } = {}) {
   const port = Number(env.PDCA_PORT || 4173);
   const { file, auditFile, root, recoveryRoot, origin, ingress, authorize } = operationsConfig(env);
   const log = resolve(env.PDCA_OPS_LOG || resolve(dirname(file), 'operations.jsonl'));
@@ -225,7 +253,7 @@ export async function startHost(env = process.env) {
   const allowRequest = req => !origin || secretMatches(req.headers['x-pdca-ingress-key'], ingress);
   let restoring = false;
   const server = makeServer(store, undefined, allowRequest, req => role(req) === 'IT', {
-    origin, role,
+    origin, role, demoEvidence,
     async restore(id, role) {
       if (restoring) throw new RequestError(409, 'กำลังกู้ Backup อีกชุด');
       restoring = true;

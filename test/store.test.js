@@ -83,7 +83,7 @@ test('all categories, isolated nodes, evidence, saved layout and lossless reclas
     assert.equal(persisted.mode, 'free');
     assert.equal(persisted.nodes.length, 7);
     assert.deepEqual(persisted.edges, graph.edges);
-    assert.deepEqual(persisted.nodes[3], { ...action, images: [{ id: imageId, name: 'fixture.png' }] });
+    assert.deepEqual(persisted.nodes[3], { ...action, actionNumber: 1, images: [{ id: imageId, name: 'fixture.png' }] });
     assert.equal(reopened.image(imageId).mime, 'image/png');
     assert.deepEqual(Buffer.from(reopened.image(imageId).bytes), Buffer.from(png, 'base64'));
     assert.equal(history(graph.id).filter(row => row.kind === 'node-category').length, 2);

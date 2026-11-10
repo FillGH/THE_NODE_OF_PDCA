@@ -37,7 +37,7 @@ function isDate(value) {
 
 function normalizeNode(node) {
   requireValue(node && isId(node.id), 'รหัส Node ไม่ถูกต้อง');
-  const { id, cat, title, sideNote, pic, due, status, snapY, freeX, freeY, freeW, freeH, images, documents } = node;
+  const { id, cat, title, sideNote, pic, due, status, snapY, freeX, freeY, freeW, freeH, images, documents, sizeLocked } = node;
   requireValue(Number.isInteger(cat) && categoryNames[cat], 'ประเภท Node ไม่ถูกต้อง');
   requireValue([title, sideNote, pic].every(isText) && isDate(due) && statuses.includes(status), 'ข้อมูล Node ไม่ถูกต้อง');
   requireValue([freeX, freeY].every(value => value === null || inRange(value, 0, Number.MAX_SAFE_INTEGER)) &&
@@ -47,7 +47,9 @@ function normalizeNode(node) {
     'รายการรูปไม่ถูกต้อง');
   requireValue(Array.isArray(documents) && documents.every(value => isText(value) && documentLink(value)),
     'ลิงก์เอกสารไม่ถูกต้อง');
-  return { id, cat, title, sideNote, pic, due, status, snapY, freeX, freeY, freeW, freeH, images, documents };
+  requireValue(sizeLocked === undefined || typeof sizeLocked === 'boolean', 'สถานะล็อกขนาดไม่ถูกต้อง');
+  return { id, cat, title, sideNote, pic, due, status, snapY, freeX, freeY, freeW, freeH,
+    ...(sizeLocked && { sizeLocked }), images, documents };
 }
 
 export function normalizeWorkspace(input) {
@@ -76,6 +78,23 @@ export function normalizeWorkspace(input) {
     Array.isArray(collapsed) && collapsed.length === categoryNames.length &&
     collapsed.every(value => typeof value === 'boolean'), 'ข้อมูล Layout ไม่ถูกต้อง');
   return { title, nodes, edges, mode, widths, collapsed };
+}
+
+function assignActionNumbers(graph, previous) {
+  const numbers = new Map(previous.nodes.map(node => [node.id, node.actionNumber]));
+  graph.lastActionNumber = previous.lastActionNumber ?? 0;
+  for (const node of graph.nodes) {
+    const number = numbers.get(node.id);
+    if (number !== undefined) node.actionNumber = number;
+    else if (node.cat === 3) node.actionNumber = ++graph.lastActionNumber;
+  }
+}
+
+function readGraph(json) {
+  const graph = JSON.parse(json);
+  // Legacy Workspaces have insertion order but no saved Action references yet.
+  if (graph.lastActionNumber === undefined) assignActionNumbers(graph, graph);
+  return graph;
 }
 
 function graphChanges(previous, next, record) {
@@ -159,7 +178,7 @@ export function reconcileWorkspace(db, { events, tip }) {
         throw new Error('Invalid Audit event');
       }
       const saved = workspace.get(id);
-      const graph = saved && JSON.parse(saved.graph);
+      const graph = saved && readGraph(saved.graph);
       if (!graph || (id !== subject && !graph.nodes.some(node => node.id === subject))) {
         counts.absent++;
         continue;
@@ -195,6 +214,13 @@ export function openStore(file, { now = Date.now, auditFile = auditPath(file) } 
     PRAGMA busy_timeout = 3000;
     CREATE TABLE IF NOT EXISTS workspaces (
       id TEXT PRIMARY KEY, graph TEXT NOT NULL, revision INTEGER NOT NULL, last_save_id TEXT
+    ) STRICT;
+    CREATE TABLE IF NOT EXISTS workspace_categories (
+      id TEXT PRIMARY KEY, name TEXT NOT NULL, name_key TEXT NOT NULL UNIQUE
+    ) STRICT;
+    CREATE TABLE IF NOT EXISTS workspace_category_assignments (
+      pdca_id TEXT PRIMARY KEY REFERENCES workspaces(id) ON DELETE CASCADE,
+      category_id TEXT NOT NULL REFERENCES workspace_categories(id) ON DELETE CASCADE
     ) STRICT;
     CREATE TABLE IF NOT EXISTS node_ids (
       id TEXT PRIMARY KEY, pdca_id TEXT NOT NULL REFERENCES workspaces(id)
@@ -275,7 +301,7 @@ export function openStore(file, { now = Date.now, auditFile = auditPath(file) } 
 
   function load(id) {
     const saved = row(id);
-    const graph = visibleGraph(id, JSON.parse(saved.graph));
+    const graph = visibleGraph(id, readGraph(saved.graph));
     for (const node of graph.nodes) {
       node.images = node.images.map(id => ({ id, name: imageMeta.get(id).name }));
     }
@@ -344,7 +370,7 @@ export function openStore(file, { now = Date.now, auditFile = auditPath(file) } 
       db.prepare('DELETE FROM audit.events WHERE retain_until <= ?').run(time);
       for (const {pdca_id: id, subject_id: subject, expires} of findDue.all(time)) {
         if (!getTrash.get(id, subject)) continue;
-        const saved = row(id, true), graph = JSON.parse(saved.graph);
+        const saved = row(id, true), graph = readGraph(saved.graph);
         const operation = randomUUID();
         const day = new Date(time + 7 * 3_600_000).toISOString().slice(0, 10);
         const [year, month, date] = day.split('-').map(Number);
@@ -414,6 +440,7 @@ export function openStore(file, { now = Date.now, auditFile = auditPath(file) } 
         if (!retainedImages.has(imageId)) removeImage.run(imageId);
       }
     }
+    assignActionNumbers(graph, previous);
     const revision = saved.revision + Number(!same(previous, graph));
     const savedAt = new Date(now()).toISOString();
     graphChanges(previous, graph, (kind, subject, before, after) => {
@@ -435,7 +462,7 @@ export function openStore(file, { now = Date.now, auditFile = auditPath(file) } 
       if (saved.revision !== input.revision) {
         throw new RequestError(409, 'ผังนี้มีฉบับบันทึกใหม่ กรุณาเปิดผังใหม่');
       }
-      return { revision: persist(id, saved, JSON.parse(saved.graph), graph, input.uploads, displayName, input.saveId) };
+      return { revision: persist(id, saved, readGraph(saved.graph), graph, input.uploads, displayName, input.saveId) };
     });
   }
 
@@ -449,7 +476,7 @@ export function openStore(file, { now = Date.now, auditFile = auditPath(file) } 
         requireValue(receipt.digest === digest, 'รหัสคำขอนี้ใช้กับข้อมูลชุดอื่นแล้ว');
         return { revision: receipt.revision };
       }
-      const previous = JSON.parse(saved.graph);
+      const previous = readGraph(saved.graph);
       const visible = visibleGraph(id, previous);
       const activeNodes = new Set(visible.nodes.map(node => node.id));
       for (const op of input.ops) if (op?.kind === 'node-add') activeNodes.add(op.id);
@@ -506,10 +533,13 @@ export function openStore(file, { now = Date.now, auditFile = auditPath(file) } 
     const query = term.trim().normalize('NFC').toLowerCase();
     const matches = value => value.normalize('NFC').toLowerCase().includes(query);
     const results = [];
-    for (const { id, graph } of db.prepare('SELECT id, graph FROM workspaces ORDER BY rowid DESC').all()) {
+    for (const { id, graph, categoryId } of db.prepare(
+      'SELECT w.id, w.graph, a.category_id AS categoryId FROM workspaces w ' +
+      'LEFT JOIN workspace_category_assignments a ON a.pdca_id = w.id ORDER BY w.rowid DESC'
+    ).all()) {
       if (getTrash.get(id, id)) continue;
       const { title, nodes, edges } = visibleGraph(id, JSON.parse(graph));
-      const pdca = { id, title, nodeCount: nodes.length, edgeCount: edges.length };
+      const pdca = { id, title, nodeCount: nodes.length, edgeCount: edges.length, categoryId };
       if (!query || matches(title)) results.push(pdca);
       if (query) {
         for (const node of nodes) {
@@ -522,17 +552,60 @@ export function openStore(file, { now = Date.now, auditFile = auditPath(file) } 
     return results;
   }
 
+  function changeCategory(id, value, expectedName) {
+    const name = requiredText(value, 'กรุณากรอกชื่อหมวด').normalize('NFC');
+    const key = name.toLowerCase();
+    requireValue(name.length <= 50 && !['ทุกหมวด', 'ไม่มีหมวด'].includes(name), 'ชื่อหมวดต้องมี 1–50 ตัวอักษรและไม่ใช้ชื่อสงวน');
+    return transaction(() => {
+      const existing = db.prepare('SELECT id FROM workspace_categories WHERE name_key = ?').get(key);
+      if (existing && existing.id !== id) {
+        throw new RequestError(409, 'มีชื่อหมวดนี้แล้ว');
+      }
+      if (id) {
+        const result = db.prepare('UPDATE workspace_categories SET name = ?, name_key = ? WHERE id = ? AND name = ?')
+          .run(name, key, id, expectedName);
+        if (!result.changes) throw new RequestError(409, 'หมวดเปลี่ยนแล้ว กรุณาเปิดรายการใหม่');
+      } else {
+        id = randomUUID();
+        db.prepare('INSERT INTO workspace_categories VALUES (?, ?, ?)').run(id, name, key);
+      }
+      return { id, name };
+    });
+  }
+
   return {
     create(title) {
       const id = randomUUID();
       const graph = {
         title: requiredText(title, 'กรุณากรอกชื่อ PDCA'), nodes: [], edges: [],
-        mode: 'snap', widths: widthsDefault, collapsed: categoryNames.map(() => false),
+        mode: 'snap', widths: widthsDefault, collapsed: categoryNames.map(() => false), lastActionNumber: 0,
       };
       addWorkspace.run(id, JSON.stringify(graph));
       return { id, revision: 0, ...graph };
     },
     load, save, apply, search, history, restoreOperation, trash, setVisibility, purge,
+    listCategories: () => db.prepare('SELECT id, name FROM workspace_categories ORDER BY name_key').all(),
+    changeCategory,
+    removeCategory(id, expectedName) {
+      const result = db.prepare('DELETE FROM workspace_categories WHERE id = ? AND name = ?').run(id, expectedName);
+      if (!result.changes) throw new RequestError(409, 'หมวดเปลี่ยนแล้ว กรุณาเปิดรายการใหม่');
+    },
+    assignCategory(id, categoryId, expectedCategoryId) {
+      requireValue(categoryId === null || isId(categoryId), 'หมวด Workspace ไม่ถูกต้อง');
+      return transaction(() => {
+        row(id);
+        const before = db.prepare('SELECT category_id FROM workspace_category_assignments WHERE pdca_id = ?').get(id)?.category_id ?? null;
+        if (before !== expectedCategoryId) throw new RequestError(409, 'หมวดของผังเปลี่ยนแล้ว กรุณาเลือกใหม่');
+        if (categoryId === null) db.prepare('DELETE FROM workspace_category_assignments WHERE pdca_id = ?').run(id);
+        else {
+          if (!db.prepare('SELECT 1 FROM workspace_categories WHERE id = ?').get(categoryId)) {
+            throw new RequestError(409, 'หมวดเปลี่ยนแล้ว กรุณาเลือกใหม่');
+          }
+          db.prepare('INSERT INTO workspace_category_assignments VALUES (?, ?) ON CONFLICT(pdca_id) DO UPDATE SET category_id = excluded.category_id')
+            .run(id, categoryId);
+        }
+      });
+    },
     auditLog: () => db.prepare('SELECT * FROM audit.events ORDER BY seq DESC').all(),
     imageMetadata: id => imageMeta.get(id),
     revision: id => row(id).revision,

@@ -16,6 +16,15 @@
       <button class="navbtn active" id="home">Workspaces</button>
       <button class="navbtn" id="canvasNav" disabled>Canvas</button>
     </nav>
+    <div id="canvasActions" class="canvas-actions" aria-label="คำสั่งผัง PDCA" hidden>
+      <button class="btn" id="showOverview">Action Overview</button>
+      <button class="btn" id="showHistory">History</button>
+      <button class="btn" id="showExport">Export</button>
+      <details id="pdcaMore" class="editor-menu">
+        <summary class="btn" aria-label="คำสั่งผังเพิ่มเติม">⋯</summary>
+        <div class="editor-menu-panel"><button class="btn danger" id="trashPdca">ย้ายผังเข้า Trash</button></div>
+      </details>
+    </div>
     <div class="editor"><details id="editorMenu" class="editor-menu" hidden>
       <summary id="editorName" aria-label="เมนูผู้ใช้"></summary>
       <div class="editor-menu-panel"><button type="button" class="btn" id="sessionEnd">เปลี่ยนผู้ใช้ / จบทุกแท็บ</button></div>
@@ -24,10 +33,26 @@
       <span id="saveStatus" role="status" aria-live="polite"></span>
       <button class="btn" id="retrySave" hidden>ตรวจฉบับร่าง</button>
     </div>
-    <span class="tag training">BUILD 3 · ข้อมูลสมมติ</span>
+    <span class="tag training">BUILD 4 · LAN Test</span>
     <button class="iconbutton" id="themeToggle" aria-label="Toggle dark mode">☾</button>
+    <details class="editor-menu appearance-menu" id="appearanceMenu">
+      <summary class="btn" aria-label="เลือกแบบอักษร">Aa</summary>
+      <div class="editor-menu-panel appearance-panel">
+        <label for="fontFamily">แบบอักษร</label>
+        <select id="fontFamily">
+          <option value="sarabun">Sarabun</option>
+          <option value="plex">IBM Plex Sans Thai</option>
+          <option value="noto-serif">Noto Serif Thai</option>
+        </select>
+        <p class="font-preview">ตรวจสอบคุณภาพ · Quality check A-02</p>
+      </div>
+    </details>
     <div class="font-size-controls" id="canvasFontControls" aria-label="Text size" hidden>
-      <button data-size="0.9">A−</button><button class="active" data-size="1">A</button><button data-size="1.15">A+</button>
+      <button data-size="0.9" aria-label="ขนาดอักษร 90%" aria-pressed="false">A−</button>
+      <button class="active" data-size="1" aria-label="ขนาดอักษร 100%" aria-pressed="true">A</button>
+      <button data-size="1.15" aria-label="ขนาดอักษร 115%" aria-pressed="false">A+</button>
+      <button data-size="1.3" aria-label="ขนาดอักษร 130%" aria-pressed="false">A++</button>
+      <button data-size="1.45" aria-label="ขนาดอักษร 145%" aria-pressed="false">A+++</button>
     </div>
   </div>
   <p class="field-error navigation-error" id="navigationError" role="alert"></p>
@@ -35,10 +60,6 @@
     <div class="subhead" id="canvasToolbar" hidden>
       <div class="canvas-name"><strong id="canvasTitle"></strong><button class="btn" id="renamePdca">เปลี่ยนชื่อ</button></div>
       <div class="tools">
-        <button class="btn" id="showOverview">Action Overview</button>
-        <button class="btn" id="showHistory">History</button>
-        <button class="btn" id="showExport">Export</button>
-        <button class="btn" id="trashPdca">ย้ายผังเข้า Trash</button>
         <div class="segments" aria-label="Layout mode"><button class="active" id="snapMode">▦ Snap</button><button id="freeMode">⬚ Free Float</button></div>
         <button class="btn" id="autoArrange">↗ Auto Arrange</button><button class="btn" id="undoLayout">↶ Undo</button>
         <button class="btn" id="defaultView">⟲ Default View</button>
@@ -53,6 +74,7 @@
           <div class="board-size" id="boardSize"><div class="stage" id="stage">
             <div id="orbs" class="orbs"></div><div id="lanes" class="lanes"></div>
             <svg id="links" class="world-links" xmlns="http://www.w3.org/2000/svg"></svg><div id="cards" class="cards"></div>
+            <input id="inlineCardTitle" class="inline-card-title" data-edit="title" aria-label="แก้ Title บน Card · บันทึกอัตโนมัติ" hidden>
           </div></div>
           <p class="empty-canvas" id="emptyCanvas">ผังนี้ยังไม่มี Node · กด ＋ Node เพื่อเริ่มต้น</p>
           <div id="minimap" tabindex="0" role="group" aria-label="Mini-map · ใช้ปุ่มลูกศรเพื่อเลื่อน Canvas" hidden>
@@ -72,6 +94,9 @@
           <button class="btn primary" id="createPdca">＋ สร้าง PDCA</button>
           <label for="search" class="sr-only">ค้นหา PDCA หรือ Node</label>
           <input class="workspace-search" id="search" type="search" placeholder="ค้นหาชื่อ PDCA, Title หรือ Content">
+          <label for="workspaceCategory" class="sr-only">แสดงหมวด Workspace</label>
+          <select id="workspaceCategory" aria-label="แสดงหมวด Workspace"><option value="">ทุกหมวด</option></select>
+          <button class="btn" id="manageCategories" aria-haspopup="dialog">จัดการหมวด</button>
           <button class="btn" id="showTrash">Trash</button>
           <button class="btn" id="showAudit" hidden>Deletion Audit</button>
           <button class="btn" id="clearSearch" disabled>ล้างคำค้น</button>
@@ -84,17 +109,36 @@
 
 <dialog id="recordDialog" aria-labelledby="recordTitle">
   <section class="modal record-panel">
-    <h2 id="recordTitle"></h2>
+    <header class="dialog-heading">
+      <h2 id="recordTitle"></h2>
+      <button type="button" class="btn" id="closeRecords" autofocus>ปิด</button>
+    </header>
     <div id="recordFilters"></div>
     <p id="recordError" class="field-error" role="alert"></p>
     <div id="recordList"></div>
-    <div class="modal-footer"><button type="button" class="btn" id="closeRecords">ปิด</button></div>
+  </section>
+</dialog>
+
+<dialog id="categoryDialog" aria-labelledby="categoryHeading">
+  <section class="modal category-panel">
+    <header class="dialog-heading">
+      <h2 id="categoryHeading">จัดการหมวด Workspace</h2>
+      <button type="button" class="btn" id="closeCategories">ปิด</button>
+    </header>
+    <p>ตั้งหมวดตามหัวข้องาน เช่น คุณภาพ หรือเวลาหยุดเครื่อง</p>
+    <form id="createCategoryForm" class="category-line">
+      <label for="categoryName">ชื่อหมวดใหม่</label>
+      <input id="categoryName" name="name" maxlength="50" required autofocus>
+      <button class="btn primary" type="submit">เพิ่มหมวด</button>
+    </form>
+    <p id="categoryMessage" role="status"></p>
+    <div id="categoryList"></div>
   </section>
 </dialog>
 
 <dialog id="identityDialog" aria-labelledby="identityTitle">
   <form class="modal" id="identityForm">
-    <span class="tag training">BUILD 3 · ข้อมูลสมมติเท่านั้น</span>
+    <span class="tag training">BUILD 4 · ข้อมูลสมมติสำหรับ LAN Test</span>
     <h2 id="identityTitle">เริ่มใช้งาน THE NODE OF PDCA</h2>
     <div class="field"><label for="displayName">Display Name สำหรับ History</label><input id="displayName" placeholder="เช่น ผู้ทดสอบ A" autofocus></div>
     <p class="fieldhelp">ใช้ชื่อสมมติสำหรับระบุผู้แก้ในประวัติการบันทึก</p>
@@ -151,6 +195,16 @@
   <figure class="figure-panel"><button class="iconbutton" id="closeFigure" aria-label="ปิดภาพ" autofocus>×</button>
     <img id="figureImage" alt=""><figcaption id="figureCaption"></figcaption>
   </figure>
+</dialog>
+<dialog id="confirmDialog" aria-labelledby="confirmHeading" aria-describedby="confirmMessage">
+  <form class="modal" method="dialog">
+    <h2 id="confirmHeading">ยืนยันการเปลี่ยนแปลง</h2>
+    <p id="confirmMessage"></p>
+    <div class="modal-footer">
+      <button class="btn" value="no" autofocus>ยกเลิก</button>
+      <button class="btn danger" id="confirmAction" value="yes">ยืนยัน</button>
+    </div>
+  </form>
 </dialog>
 <div id="tooltip" class="tooltip"></div><div id="toast" class="toast" role="status" aria-live="polite"></div>
 <script type="module" src="/canvas.js"></script>

@@ -2,7 +2,7 @@
 const fields = {
   layout: ['mode', 'widths', 'collapsed'],
   content: ['cat', 'title', 'sideNote', 'pic', 'due', 'status', 'images', 'documents'],
-  position: ['snapY', 'freeX', 'freeY', 'freeW', 'freeH'],
+  position: ['snapY', 'freeX', 'freeY', 'freeW', 'freeH', 'sizeLocked'],
   edge: ['label', 'color'],
 };
 const pick = (object, keys) => Object.fromEntries(keys.map(key => [key, object[key]]));
@@ -14,6 +14,7 @@ export function graphSnapshot(workspace) {
     title: workspace.title, ...pick(workspace, fields.layout),
     nodes: workspace.nodes.map(node => ({
       id: node.id, ...pick(node, fields.content), ...pick(node, fields.position),
+      sizeLocked: !!node.sizeLocked,
       images: node.images.map(image => typeof image === 'string' ? image : image.id),
     })),
     edges: workspace.edges.map(({ id, from, to, label, color }) => ({ id, from, to, label, color })),
@@ -72,7 +73,15 @@ export function applyGraphOps(graph, ops) {
       case 'position': {
         const node = get(nodes);
         if (!node) throw new Error('ไม่พบ Node');
-        Object.assign(node, pick(value, fields[kind]));
+        const changes = pick(value, fields[kind]);
+        if (kind === 'position') {
+          if (changes.sizeLocked === undefined) delete changes.sizeLocked;
+          if (node.sizeLocked && changes.sizeLocked !== false) {
+            changes.freeW = node.freeW;
+            changes.freeH = node.freeH;
+          }
+        }
+        Object.assign(node, changes);
         break;
       }
       case 'edge-add':
