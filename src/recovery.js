@@ -81,8 +81,8 @@ export function inspectWorkspace(db) {
   return { cut, workspaces, categories, categoryAssignments };
 }
 
-export function inspectWorkspaceFile(file) {
-  const db = new DatabaseSync(file, { readOnly: true });
+export function inspectWorkspaceFile(file, { busyTimeoutMs = 0 } = {}) {
+  const db = new DatabaseSync(file, { readOnly: true, timeout: busyTimeoutMs });
   try { return inspectWorkspace(db); } finally { db.close(); }
 }
 

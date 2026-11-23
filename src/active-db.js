@@ -64,10 +64,10 @@ export function recoverExistingJournals(file, auditFile) {
   } finally { workspace.close(); }
 }
 
-export function inspectActivePair(file, auditFile) {
+export function inspectActivePair(file, auditFile, { busyTimeoutMs = 0 } = {}) {
   recoverExistingJournals(file, auditFile);
-  const inventory = inspectWorkspaceFile(file);
-  const db = new DatabaseSync(file, { readOnly: true });
+  const inventory = inspectWorkspaceFile(file, { busyTimeoutMs });
+  const db = new DatabaseSync(file, { readOnly: true, timeout: busyTimeoutMs });
   try {
     requireState(db.prepare('PRAGMA application_id').get().application_id === 0,
       'Cannot activate an isolated snapshot (prepare it first)');
@@ -192,7 +192,7 @@ export async function activeStatus(env, role) {
   let inventory;
   for (;;) {
     try {
-      inventory = inspectActivePair(state.current.workspace, state.current.audit);
+      inventory = inspectActivePair(state.current.workspace, state.current.audit, { busyTimeoutMs: 1500 });
       break;
     } catch (error) {
       const busy = error?.code === 'SQLITE_BUSY' || /^database is locked$/i.test(error?.message || '');
