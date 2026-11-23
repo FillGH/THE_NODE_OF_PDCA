@@ -61,3 +61,11 @@ Operational Runbook สำหรับ Detail/Host Migration: [design/BUILD4_HOS
 4. **Cutover crash:** Pointer file replacement cannot be atomically committed alongside two SQLite files. If power fails after resealing candidate+Audit but before the pointer is written, the stale pointer fails closed. IT must STOP, preserve both versions and Audit, re-run Restore/Prepare from a fresh Stage and obtain recovery-point approval. Do not edit Active DB Pointer by hand.
 5. **Legacy data enrollment:** Earlier BUILD 4 databases without the witness have no proof of the previous non-Audit history. IT must preserve a verified baseline and migrate on an approved copy before managed adoption; never enable the new mode by blindly pointing at old files.
 6. **Acceptance:** Factory V-07 needs evidence for deleting Staging after ACTIVATE, a rejected pre-write Workspace substitution with unchanged deletion ledger, guarded Rollback of post-cutover metadata, and recovery from an interrupted cutover.
+
+
+## C-01/C-02/C-03 Recovery Hardening — Codex findings
+
+- **C-01:** Managed Startup/Status first invokes SQLite Native Hot Journal Recovery with a writable connection to EXISTING Workspace + Audit (`create:false`, never create missing files), then STRICT read-only SQLite/Workspace/Audit/Witness validation. Missing files, mismatched witness, and substituted stale Workspace remain blocked. No automatic ADOPT or reseal.
+- **C-02:** Original pre-Witness Snapshot remains immutable. Following checksum, cutoff, and Audit validation, `prepareRestore()` enrolls any missing Witness table ONLY on isolated `candidate.sqlite` + COPIED `preview-audit.sqlite`. Never mutate original Backup or authoritative Live Audit to permit Preview.
+- **C-03:** IT stops all writers and preserves the existing original Workspace/Audit pair. With Active Pointer ABSENT, Menu Option **8 MIGRATE LEGACY COPY** creates and migrates an isolated pair under `PDCA_DATA_ROOT/legacy-upgrade-<UUID>`. IT compares Inventory, then sets external `PDCA_DB`/`PDCA_AUDIT` to approved candidate paths BEFORE ADOPT. No automatic cutover.
+- SQLite-native hot journal rollback of an uncommitted transaction is DISTINCT from an interruption between successful cross-file Witness reseal and separate Active JSON Pointer replacement; the latter remains FAIL CLOSED requiring IT-controlled recovery.

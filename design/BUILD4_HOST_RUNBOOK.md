@@ -97,3 +97,10 @@ Register-ScheduledTask -TaskName 'PDCA-Host' -Action $action -Trigger $trigger -
 
 
 **Preview Isolation after Witness (F-05):** `node src/ops.js prepare <stage-id>` ส่งกลับทั้ง `candidate` และ `previewAudit`. ให้เปิด Preview ด้วย `candidate.sqlite` คู่กับ `preview-audit.sqlite` ใน Staging ที่ได้จากคำสั่งนี้ ห้ามคัดลอก/นำ Live Audit มาเปิด Preview เพราะ Witness ที่ตรวจจับฐานเก่าจะปฏิเสธตามการออกแบบ. การเปิดระบบจริงหลัง Activate ใช้ Audit จริงที่ IT ควบคุมผ่าน Active Pointer เท่านั้น
+
+
+### C-01–C-03 — Crash and Legacy Data Upgrade
+
+- **C-01**: If a normal process crash leaves Hot Rollback Journals, SQLite opens existing Workspace/Audit writable with `create:false` and rolls back incomplete transactions BEFORE read-only Integrity/Witness validation. Missing files and stale pairs remain NO-GO.
+- **C-02**: Old Snapshot stays immutable; PREPARE creates and migrates only isolated Candidate + Preview Audit. Never pair old Candidate directly with Live Audit.
+- **C-03**: IT stops all writers, preserves original Workspace and Audit, runs Menu **8 MIGRATE LEGACY COPY** before ADOPT, verifies copy, and changes external DB/Audit paths to approved candidate BEFORE ADOPT. Original data remains intact.

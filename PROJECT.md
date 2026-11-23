@@ -1019,3 +1019,8 @@ Owner approved a single corrective increment before Factory handoff. F-01: a pre
 
 
 **Preview safety adjustment after Windows regression:** BUILD 4 legacy preview tests were updated to use the IT-prepared `preview-audit.sqlite` snapshot rather than pairing an old staged candidate with live Audit. This preserves strict Witness checks without modifying the active Audit file during Preview.
+
+
+### Codex Recovery Hardening — C-01/C-02/C-03 (23 Nov 2026)
+
+Owner authorized fixing P1 C-01 SQLite Hot Journal startup failure, P2 C-02 retained pre-Witness Snapshot PREPARE failure, and P2 C-03 existing pre-Witness BUILD 4 ADOPT upgrade procedure in one controlled increment. C-01 permits SQLite native rollback of incomplete writes on existing Workspace/Audit files ONLY, before strict cross-file integrity and witness checks; stale/missing pairs remain BLOCKED. C-02 enrolls witness only on validated isolated Candidate + Preview Audit; original Backup and Live Audit are unchanged. C-03 is an IT-authorized stopped-service copy migration and review of original-preserving legacy pair before ADOPT, with explicit external configuration update to the reviewed candidate. No PDCA user-facing feature change. Factory V-07, RPO/RTO, IT and Owner approval remain mandatory, independent of Windows CI or Codex review.

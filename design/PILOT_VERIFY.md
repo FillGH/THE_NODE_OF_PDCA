@@ -125,3 +125,11 @@ try {
 - ทดสอบ ROLLBACK หลังเปลี่ยน `scope_versions`, `save_receipts` หรือ `last_save_id` ต้องไม่สูญข้อมูลเงียบ; ตรวจค่า Full Inventory และหลักฐานเหตุการณ์
 - จำลองการขัดข้องระหว่าง Reseal Witness กับ Pointer Replacement; ต้อง Fail Closed และต้องมี IT-controlled Recovery Plan ไม่แก้ Pointer JSON ด้วยมือ
 - บันทึก Node.js Build/Run Version ตาม Manifest; รุ่นที่ CI ทดสอบคือ 24.11.0. หากใช้ Node Patch อื่น ให้แยกผล Revalidation/IT Approval ชัดเจน
+
+
+### V-07 — C-01/C-02/C-03 Compatibility and Fault Injection
+
+- C-01: Kill an uncommitted dual-file SQLite transaction, then confirm native Hot Journal Recovery to the Last Committed State before Strict Audit/Witness checks; missing files and stale substituted Workspace still block Restart.
+- C-02: Restore an authentic BUILD 4 pre-Witness Snapshot; PREPARE only on isolated Preview Audit, immutable Source Snapshot and unchanged authoritative Audit; test corruption and mismatch refusals.
+- C-03: With all writers stopped and originals secured, migrate a pre-Witness pair to NEW COPIES, verify content, ADOPT using approved candidate paths, and reject migration after Pointer exists.
+- Record Source SHA, Node/Windows Version, test evidence, Owner and RPO/RTO; CI success does not establish Factory V-07 acceptance.

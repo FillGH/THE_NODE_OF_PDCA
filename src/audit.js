@@ -54,6 +54,29 @@ export function inspectWitnessPair(workspaceFile, auditFile) {
   } finally { workspace.close(); audit.close(); }
 }
 
+// Enroll a pre-witness snapshot ONLY after independent Snapshot/Audit validation,
+// on a staged candidate paired with a COPIED Preview Audit, never with LIVE Audit.
+export function enrollLegacyPreviewWitness(candidate, previewAudit) {
+  const db = new DatabaseSync(candidate, { create: false });
+  try {
+    db.prepare('ATTACH DATABASE ? AS audit').run(previewAudit);
+    const wsCut = workspacePoint(db), auditCut = getPoint(db, 'audit.ledger_state');
+    if (!matches(wsCut, auditCut)) throw new Error('Legacy preview cutoff does not match Audit');
+    const mainHas = tableExists(db, 'main', 'workspace_generation');
+    const auditHas = tableExists(db, 'audit', 'workspace_generation');
+    if (!auditHas) throw new Error('Preview Audit witness missing; cannot enroll legacy candidate');
+    if (mainHas) return false;
+    const point = witnessPoint(db, 'audit');
+    if (!point) throw new Error('Preview Audit witness is incomplete');
+    return transaction(db, () => {
+      db.exec('CREATE TABLE main.workspace_generation (' +
+        'singleton INTEGER PRIMARY KEY CHECK(singleton=1), generation INTEGER NOT NULL, token TEXT NOT NULL) STRICT');
+      db.prepare('INSERT INTO main.workspace_generation VALUES (1, ?, ?)').run(point.generation, point.token);
+      return true;
+    });
+  } finally { db.close(); }
+}
+
 // IT-only reseal of an approved recovery candidate or validated rollback target.
 // Must be called only while the server and all other writers are stopped.
 export function resealWitness(workspaceFile, auditFile) {

@@ -21,7 +21,7 @@ function Invoke-Pdca([string[]]$Command) {
 try {
   while ($true) {
     Write-Host ''
-    Write-Host '1 Status | 2 List Backup IDs | 3 ADOPT | 4 Restore to staging | 5 Prepare candidate | 6 ACTIVATE | 7 ROLLBACK | 0 Exit'
+    Write-Host '1 Status | 2 List Backup IDs | 3 ADOPT | 4 Restore to staging | 5 Prepare candidate | 6 ACTIVATE | 7 ROLLBACK | 8 MIGRATE LEGACY COPY | 0 Exit'
     $choice = Read-Host 'Select action'
     switch ($choice) {
       '1' { Invoke-Pdca -Command @('status') }
@@ -46,6 +46,12 @@ try {
       '7' {
         Write-Host 'ROLLBACK is blocked if there are post-cutover Audit events or other edits.'
         if ((Read-Host 'Type ROLLBACK to confirm') -ceq 'ROLLBACK') { Invoke-Pdca -Command @('rollback', 'ROLLBACK') }
+      }
+      '8' {
+        Write-Host 'IT only: service STOPPED, pointer ABSENT, verify original Workspace/Audit and backup first.'
+        if ((Read-Host 'Type MIGRATE-LEGACY to create a NEW isolated candidate copy') -ceq 'MIGRATE-LEGACY') {
+          Invoke-Pdca -Command @('migrate-legacy', 'MIGRATE-LEGACY')
+        }
       }
       '0' { return }
       default { Write-Warning 'Choose a valid menu option' }

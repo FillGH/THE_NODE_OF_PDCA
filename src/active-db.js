@@ -7,6 +7,7 @@ import { isAbsolute, join, relative, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
 import { auditSuffix, inspectWitnessPair, resealWitness } from './audit.js';
 import { inspectWorkspaceFile } from './recovery.js';
+import { openStore } from './store.js';
 
 function requireState(ok, message) {
   if (!ok) throw new Error(message);
@@ -49,7 +50,22 @@ function pair(config, value) {
   return { workspace, audit };
 }
 
+// Native SQLite hot-journal rollback may require a writable connection after abrupt exit.
+// Never create a missing Workspace or Audit. Strict read-only checks run AFTER rollback.
+export function recoverExistingJournals(file, auditFile) {
+  requireState(existsSync(file) && existsSync(auditFile),
+    'Workspace or Audit missing; native crash recovery must not create a database');
+  const workspace = new DatabaseSync(file, { create: false });
+  try {
+    workspace.exec('PRAGMA busy_timeout = 3000');
+    workspace.prepare('ATTACH DATABASE ? AS audit').run(auditFile);
+    workspace.prepare('SELECT count(*) AS n FROM main.sqlite_schema').get();
+    workspace.prepare('SELECT count(*) AS n FROM audit.sqlite_schema').get();
+  } finally { workspace.close(); }
+}
+
 export function inspectActivePair(file, auditFile) {
+  recoverExistingJournals(file, auditFile);
   const inventory = inspectWorkspaceFile(file);
   const db = new DatabaseSync(file, { readOnly: true });
   try {
@@ -124,6 +140,43 @@ export async function adoptActive(env, role, confirmation) {
       changedAtUtc: new Date().toISOString(), cut: inventory.cut };
     await atomicPointer(config.pointer, state);
     return { action: 'adopt', current, cut: inventory.cut, serial: state.serial };
+  });
+}
+
+// IT-only enrollment of EXISTING pre-witness BUILD 4 databases on NEW copies.
+// Never modifies originals or creates the Active Pointer; service must be stopped.
+export async function prepareLegacyAdoption(env, role, confirmation) {
+  requireState(role === 'IT' && confirmation === 'MIGRATE-LEGACY',
+    'IT authorization and MIGRATE-LEGACY confirmation required');
+  return withStoppedServer(env, async config => {
+    requireState(!existsSync(config.pointer), 'Active DB pointer exists; legacy migration refused');
+    const original = pair(config, { workspace: resolve(env.PDCA_DB), audit: resolve(env.PDCA_AUDIT) });
+    recoverExistingJournals(original.workspace, original.audit);
+    const inventory = inspectWorkspaceFile(original.workspace);
+    requireState(auditSuffix(original.audit, inventory.cut).events.length === 0,
+      'Legacy Workspace/Audit cutoff mismatch');
+    const inspectLegacy = new DatabaseSync(original.workspace, { readOnly: true });
+    const audit = new DatabaseSync(original.audit, { readOnly: true });
+    try {
+      const has = db => !!db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='workspace_generation'").get();
+      requireState(!has(inspectLegacy) && !has(audit),
+        'Legacy migration requires a pre-witness Workspace/Audit pair; use ADOPT for current data');
+    } finally { inspectLegacy.close(); audit.close(); }
+    const destination = config.permitted(join(config.root, 'legacy-upgrade-' + randomUUID()));
+    await mkdir(destination);
+    const next = { workspace: config.permitted(join(destination, 'workspace.sqlite')),
+      audit: config.permitted(join(destination, 'workspace.sqlite.audit.sqlite')) };
+    await copyFile(original.workspace, next.workspace, constants.COPYFILE_EXCL);
+    await copyFile(original.audit, next.audit, constants.COPYFILE_EXCL);
+    const store = openStore(next.workspace, { auditFile: next.audit });
+    try { /* migration runs during openStore on the new pair only */ }
+    finally { store.close(); }
+    const migrated = inspectActivePair(next.workspace, next.audit);
+    requireState(JSON.stringify(migrated) === JSON.stringify(inventory),
+      'Legacy copy content changed during witness enrollment');
+    return { action: 'legacy-upgrade-candidate', original, candidate: next,
+      projects: migrated.workspaces.length, cutoff: migrated.cut,
+      nextStep: 'IT verify original+candidate, then set PDCA_DB/PDCA_AUDIT to candidate in external env and ADOPT' };
   });
 }
 

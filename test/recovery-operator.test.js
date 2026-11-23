@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { test } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { auditPath, inspectWitnessPair, resealWitness } from '../src/audit.js';
-import { adoptActive, activeStatus, activatePrepared, rollbackActive, readActiveState, inspectActivePair } from '../src/active-db.js';
+import { adoptActive, prepareLegacyAdoption, activeStatus, activatePrepared, rollbackActive, readActiveState, inspectActivePair } from '../src/active-db.js';
 import { operationsConfig } from '../src/ops.js';
 import { createSnapshot, restoreSnapshot, prepareRestore, inspectWorkspaceFile } from '../src/recovery.js';
 import { startHost } from '../src/server.js';
@@ -272,4 +272,92 @@ test('R-11 all ordinary Create, Category, Save paths advance Workspace and Audit
     current = inspectWitnessPair(f.file, f.auditFile);
     assert.ok(current.generation > previous.generation);
   } finally { store.close(); }
+});
+
+
+// Reproduce the pre-witness BUILD 4 schema while retaining authentic cutoff and Audit.
+function stripWitnessToLegacy(file, auditFile) {
+  const db = new DatabaseSync(file);
+  try {
+    db.prepare('ATTACH DATABASE ? AS audit').run(auditFile);
+    db.exec('BEGIN IMMEDIATE; DROP TABLE main.workspace_generation; DROP TABLE audit.workspace_generation; COMMIT');
+  } finally { db.close(); }
+}
+
+test('R-12 C-01 native hot-journal recovery precedes strict managed startup validation', async t => {
+  const f = setup(t);
+  f.env.PDCA_PORT = '42744';
+  await adoptActive(f.env, 'IT', 'ADOPT');
+  const before = inspectWorkspaceFile(f.file);
+  const witness = inspectWitnessPair(f.file, f.auditFile);
+  const crashScript = [
+    "import { DatabaseSync } from 'node:sqlite';",
+    'const db = new DatabaseSync(process.argv[1], { create: false });',
+    "db.exec('PRAGMA main.cache_size = 8');",
+    "db.prepare('ATTACH DATABASE ? AS audit').run(process.argv[2]);",
+    "db.exec('PRAGMA audit.cache_size = 8');",
+    "db.exec('BEGIN IMMEDIATE');",
+    "db.prepare('UPDATE workspaces SET graph = ?').run('X'.repeat(6 * 1024 * 1024));",
+    `db.exec("UPDATE audit.ledger_state SET head = 'uncommitted-change'");`,
+    "process.kill(process.pid, 'SIGKILL');",
+  ].join('\n');
+  const crashed = spawnSync(process.execPath, ['--input-type=module', '-e', crashScript, f.file, f.auditFile],
+    { encoding: 'utf8', timeout: 20000 });
+  assert.notEqual(crashed.status, 0);
+  assert.equal(existsSync(f.file + '-journal'), true, 'Crash must leave a SQLite hot journal');
+  assert.equal((await activeStatus(f.env, 'IT')).projects, 1);
+  assert.deepEqual(inspectWorkspaceFile(f.file), before, 'Uncommitted Workspace bytes must roll back');
+  assert.deepEqual(inspectWitnessPair(f.file, f.auditFile), witness, 'Committed witness must remain');
+  const host = await startHost(f.env);
+  try { await host.backups.first; } finally { await host.stop(); }
+  rmSync(f.auditFile);
+  await assert.rejects(startHost(f.env), /missing|unable to open/i);
+  assert.equal(existsSync(f.auditFile), false, 'Missing Audit must not be recreated');
+});
+
+test('R-13 C-02 archived pre-witness snapshot prepares using isolated migrated Preview Audit', async t => {
+  const f = setup(t);
+  f.env.PDCA_PORT = '42745';
+  stripWitnessToLegacy(f.file, f.auditFile);
+  const oldInventory = inspectWorkspaceFile(f.file);
+  const snapshot = await createSnapshot(f);
+  const migrated = openStore(f.file, { auditFile: f.auditFile });
+  migrated.close();
+  await adoptActive(f.env, 'IT', 'ADOPT');
+  const liveWitness = inspectWitnessPair(f.file, f.auditFile);
+  const report = await restoreSnapshot({ ...f, id: snapshot.id, role: 'IT' });
+  assert.equal(report.status, 'awaiting-it-review', report.reason);
+  const prepared = await prepareRestore({ ...f, stageId: report.stageId, role: 'IT' });
+  assert.deepEqual(inspectWorkspaceFile(prepared.candidate), oldInventory);
+  assert.deepEqual(inspectWitnessPair(f.file, f.auditFile), liveWitness, 'Live Audit cannot change during preview');
+  const preview = openStore(prepared.candidate, { auditFile: prepared.previewAudit });
+  try { assert.equal(preview.search('First PDCA').length, 1); } finally { preview.close(); }
+  const activated = await activatePrepared(f.env, 'IT', report.stageId, 'ACTIVATE');
+  assert.notEqual(activated.current.workspace, prepared.candidate);
+  assert.equal((await activeStatus(f.env, 'IT')).projects, 1);
+  const old = new DatabaseSync(join(f.root, snapshot.id, 'workspace.sqlite'), { readOnly: true });
+  try { assert.equal(old.prepare("SELECT count(*) AS n FROM sqlite_schema WHERE name='workspace_generation'").get().n, 0); }
+  finally { old.close(); }
+  assert.throws(() => openStore(prepared.candidate, { auditFile: f.auditFile }), /witness mismatch/);
+});
+
+test('R-14 C-03 IT migration on a COPY preserves legacy originals before ADOPT', async t => {
+  const f = setup(t);
+  f.env.PDCA_PORT = '42746';
+  stripWitnessToLegacy(f.file, f.auditFile);
+  const original = inspectWorkspaceFile(f.file);
+  await assert.rejects(adoptActive(f.env, 'IT', 'ADOPT'), /workspace_generation/);
+  await assert.rejects(prepareLegacyAdoption(f.env, 'Phil', 'MIGRATE-LEGACY'), /IT authorization/);
+  await assert.rejects(prepareLegacyAdoption(f.env, 'IT', 'wrong'), /confirmation/);
+  const next = await prepareLegacyAdoption(f.env, 'IT', 'MIGRATE-LEGACY');
+  assert.notEqual(next.candidate.workspace, f.file);
+  assert.equal(existsSync(f.env.PDCA_ACTIVE_DB_POINTER), false);
+  assert.deepEqual(inspectWorkspaceFile(next.candidate.workspace), original);
+  const source = new DatabaseSync(f.file, { readOnly: true });
+  try { assert.equal(source.prepare("SELECT count(*) AS n FROM sqlite_schema WHERE name='workspace_generation'").get().n, 0); }
+  finally { source.close(); }
+  const copiedEnv = { ...f.env, PDCA_DB: next.candidate.workspace, PDCA_AUDIT: next.candidate.audit };
+  await adoptActive(copiedEnv, 'IT', 'ADOPT');
+  assert.equal((await activeStatus(copiedEnv, 'IT')).projects, 1);
+  await assert.rejects(prepareLegacyAdoption(copiedEnv, 'IT', 'MIGRATE-LEGACY'), /pointer exists/);
 });

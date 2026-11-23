@@ -4,7 +4,7 @@ import { copyFile, mkdir, open, readFile, readdir, rename, rm, stat, statfs, wri
 import { join } from 'node:path';
 import { backup, DatabaseSync } from 'node:sqlite';
 import { isMainThread, parentPort, Worker, workerData } from 'node:worker_threads';
-import { auditSuffix, resealWitness, stagedApplicationId, workspacePoint } from './audit.js';
+import { auditSuffix, enrollLegacyPreviewWitness, resealWitness, stagedApplicationId, workspacePoint } from './audit.js';
 import { imageType, normalizeWorkspace, reconcileWorkspace, trashLifetime } from './store.js';
 
 const hour = 3_600_000;
@@ -223,6 +223,7 @@ export async function prepareRestore({ stageId, recoveryRoot, file: liveFile, au
     try { await backup(liveAudit, previewAudit); } finally { liveAudit.close(); }
     check(!auditSuffix(previewAudit, cut, survivingPoint(liveFile)).events.length,
       'Preview Audit advanced after Restore; repeat recovery before opening Preview');
+    enrollLegacyPreviewWitness(candidate, previewAudit);
     resealWitness(candidate, previewAudit);
     await syncFile(candidate);
     await syncFile(previewAudit);

@@ -4,7 +4,7 @@ import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { auditPath, auditSuffix } from './audit.js';
 import { createSnapshot, inspectWorkspaceFile, prepareRestore, restoreSnapshot } from './recovery.js';
-import { selectedFiles, adoptActive, activeStatus, activatePrepared, rollbackActive, inspectActivePair } from './active-db.js';
+import { selectedFiles, adoptActive, prepareLegacyAdoption, activeStatus, activatePrepared, rollbackActive, inspectActivePair } from './active-db.js';
 
 export function secretMatches(value, secret) {
   if (!secret || typeof value !== 'string') return false;
@@ -45,10 +45,11 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
   const [command, id, confirmation] = process.argv.slice(2);
   try {
     const { PDCA_OPERATOR_KEY: key } = process.env;
-    const config = operationsConfig(process.env, { skipPointer: command === 'adopt' });
+    const config = operationsConfig(process.env, { skipPointer: command === 'adopt' || command === 'migrate-legacy' });
     const role = config.authorize(key);
     let result;
     if (command === 'adopt') result = await adoptActive(process.env, role, id);
+    else if (command === 'migrate-legacy') result = await prepareLegacyAdoption(process.env, role, id);
     else if (command === 'status') result = await activeStatus(process.env, role);
     else if (command === 'activate') result = await activatePrepared(process.env, role, id, confirmation);
     else if (command === 'rollback') result = await rollbackActive(process.env, role, id);
@@ -72,7 +73,7 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
       if (process.env.PDCA_ACTIVE_DB_POINTER) inspectActivePair(config.file, config.auditFile);
       await mkdir(config.root, { recursive: true });
       result = await createSnapshot(config);
-    } else throw new Error('Use status, backups, adopt ADOPT, restore <snapshot ID>, prepare <stage ID>, activate <stage ID> ACTIVATE|ACTIVATE-RECOVERY, rollback ROLLBACK, inspect, or backup with the required role');
+    } else throw new Error('Use status, backups, migrate-legacy MIGRATE-LEGACY, adopt ADOPT, restore <snapshot ID>, prepare <stage ID>, activate <stage ID> ACTIVATE|ACTIVATE-RECOVERY, rollback ROLLBACK, inspect, or backup with the required role');
     console.log(JSON.stringify(result, null, 2));
     if (result.status === 'held') process.exitCode = 2;
   } catch (error) {

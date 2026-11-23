@@ -91,6 +91,20 @@ node --env-file="C:\PDCA-LAN-Test\config\host.env" src/server.js
 
 หลัง ADOPT ให้ใช้ **Managed Host** เท่านั้น ไม่ใช้ Demo Launcher และไม่แก้ `PDCA_DB` เพื่อสลับฐานข้อมูล
 
+### อัปเกรดฐาน BUILD 4 รุ่นก่อน Witness (C-03) — IT เท่านั้น
+
+สำหรับฐานข้อมูล **เก่าก่อนเพิ่ม workspace_generation** (การติดตั้งใหม่ไม่ต้องทำ):
+
+1. หยุด/Disable Auto-restart ของ Service และยืนยันไม่มี Writer อื่น สำรอง Workspace **และ** Audit ต้นฉบับภายใต้ IT พร้อมตรวจ SQLite/Audit Cutoff, Source SHA และเก็บหลักฐาน
+2. ตรวจว่าไฟล์ `PDCA_ACTIVE_DB_POINTER` **ยังไม่มีอยู่** (ห้ามใช้กับระบบ ADOPT แล้ว) ตั้ง `PDCA_DB` และ `PDCA_AUDIT` ใน `host.env` ให้ชี้ไฟล์เดิมภายใต้ `PDCA_DATA_ROOT`
+3. เปิด `tools\recovery\recovery-menu.cmd "<host.env>"` เลือก **8 MIGRATE LEGACY COPY**, ยืนยัน `MIGRATE-LEGACY` ด้วย IT Operator Key
+4. ระบบสร้าง **สำเนาใหม่** ที่ `PDCA_DATA_ROOT\legacy-upgrade-<UUID>\` และ Migrate Witness **ในสำเนาเท่านั้น**. IT ตรวจ `candidate.workspace` / `candidate.audit`, จำนวน PDCA, Audit Cutoff และข้อมูล เทียบกับต้นฉบับก่อนอนุมัติ
+5. **ก่อนสร้าง Pointer** จึงแก้ `PDCA_DB`/`PDCA_AUDIT` ภายในไฟล์ Env ภายนอกให้เป็น Path Candidate ที่อนุมัติแล้ว เลือก **3 ADOPT**, **1 Status**, Restart Managed Host และตรวจ Backup
+6. หากตรวจไม่ผ่าน STOP เก็บต้นฉบับไว้ ไม่แก้ Pointer/Copy ทับเพื่อข้ามการตรวจ
+
+**C-01 Hot Journal:** Startup/IT Status อนุญาต SQLite Native Rollback บนไฟล์ Workspace/Audit **ที่มีอยู่แล้ว** ก่อน Strict Integrity/Audit/Witness Validation เท่านั้น ไม่สร้างฐานใหม่หรือเปิดฐานที่ Witness ผิด; ห้ามลบ Journal ด้วยมือ
+
+
 ## 5. Network Test และ Acceptance
 
 ให้ IT ตั้ง HTTPS Reverse Proxy บนเครื่องเดียวกับ Node Host และทดสอบว่า Browser ที่ได้รับสิทธิ์เข้า URL ภายนอกได้ แต่ Browser/Client ที่ไม่ได้รับสิทธิ์ รวมถึงการเชื่อมต่อ Node Port โดยตรงเข้าไม่ได้. `127.0.0.1:4175` เป็น Loopback ภายใน Host เท่านั้น ไม่ใช่ URL สำหรับ Client
@@ -121,6 +135,9 @@ node --env-file="C:\PDCA-LAN-Test\config\host.env" src/server.js
 - [ ] IT บันทึก ACL, Service Account, Host/Proxy Origin, Key Handling, Allowed/Denied Client Evidence
 - [ ] Start/Restart/Backup อ่าน **Active Workspace/Audit คู่เดียวกัน**, ตรวจ Snapshot และ Log ได้
 - [ ] Recovery Drill: ADOPT / Restore / Prepare / Activate / Rollback และ Block Conditions ผ่าน พร้อมเวลาวัด RPO/RTO; ทดสอบลบ Staging หลัง Activate แล้วฐาน Active ยังเปิดได้
+- [ ] C-01 Crash ระหว่าง Transaction → Hot Journal Recovery → Restart กับ Last Committed Data; Missing DB ยัง BLOCK
+- [ ] C-02 Pre-Witness Snapshot → Restore/Prepare/Preview/Activate โดยไม่แก้ Snapshot ต้นฉบับหรือ Live Audit
+- [ ] C-03 Legacy Migration บนสำเนา → ADOPT; ต้นฉบับคงเดิม
 - [ ] Fault Injection: ย้อน Workspace เก่าโดย Audit Cutoff ไม่เปลี่ยนแล้วระบบต้องปฏิเสธ; ตรวจ Crash ระหว่าง Witness Reseal/Pointer Update โดยไม่เปิดฐานผิดชุด
 - [ ] IT ตรวจ Source Rollback / PowerShell Policy / Task Scheduler / Backup Failure Monitoring
 - [ ] ทุก Mandatory Gate ใน `PILOT_VERIFY.md` PASS และ Project Owner + IT อนุมัติแยกกัน
