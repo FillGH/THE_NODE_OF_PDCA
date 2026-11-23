@@ -101,7 +101,7 @@ node --env-file="C:\PDCA-LAN-Test\config\host.env" src/server.js
 
 - เมื่อ Managed Host เริ่ม ระบบสำรองทันทีและทำซ้ำทุก **2 ชั่วโมง**; เก็บ Snapshot บน Host **30 วัน**, ถ้าล้มเหลวลองใหม่ใน 5 นาที. ตรวจ `backup-verified` ใน `operations.jsonl` และตรวจ Snapshot จริง
 - **Snapshot** เป็น Workspace ที่ตรวจ SHA-256 แล้ว; **Audit** แยกและต้องเป็น Ledger ที่ถูกต้อง/ล่าสุดจาก Host ที่รับการเขียน. ห้ามถือว่าสำรอง Workspace อย่างเดียวเพียงพอสำหรับ Disaster Recovery
-- IT เปิด `tools\recovery\recovery-menu.cmd "<host.env>"` → **1 Status → 2 List Backups → 4 Restore to Staging → Review `restore.json` → 5 Prepare** แล้วตรวจ Candidate ในพื้นที่แยก
+- IT เปิด `tools\recovery\recovery-menu.cmd "<host.env>"` → **1 Status → 2 List Backups → 4 Restore to Staging → Review `restore.json` → 5 Prepare** แล้วตรวจ Candidate ในพื้นที่แยก โดยใช้คู่ `candidate.sqlite` + `preview-audit.sqlite` ที่ PREPARE สร้างให้โดยเฉพาะ **ห้ามนำ Candidate Preview ไปจับคู่กับ Live Audit**
 - ก่อน **6 ACTIVATE**: หยุดบริการและ Disable Auto-restart, ยืนยัน Candidate/Source/Audit และ Recovery Point. ACTIVATE ปกติจะ Block ถ้าข้อมูล Candidate ไม่ตรง Live; `ACTIVATE-RECOVERY` ใช้ได้เฉพาะเมื่อ IT ยืนยันผลกระทบต่อข้อมูลและยอมรับ Recovery Point อย่างชัดเจน
 - เมนู **7 ROLLBACK** จะ Block เมื่อมีข้อมูลใหม่หลัง Cutover (รวมการแก้ไขที่ไม่เกิด Deletion Audit). ห้าม Copy ทับ Workspace/Audit หรือแก้ Pointer ด้วยมือ
 - **F-01:** เมื่อ ACTIVATE สำเร็จ ระบบ Copy Candidate ไปยัง `PDCA_DATA_ROOT\active-db\release-<stage-id>-<serial>\workspace.sqlite` ก่อนสลับ Pointer. โฟลเดอร์ `restore\<stage-id>` ยังเป็นหลักฐานและสามารถจัดการอายุตามนโยบายได้โดยไม่กระทบฐาน Active. **ห้ามลบ `active-db` โดยคิดว่าเป็น Staging**

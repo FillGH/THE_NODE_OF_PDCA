@@ -31,7 +31,7 @@
 
 - `ADOPT` ตรวจคู่ Workspace/Audit, สร้าง Pointer และปรับ Witness ข้าม SQLite ทั้งสองไฟล์ให้เป็น Baseline ของชุด Active ใหม่ ต้องทำขณะ Server ปิด
 - `RESTORE` คัด Snapshot ไปยัง Staging ตรวจ Checksum และ Reconcile เหตุการณ์จาก Audit ที่มี Ledger/Sequence/Head ตรงกัน; `held` หมายถึง **ไม่ผ่าน**
-- `PREPARE` สำหรับ IT เท่านั้น สร้าง `candidate.sqlite` จาก Staging ที่ผ่าน; ไม่ Activate โดยอัตโนมัติ
+- `PREPARE` สำหรับ IT เท่านั้น สร้าง `candidate.sqlite` และ `preview-audit.sqlite` ด้วย SQLite Online Backup ของ Audit. Reseal Witness เฉพาะคู่ Preview ใน Staging; **ห้ามใช้ Live Audit คู่กับ Preview Candidate** และห้าม Activate โดยอัตโนมัติ
 - `ACTIVATE` จะผ่านก็ต่อเมื่อ Candidate มี **Full Inventory** ตรงกับ Live Workspace/Audit รวมถึง Graph Edits และ Conflict Metadata ที่ไม่ได้เพิ่ม Deletion Audit Event. Candidate จะถูก **Promote ไปยัง `PDCA_DATA_ROOT/active-db/.../workspace.sqlite`** นอก Restore Staging ก่อน Reseal Workspace/Audit Witness และเปลี่ยน Pointer
 - `ACTIVATE-RECOVERY` เป็นการยอมรับ Recovery Point และความเสี่ยงข้อมูลสูญหายอย่างเจาะจงโดย IT เมื่อ Live แตกต่าง/เสียหาย ต้องตรวจ Snapshot Time, Recent Work, Audit, RPO/RTO และ Record Evidence ก่อนดำเนินการ
 - `ROLLBACK` ใช้ได้ต่อเมื่อ Full Inventory ของ Current/Previous ตรงกัน รวมทั้ง `last_save_id`, `scope_versions` และ `save_receipts`; หากมีงานเขียนหลัง Cutover ปฏิเสธและให้ IT ทำ Recovery/Reconciliation แทน. หากผ่านจึง Reseal คู่ Previous/Audit ก่อนสลับ Pointer

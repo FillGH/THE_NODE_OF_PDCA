@@ -125,7 +125,10 @@ test('Workspace category management persists and restores assignments, including
     { pdca_id: first.id, category_id: group.id },
   ]);
   const prepared = await prepareRestore({ ...options, stageId: restored.stageId, role: 'IT' });
-  const candidate = openStore(prepared.candidate, { auditFile: options.auditFile, now });
+  assert.notEqual(prepared.previewAudit, options.auditFile, 'PREPARE must not modify or reuse live Audit for Preview');
+  assert.throws(() => openStore(prepared.candidate, { auditFile: options.auditFile, now }),
+    /witness mismatch/, 'Preview must refuse pairing with live Audit');
+  const candidate = openStore(prepared.candidate, { auditFile: prepared.previewAudit, now });
   try { assert.equal(candidate.search('สมมติ A')[0].categoryId, group.id); }
   finally { candidate.close(); }
 });
