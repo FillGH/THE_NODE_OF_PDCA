@@ -38,6 +38,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'npm ci failed' }
           npm.cmd test
           if ($LASTEXITCODE -ne 0) { throw 'Automated regression tests failed' }
+          # Diagnostic-only F-07 probe: report SQLITE_BUSY without changing deployment gating.
+          node tools/qa/f07-probe.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'F-07 diagnostic probe infrastructure failed' }
       - name: Stage package, record checksums and create ZIP
         shell: pwsh
         run: |
