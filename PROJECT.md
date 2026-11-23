@@ -404,7 +404,7 @@ The following are candidate test activities for **already-confirmed capabilities
 
 **Current high-level concept only (Confirmed):** A visual PDCA knowledge network with individually linkable nodes, seven fixed categories, and common factory-wide access.
 
-**DESIGN AUTHORIZED — UI/UX AND MOCK-DATA PROTOTYPE ONLY.** The Project Owner explicitly approved the transition from DEFINE to DESIGN on 2026-11-05, after the v0.38 closure and N-01/N-03 editorial cleanup. Prior standalone prototypes and Blender-inspired visual discussions remain exploratory inputs, not accepted designs. DESIGN may choose a lightweight prototype approach but **not** commence production implementation, backend/database integration, live collaboration infrastructure, authentication/access-control integration, deployment or real factory record processing. Those activities remain prohibited until a separate BUILD authorization and any required IT approvals.
+**Historical DESIGN-entry gate (2026-11-05) — UI/UX AND MOCK-DATA PROTOTYPE ONLY at that time.** The Project Owner explicitly approved the transition from DEFINE to DESIGN on 2026-11-05, after the v0.38 closure and N-01/N-03 editorial cleanup. Prior standalone prototypes and Blender-inspired visual discussions remain exploratory inputs, not accepted designs. DESIGN may choose a lightweight prototype approach but **not** commence production implementation, backend/database integration, live collaboration infrastructure, authentication/access-control integration, deployment or real factory record processing. Those activities remain prohibited until a separate BUILD authorization and any required IT approvals.
 
 **DESIGN v0.1 — original authorized scope, work plan and review gates:**
 1. **Information architecture and journeys:** Sketch PDCA discovery/create/open, graph canvas with seven Node categories, Node detail editing, Action Overview, history/restore, Trash and per-PDCA exports, using representative *fictional* factory data.
@@ -414,7 +414,7 @@ The following are candidate test activities for **already-confirmed capabilities
 5. **Usability and acceptance:** Review key workflows in the confirmed desktop Full HD 1920×1080 target, including empty/long content and crowded graphs; capture owner feedback, adjust, then record a **separately owner-accepted UI/UX interaction baseline** before any BUILD gate.
 6. **DESIGN/pre-BUILD risk tracking:** Plan for IT network access G-11, Pilot Host, backup sizing/recovery, deletion audit retention, data integrity/locking matrix, Session isolation and operational ownership. These risks are tracked but not represented as implemented or verified by mock screens.
 
-**No implicit permission:** UI prototypes may be static or interactive with local fictional data only. No production database, factory-host setup, IT integration, actual employee information, multi-user production service or full-stack application is authorized by DESIGN entry.
+**Historical DESIGN-entry boundary (2026-11-05):** UI prototypes at this gate used local fictional data only. DESIGN-entry approval did not authorize production database, factory hosting, IT integration, actual employee data or a full-stack application. Later BUILD approvals are recorded separately; live-data and Factory deployment approvals remain outstanding.
 
 ### UI/UX interaction baseline — core scope accepted
 
@@ -786,13 +786,13 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 - Complete Pilot task scripts/critical task tagging, evidence plans, all in-scope readiness tests (D-050), Hard Gates including G-11, ~200-Node/10-editor test, RPO/RTO restore tests, seven-day purge and thirty-day backup expiry via appropriate pre-Pilot time simulation, and cross-department usability scoring.
 - Owner's GO/REFINE/NO-GO remains subject to all passed mandatory gates, agreed usability thresholds and independent company IT authorization (D-070/D-071). No test is reported PASS without evidence.
 
-**Later release acceptance remains subject to the starter-kit Ready to Release gate; no implementation, Pilot or production-release evidence exists yet.**
+**Ready to Release remains NOT MET:** BUILD 4 implementation and Windows CI evidence exist; Factory LAN verification, Official Pilot, production acceptance and company IT/security authorization remain NOT TESTED / NOT APPROVED.
 
 ## 12. Current Baseline
 
 **Requirements baseline:** DEFINE v0.38 — approved Closure Patch; 107 Decisions remain preserved  
-**Current lifecycle baseline:** DESIGN closed for the Increment 1 decision — v0.10 is the accepted scoped core UI/UX baseline (§7)  
-**Status:** DESIGN authorized on 2026-11-05 and the Project Owner accepted v0.10 and the closeout design decisions on 2026-11-08. Ready to Build is met for the Increment 1 decision. BUILD authorization is pending.  
+**Current lifecycle baseline:** DESIGN v0.10 accepted (2026-11-08); BUILD 4 accepted by Project Owner (2026-11-10) for subsequent Factory LAN verification with fictional data.  
+**Current implementation status:** Windows Prebuilt + Recovery Hardening implemented at Draft PR #1, source commit `7cef97e7e798debaf470f601d240549f47f40b56`; Windows CI and clean-machine automated tests PASS. The PR remains unmerged; Factory LAN V-01–V-08, live Recovery/RPO/RTO drill, IT security acceptance, Official Pilot and Production Release are NOT YET APPROVED / NOT TESTED.  
 **Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; following full Pilot PASS and the Project Owner's final GO decision (D-070), **all authorized factory departments can voluntarily start using the system**, with no mandatory adoption order or timetable (D-072). Specific Pilot departments/participants, detailed evidence scripts and IT/security operational approvals remain to be decided. The Hybrid Pilot and scoring rules are confirmed (D-053/D-054). Minimum sample size is ≥5 first-time users per department (D-011). The two-level exit policy (D-009), usability thresholds (D-010), and overall-plus-each-department task-completion evaluation (D-012) remain binding; Project Owner decides full vs targeted remedial retests (D-071).
 
 **Delivery strategy:** Custom-build the application for the factory (D-013); existing market products are references, not purchase candidates for the core solution. Open-source libraries/frameworks are allowed, finished use is internal-only, and no new monetary spending is permitted (D-014). This is not a claim of zero internal labor or existing-infrastructure cost.
@@ -801,7 +801,11 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 
 **Host operating expectation:** Use Phil’s laptop as the interim Host while powered on, with app and backup startup at boot and two-hour backups retained 30 days (§7). The later shared LAN server with Float Monitor requires its own IT setup, migration and validation. Preserve all saved PDCA data, images and document references through the transfer (D-019).
 
-This file records confirmed requirements and the owner-authorized move to **DESIGN of UI/UX and mock-data prototypes**. No production implementation, substantive backend/database integration, real factory data processing, or deployment is authorized.
+**Current approval boundary:** BUILD implementation using synthetic data has been accepted. Factory deployment, access to real data and Official Pilot still require their separate security/acceptance gates. Nothing in the automated CI results authorizes production operation.
+
+### Historical DEFINE-stage requirement notes (2026-11-04; retained for traceability)
+
+The D-035–D-107 summaries below record the scope and authorization language **as of the DEFINE stage**. Phrases such as “BUILD not authorized,” “DESIGN only” or “DEFINE only” describe the historical decision date; they are superseded for *current lifecycle status* by BUILD 4 acceptance above. The technical requirements and decision IDs remain authoritative; this editorial clarification does not change them.
 
 **Node deletion:** D-035–D-039 establish recoverable Trash for seven days, automated final removal thereafter, authorized-user delete/restore, no cascade to other Nodes, and explicit confirmation identifying Node and relationship count. DESIGN is authorized for UI/UX with mock data only; BUILD is not authorized.
 **Core PDCA boundary (D-040–D-044):** Keep discovery/search simple; links stay within one PDCA; each PDCA can contain multiple Problem Nodes; there is no project-level closure-based edit lock; whole-PDCA deletion uses seven-day recoverable Trash followed by automatic permanent removal. Fine UI/UX decisions follow modern web conventions during DESIGN. DESIGN is authorized for UI/UX with mock data only; BUILD is not authorized.
