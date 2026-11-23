@@ -102,3 +102,13 @@ The new `active-db.json` pointer is the single database-selection authority in m
 - Demonstrate full disaster recovery from a lost Workspace using surviving valid Audit and explicit ACTIVATE-RECOVERY approval (with incident/RPO/RTO documentation).
 - Run actual Backup/Restore timing checks, retention, fail/retry and Host access checks against the approved Factory LAN environment.
 - A ZIP or automated test PASS alone does not satisfy IT security approval or V-07 Factory recovery acceptance.
+
+
+### CRITICAL: source-code downgrade and active pointer compatibility
+
+Older BUILD 4 source (before this Recovery Operator increment) **does not read PDCA_ACTIVE_DB_POINTER**. Starting that older source with the original PDCA_DB path after any managed ACTIVATE may silently open an obsolete Workspace even if the managed source was using another database. This is the same class of stale-DB source-rollback hazard encountered in Float Monitor.
+
+- **STOP:** Never reinstall, run, schedule, or roll back to pre-pointer PDCA source simply by extracting an older ZIP over the current installation. Do not bypass the pointer by changing PDCA_DB or editing service BAT/PowerShell scripts manually.
+- To downgrade software, stop the service, secure the latest Workspace **and** Audit from the ACTIVE pair, check whether any post-cutover writes occurred (including ordinary graph edits that do not appear in deletion Audit), and have IT approve a safe conversion/migration plan with a reversible test before switching service source.
+- Prefer redeploying a known-good **pointer-aware** package with the same external pointer and audit intact. If no compatible recovery is possible, keep the service STOPPED and escalate rather than allowing a stale-database startup.
+- Validate Source SHA, active pointer serial, Workspace/Audit inventory, Backup destination, and actual displayed PDCA content after every source change. Retain the previous source and data until IT acceptance, never overwrite the live pair in place.

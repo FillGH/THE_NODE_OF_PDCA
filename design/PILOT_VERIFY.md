@@ -113,3 +113,5 @@ try {
 ## V-07 Addendum — Prebuilt Managed Recovery
 
 หากใช้งาน `PDCA_ACTIVE_DB_POINTER` ให้ IT บันทึกหลักฐานว่า Startup, Status, Backup และ Restore ใช้คู่ Workspace/Audit ตาม Pointer จริงหลัง Restart; ทดสอบ ADOPT, Restore to staging, Prepare, ACTIVATE, ROLLBACK และกรณีปฏิเสธเมื่อ Database หรือ Audit ไม่ตรงกัน รวมถึงกรณีที่มีการแก้ Node/PDCA แต่ไม่เกิด Deletion Audit Event ทั้งนี้ ACTIVATE-RECOVERY ต้องมี IT ยอมรับ Recovery Point และความเสี่ยงข้อมูลสูญหายอย่างชัดเจน ห้ามใช้ผล Automated Test แทน Factory V-07
+
+**Source Rollback Safety Gate (V-08):** ทดสอบและบันทึกว่า Task Scheduler/Start Script จะไม่เรียก Source BUILD 4 รุ่นเก่าที่ไม่รองรับ Active DB Pointer หลัง Managed ACTIVATE; การย้อนรุ่น Source ต้องมีแผน IT ที่รักษาคู่ Workspace/Audit ล่าสุด ทวนแผนข้อมูลใหม่หลัง Cutover และตรวจ Source SHA/Active DB ก่อนเปิดรับผู้ใช้

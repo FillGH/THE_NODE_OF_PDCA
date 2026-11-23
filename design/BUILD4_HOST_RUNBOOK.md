@@ -4,6 +4,9 @@
 
 ใช้ข้อมูลสมมติใน BUILD 4 การเปิดบริการบน LAN โรงงาน บัญชีและสิทธิ์จริง การตั้งค่าเครื่อง และการใช้ข้อมูลจริงอยู่ใน VERIFY หลังได้รับอนุมัติแยก เกณฑ์ D-068, D-069, D-106, Closure-04 และ IT-01–IT-06 อยู่ใน [PROJECT](../PROJECT.md) และ [IT handoff](IT_HANDOFF.md)
 
+
+**SOURCE DOWNGRADE STOP GATE:** BUILD 4 รุ่นก่อนเพิ่ม `PDCA_ACTIVE_DB_POINTER` ไม่อ่าน Pointer นี้ และอาจเปิดฐาน `PDCA_DB` เก่าหลังมีการ Activate แล้ว ดังนั้นห้ามนำ Source/ZIP รุ่นเก่ามาทับหรือ Start โดยไม่ตรวจคู่ Workspace/Audit ที่ใช้งานจริงและข้อมูลที่เขียนหลัง Cutover ให้ IT วางแผน Source Rollback แยกจาก Database Rollback พร้อมเก็บหลักฐานและ Stop Service ก่อนทุกครั้ง (ดู `deployment/PREBUILT_WINDOWS.md`)
+
 ## ข้อมูลและจุดตัด Audit
 
 - BUILD 3 เก็บผัง JSON, ID ของ Node, รูปเป็น BLOB, History, Trash, revision และใบรับการบันทึกใน SQLite ส่วนลิงก์เอกสารเก็บเป็นค่าที่อ้างถึงปลายทาง ฐานเดิมมี `deletion_audit` ในไฟล์เดียวกัน ให้หยุด BUILD 3 และสำรองไฟล์เดิมก่อนเปิด **สำเนา** ด้วย BUILD 4 ครั้งแรกจะย้าย Audit พร้อม `seq` และข้อมูลเดิมไปยังไฟล์ Audit และเริ่ม ledger ID กับ hash ณ ลำดับสูงสุดที่พบ Backup ก่อน BUILD 4 ไม่มีจุดตัดที่วิธีนี้ยืนยันได้
