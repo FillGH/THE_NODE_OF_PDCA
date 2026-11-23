@@ -1,5 +1,7 @@
 # ข้อความให้ Phil ใช้ประสาน IT
 
+> **Historical Requirements/Handoff Record (8 Nov 2026)** ไม่ใช่ IT Installation Guide ล่าสุด. สำหรับการส่งมอบ Prebuilt ZIP, การติดตั้ง และ Recovery Menu ให้ใช้ [README4IT.md](../README4IT.md) เป็นหลัก
+
 **สถานะ 8 พฤศจิกายน 2026** · Phil รับรองแบบ DESIGN · ส่งต่อทีม IT สำหรับเตรียมการตั้งค่าและ VERIFY
 
 ## ข้อความพร้อมส่ง

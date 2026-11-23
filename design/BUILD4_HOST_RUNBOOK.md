@@ -1,6 +1,13 @@
 # BUILD 4 · คู่มือสำรอง กู้คืน และย้าย Host
 
+> **IT Quick Start:** [README4IT.md](../README4IT.md) เป็นจุดเริ่มติดตั้ง/ตรวจ Package/ใช้งาน Recovery Menu; เอกสารนี้อธิบายการกู้เชิงลึก, Audit Reconciliation และ Host Migration ขั้นตอนที่ใช้ `npm.cmd` ด้านล่างเป็น DEV/Historical Source Checkout เท่านั้น ไม่ใช่ข้อบังคับของ Prebuilt Factory Server
+
+**UPDATE — Prebuilt Recovery Operator:** สำหรับโหมดที่ IT ตั้งค่า `PDCA_ACTIVE_DB_POINTER` ให้ใช้ขั้นตอน Managed Recovery Operator ใน `deployment/PREBUILT_WINDOWS.md` เป็นวิธีหลักในการ ADOPT / Restore / Prepare / Activate / Rollback แทนการแก้ DB Path ด้วยมือ ส่วนขั้นตอน CLI ด้านล่างเป็นประวัติ BUILD 4 และแนวทางกู้ทางเทคนิค โดยต้องไม่ข้ามการตรวจ Workspace + Audit และไม่สลับระหว่าง Managed/Legacy Mode โดยไม่ผ่าน Change Control
+
 ใช้ข้อมูลสมมติใน BUILD 4 การเปิดบริการบน LAN โรงงาน บัญชีและสิทธิ์จริง การตั้งค่าเครื่อง และการใช้ข้อมูลจริงอยู่ใน VERIFY หลังได้รับอนุมัติแยก เกณฑ์ D-068, D-069, D-106, Closure-04 และ IT-01–IT-06 อยู่ใน [PROJECT](../PROJECT.md) และ [IT handoff](IT_HANDOFF.md)
+
+
+**SOURCE DOWNGRADE STOP GATE:** BUILD 4 รุ่นก่อนเพิ่ม `PDCA_ACTIVE_DB_POINTER` ไม่อ่าน Pointer นี้ และอาจเปิดฐาน `PDCA_DB` เก่าหลังมีการ Activate แล้ว ดังนั้นห้ามนำ Source/ZIP รุ่นเก่ามาทับหรือ Start โดยไม่ตรวจคู่ Workspace/Audit ที่ใช้งานจริงและข้อมูลที่เขียนหลัง Cutover ให้ IT วางแผน Source Rollback แยกจาก Database Rollback พร้อมเก็บหลักฐานและ Stop Service ก่อนทุกครั้ง (ดู `deployment/PREBUILT_WINDOWS.md`)
 
 ## ข้อมูลและจุดตัด Audit
 
@@ -81,3 +88,19 @@ Register-ScheduledTask -TaskName 'PDCA-Host' -Action $action -Trigger $trigger -
 3. **ย้าย Host โดยรักษาฉบับล่าสุด** คัดลอก Workspace และ Audit ที่หยุดเขียนแล้วเป็นคู่พร้อม snapshots 30 วันที่ยังใช้งานได้และบันทึกการตรวจ เทียบ `inspect` ทั้งสองด้านรวม SHA-256, ID, เส้น, รูป, ลิงก์, History, Trash และจุดตัด เปิดปลายทางในวงแยกก่อนสลับ ตรวจ Float Monitor, ทรัพยากรร่วม และการเข้าจากเครื่องที่อนุญาต/ปฏิเสธ ปิดและกันไม่ให้ต้นทางเริ่มซ้ำก่อนปลายทางเปิดรับเขียน หลังสลับให้ผู้ใช้เริ่ม Session ใหม่
 4. **ย้อนกลับหลังสลับ** ปิดทางเข้าและหยุดเขียนที่ server ก่อน ทำ snapshot/ตรวจฉบับล่าสุดที่ server หากมีงานใหม่ให้นำ Workspace **และ Audit ล่าสุด** จาก server กลับ laptop เป็นคู่ เก็บฉบับก่อนสลับและฉบับ server ไว้สำหรับตรวจ เทียบงานใหม่และ Trash พร้อมจุดตัด แล้วจึงสลับเส้นทางกลับ หากอ่านฉบับ server ไม่ได้ ให้คงการหยุดเขียนและประเมินงานใหม่ที่อาจเสียกับ IT/Phil จากจุดกู้ล่าสุดก่อนตัดสินใจเปิดระบบ
 5. บันทึกเวลาเกิดเหตุและ `capturedAt` ของ snapshot ที่กู้ได้จริงเพื่อคำนวณ RPO เป้าหมาย ≤ 4 ชั่วโมงเมื่อมี Backup ใช้ได้ วัด RTO ตั้งแต่เริ่มเหตุจนผู้ใช้ที่ได้รับอนุญาตกลับมาใช้งานได้ตามนิยามวันทำการที่ IT ยืนยัน เป้าหมาย ≤ 1 วันทำการเมื่อระบบและผู้ดูแลพร้อม เก็บผล DEV แยกจากผลที่วัดบน Host จริง
+
+## Operational Safety Addendum — F-01 / F-05 / F-06
+
+สำหรับ Managed Recovery (อ่าน README4IT.md ก่อน): `active-db/` คือพื้นที่ฐานข้อมูลใช้งานจริง ไม่ใช่ Staging. หลัง ACTIVATE ให้ยืนยัน Pointer ชี้ไปยัง `PDCA_DATA_ROOT/active-db/.../workspace.sqlite` และลบเฉพาะโฟลเดอร์ Restore Staging ที่ได้รับอนุมัติแล้วเท่านั้น. ค่า Witness `(generation, token)` ถูกเขียนใน Workspace และ Audit พร้อมกันสำหรับทุก Application Transaction รวมถึงการสร้าง/แก้ไข PDCA ที่ไม่มี Deletion Audit Event. หากค่าต่างกัน ห้าม Start หรือ Backup. การย้าย/กู้/ย้อนกลับต้องตรวจ `last_save_id`, `scope_versions`, `save_receipts`, Workspaces และ Audit ด้วย.
+
+**Interrupted activation:** หาก Reseal Witness สำเร็จแต่ Pointer ยังไม่เปลี่ยน ระบบจะไม่เปิดด้วย Pointer เก่า. ให้ IT หยุด Task Scheduler/Proxy, เก็บ Evidence, สร้าง Restore Stage ใหม่ และอนุมัติ Recovery Point ตามขั้นตอน ไม่แก้ JSON Pointer โดยตรง. ข้อมูลก่อน Witness Migration ไม่สามารถยืนยันย้อนหลังด้วย Witness ได้.
+
+
+**Preview Isolation after Witness (F-05):** `node src/ops.js prepare <stage-id>` ส่งกลับทั้ง `candidate` และ `previewAudit`. ให้เปิด Preview ด้วย `candidate.sqlite` คู่กับ `preview-audit.sqlite` ใน Staging ที่ได้จากคำสั่งนี้ ห้ามคัดลอก/นำ Live Audit มาเปิด Preview เพราะ Witness ที่ตรวจจับฐานเก่าจะปฏิเสธตามการออกแบบ. การเปิดระบบจริงหลัง Activate ใช้ Audit จริงที่ IT ควบคุมผ่าน Active Pointer เท่านั้น
+
+
+### C-01–C-03 — Crash and Legacy Data Upgrade
+
+- **C-01**: If a normal process crash leaves Hot Rollback Journals, SQLite opens existing Workspace/Audit writable with `create:false` and rolls back incomplete transactions BEFORE read-only Integrity/Witness validation. Missing files and stale pairs remain NO-GO.
+- **C-02**: Old Snapshot stays immutable; PREPARE creates and migrates only isolated Candidate + Preview Audit. Never pair old Candidate directly with Live Audit.
+- **C-03**: IT stops all writers, preserves original Workspace and Audit, runs Menu **8 MIGRATE LEGACY COPY** before ADOPT, verifies copy, and changes external DB/Audit paths to approved candidate BEFORE ADOPT. Original data remains intact.

@@ -1,0 +1,25 @@
+# IT-ONLY TEMPLATE. Copy OUTSIDE app/repo to C:/PDCA-LAN-Test/config/Caddyfile.
+# Replace ALL __...__ placeholders, validate with the approved Caddy v2 binary.
+# IT provisions HTTPS server PEM key/cert AND CA for enrolled client certificates.
+# Browser API requests use Authorization: Bearer, so do NOT add basic_auth here.
+{
+    admin off
+    auto_https off
+}
+https://__PDCA_FQDN__:443 {
+    tls __SERVER_CERT_PEM__ __SERVER_KEY_PEM__ {
+        client_auth {
+            mode require_and_verify
+            trust_pool file __CLIENT_CA_PEM__
+        }
+    }
+    reverse_proxy 127.0.0.1:__PDCA_PORT__ {
+        # Keep the public Host so PDCA_ORIGIN validation remains strict.
+        header_up Host {host}
+        # No inbound user may supply an IT operator credential to the app.
+        header_up -X-Pdca-Operator-Key
+        # Replace (do not append to) any caller-supplied ingress key.
+        header_up X-Pdca-Ingress-Key {$PDCA_INGRESS_KEY}
+        # Preserve Authorization: Bearer for PDCA session requests.
+    }
+}

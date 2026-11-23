@@ -1,12 +1,14 @@
 # THE NODE OF PDCA · VERIFY และ LAN Test
 
+> **เอกสารนี้เป็น Test Plan/Evidence Matrix ไม่ใช่คู่มือติดตั้งล่าสุด** สำหรับการส่งมอบ **Prebuilt ZIP** ให้ IT เริ่มที่ **[README4IT.md](../README4IT.md)** ก่อน คำสั่ง `git clone` / `npm.cmd ci` ด้านล่างเป็นวิธี Development Source Checkout ย้อนหลังเท่านั้น **ไม่จำเป็นบน Factory Server** หลัง ADOPT เข้าสู่ Managed Mode ให้เปิดด้วย `src/server.js` ไม่ใช่ Demo Launcher
+
 วันที่ส่งมอบ 10 พฤศจิกายน 2026 · สาขา `codex/build-increment-4`
 
 เจ้าของโครงการรับ BUILD 4 และให้ส่งแพ็กเกจเพื่อเริ่ม LAN Test ด้วยข้อมูลสมมติ ใช้ชุดนี้เก็บหลักฐานบน Laptop บริษัทและเครื่องลูกข่ายที่ IT อนุญาต ก่อนพิจารณา Official Pilot และก่อนนำข้อมูลจริงเข้าระบบ [ข้อกำหนดและเกณฑ์ตัดสิน](../PROJECT.md)
 
-## 1. เตรียมเครื่องและเปิด Demo บน Laptop
+## 1. ทางเลือก Developer Source Checkout (Historical) และชุด Demo ทดสอบ
 
-ใช้ Git และ Node.js 24 ตาม `package.json` ตั้งพื้นที่ทดสอบบนดิสก์ภายในเครื่อง เช่น `C:\PDCA-LAN-Test` ภายใต้สิทธิ์ที่ IT จัดให้ เก็บ SQLite, Audit และ Backup บน volume เดียวกันในโฟลเดอร์ที่ผู้ใช้ LAN เข้าถึงผ่านแอปเท่านั้น
+วิธีนี้สำหรับผู้พัฒนาเท่านั้น ไม่ใช่ขั้นตอนที่ IT ต้องทำเมื่อได้รับ Verified ZIP. ใช้ Git และ Node.js 24 ตาม `package.json` ตั้งพื้นที่ทดสอบบนดิสก์ภายในเครื่อง เช่น `C:\PDCA-LAN-Test` ภายใต้สิทธิ์ที่ IT จัดให้ เก็บ SQLite, Audit และ Backup บน volume เดียวกันในโฟลเดอร์ที่ผู้ใช้ LAN เข้าถึงผ่านแอปเท่านั้น
 
 ```powershell
 git clone --branch codex/build-increment-4 --single-branch https://github.com/FillGH/THE_NODE_OF_PDCA.git
@@ -109,3 +111,33 @@ try {
 | | | | | NOT TESTED | | |
 
 เมื่อปิดผล LAN Test และข้อบังคับที่เกี่ยวข้องแล้ว ให้เจ้าของโครงการกับ IT ทวน Hard Gates ก่อนเริ่ม Official Pilot ช่วง Pilot ใช้เวลา 3 วันทำการ มี Cutting & Packing และอีก 1–2 แผนก ใช้ผู้ทดสอบครั้งแรกอย่างน้อย 5 คนและกรณีงานจริงที่ได้รับอนุมัติ 1 ผังต่อแผนก แต่ละคนต้องทำงานสำคัญครบและทำงานทั้งหมดได้อย่างน้อย 80% โดยไม่รับคำแนะนำ ให้ผ่านอย่างน้อย 80% ทั้งภาพรวมและในทุกแผนก คะแนนใช้ง่ายเฉลี่ยอย่างน้อย 4/5 เจ้าของโครงการตัดสิน GO, ปรับแล้วทดสอบซ้ำ หรือ NO-GO จากหลักฐานและการอนุมัติของ IT [เกณฑ์ Pilot และการวัดผล](../PROJECT.md#9-acceptance-criteria)
+
+## V-07 Addendum — Prebuilt Managed Recovery
+
+หากใช้งาน `PDCA_ACTIVE_DB_POINTER` ให้ IT บันทึกหลักฐานว่า Startup, Status, Backup และ Restore ใช้คู่ Workspace/Audit ตาม Pointer จริงหลัง Restart; ทดสอบ ADOPT, Restore to staging, Prepare, ACTIVATE, ROLLBACK และกรณีปฏิเสธเมื่อ Database หรือ Audit ไม่ตรงกัน รวมถึงกรณีที่มีการแก้ Node/PDCA แต่ไม่เกิด Deletion Audit Event ทั้งนี้ ACTIVATE-RECOVERY ต้องมี IT ยอมรับ Recovery Point และความเสี่ยงข้อมูลสูญหายอย่างชัดเจน ห้ามใช้ผล Automated Test แทน Factory V-07
+
+**Source Rollback Safety Gate (V-08):** ทดสอบและบันทึกว่า Task Scheduler/Start Script จะไม่เรียก Source BUILD 4 รุ่นเก่าที่ไม่รองรับ Active DB Pointer หลัง Managed ACTIVATE; การย้อนรุ่น Source ต้องมีแผน IT ที่รักษาคู่ Workspace/Audit ล่าสุด ทวนแผนข้อมูลใหม่หลัง Cutover และตรวจ Source SHA/Active DB ก่อนเปิดรับผู้ใช้
+
+### V-07 QA Addendum — Witness and Staging
+
+- ทดสอบ Copy Workspace เก่ากลับหลังสร้าง PDCA/แก้ Graph ใหม่โดยไม่มี Deletion Audit Event: `Status` และ Managed Startup ต้องปฏิเสธ, ห้ามสร้าง Backup ใหม่จาก Workspace เก่า
+- ทดสอบ Restore → Prepare → ACTIVATE จากนั้นจัดเก็บ/ลบ Staging ตามนโยบาย แล้ว Restart/Backup ต้องใช้งานได้ด้วย Workspace ที่ Promote ไป `active-db/` อย่างถูกต้อง
+- ทดสอบ ROLLBACK หลังเปลี่ยน `scope_versions`, `save_receipts` หรือ `last_save_id` ต้องไม่สูญข้อมูลเงียบ; ตรวจค่า Full Inventory และหลักฐานเหตุการณ์
+- จำลองการขัดข้องระหว่าง Reseal Witness กับ Pointer Replacement; ต้อง Fail Closed และต้องมี IT-controlled Recovery Plan ไม่แก้ Pointer JSON ด้วยมือ
+- บันทึก Node.js Build/Run Version ตาม Manifest; รุ่นที่ CI ทดสอบคือ 24.11.0. หากใช้ Node Patch อื่น ให้แยกผล Revalidation/IT Approval ชัดเจน
+
+
+### V-07 — C-01/C-02/C-03 Compatibility and Fault Injection
+
+- C-01: Kill an uncommitted dual-file SQLite transaction, then confirm native Hot Journal Recovery to the Last Committed State before Strict Audit/Witness checks; missing files and stale substituted Workspace still block Restart.
+- C-02: Restore an authentic BUILD 4 pre-Witness Snapshot; PREPARE only on isolated Preview Audit, immutable Source Snapshot and unchanged authoritative Audit; test corruption and mismatch refusals.
+- C-03: With all writers stopped and originals secured, migrate a pre-Witness pair to NEW COPIES, verify content, ADOPT using approved candidate paths, and reject migration after Pointer exists.
+- Record Source SHA, Node/Windows Version, test evidence, Owner and RPO/RTO; CI success does not establish Factory V-07 acceptance.
+
+
+### F-07 — Windows Admin Status under concurrent edits
+
+- เรียก IT Status ขณะมี Writer บันทึก PDCA ต่อเนื่องและตรวจว่าผล Status มี Integrity/Witness Verification ครบ; transient SQLite BUSY ต้อง Retry แบบมีขอบเขต ไม่ใช่การยกเว้นการตรวจ
+- ทดสอบ SQLite EXCLUSIVE Lock 3.5 วินาทีจาก Process แยก: Status ต้องกลับมา PASS หลัง Lock ถูกปล่อย และไม่มีการสร้าง DB/Audit ใหม่
+- ทดสอบ Sustained Heavy Load เกินช่วง Retry: ผลอาจเป็น `BUSY/RETRY` พร้อม Exit Failure อย่างชัดเจน ห้ามรายงานว่า PASS; ตรวจความครบของ Saved PDCAs หลัง Load
+- ทดสอบ Workspace/Audit Witness ไม่ตรงและ Unauthorized IT key: ต้อง Fail Closed โดยไม่ถูก Retry ให้ PASS; บันทึก Runtime Version และหลักฐาน Windows Factory แยกจาก CI

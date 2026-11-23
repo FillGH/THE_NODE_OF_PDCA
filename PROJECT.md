@@ -1,10 +1,10 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DESIGN complete for the Increment 1 decision · BUILD authorization pending** · **Requirements baseline: DEFINE v0.38 (Closure Patch; D-001–D-107)**  
-> Last updated: 2026-11-08  
+> **Lifecycle stage: BUILD 4 accepted · Prebuilt/Recovery improvements in Draft PR · Factory VERIFY pending** · **Requirements baseline: DEFINE v0.38 (Closure Patch; D-001–D-107)**  
+> Last updated: 2026-11-23  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
-> **DESIGN entry authorized by Project Owner (2026-11-05): UI/UX exploration and mock-data prototype only. BUILD, backend/database integration, real factory data processing and deployment remain unauthorized.** Requirements D-001–D-107 and Closure-01–05 remain the approved product baseline.
+> **Historical decision (2026-11-05): DESIGN exploration was authorized before BUILD. BUILD 4 was subsequently accepted on 2026-11-10 for fictional data; Factory LAN, real data and deployment remain subject to distinct IT/Project Owner approvals.** Requirements D-001–D-107 and Closure-01–05 remain the approved product baseline.
 
 ## 1. Problem
 
@@ -404,7 +404,7 @@ The following are candidate test activities for **already-confirmed capabilities
 
 **Current high-level concept only (Confirmed):** A visual PDCA knowledge network with individually linkable nodes, seven fixed categories, and common factory-wide access.
 
-**DESIGN AUTHORIZED — UI/UX AND MOCK-DATA PROTOTYPE ONLY.** The Project Owner explicitly approved the transition from DEFINE to DESIGN on 2026-11-05, after the v0.38 closure and N-01/N-03 editorial cleanup. Prior standalone prototypes and Blender-inspired visual discussions remain exploratory inputs, not accepted designs. DESIGN may choose a lightweight prototype approach but **not** commence production implementation, backend/database integration, live collaboration infrastructure, authentication/access-control integration, deployment or real factory record processing. Those activities remain prohibited until a separate BUILD authorization and any required IT approvals.
+**Historical DESIGN-entry gate (2026-11-05) — UI/UX AND MOCK-DATA PROTOTYPE ONLY at that time.** The Project Owner explicitly approved the transition from DEFINE to DESIGN on 2026-11-05, after the v0.38 closure and N-01/N-03 editorial cleanup. Prior standalone prototypes and Blender-inspired visual discussions remain exploratory inputs, not accepted designs. DESIGN may choose a lightweight prototype approach but **not** commence production implementation, backend/database integration, live collaboration infrastructure, authentication/access-control integration, deployment or real factory record processing. Those activities remain prohibited until a separate BUILD authorization and any required IT approvals.
 
 **DESIGN v0.1 — original authorized scope, work plan and review gates:**
 1. **Information architecture and journeys:** Sketch PDCA discovery/create/open, graph canvas with seven Node categories, Node detail editing, Action Overview, history/restore, Trash and per-PDCA exports, using representative *fictional* factory data.
@@ -414,7 +414,7 @@ The following are candidate test activities for **already-confirmed capabilities
 5. **Usability and acceptance:** Review key workflows in the confirmed desktop Full HD 1920×1080 target, including empty/long content and crowded graphs; capture owner feedback, adjust, then record a **separately owner-accepted UI/UX interaction baseline** before any BUILD gate.
 6. **DESIGN/pre-BUILD risk tracking:** Plan for IT network access G-11, Pilot Host, backup sizing/recovery, deletion audit retention, data integrity/locking matrix, Session isolation and operational ownership. These risks are tracked but not represented as implemented or verified by mock screens.
 
-**No implicit permission:** UI prototypes may be static or interactive with local fictional data only. No production database, factory-host setup, IT integration, actual employee information, multi-user production service or full-stack application is authorized by DESIGN entry.
+**Historical DESIGN-entry boundary (2026-11-05):** UI prototypes at this gate used local fictional data only. DESIGN-entry approval did not authorize production database, factory hosting, IT integration, actual employee data or a full-stack application. Later BUILD approvals are recorded separately; live-data and Factory deployment approvals remain outstanding.
 
 ### UI/UX interaction baseline — core scope accepted
 
@@ -786,13 +786,13 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 - Complete Pilot task scripts/critical task tagging, evidence plans, all in-scope readiness tests (D-050), Hard Gates including G-11, ~200-Node/10-editor test, RPO/RTO restore tests, seven-day purge and thirty-day backup expiry via appropriate pre-Pilot time simulation, and cross-department usability scoring.
 - Owner's GO/REFINE/NO-GO remains subject to all passed mandatory gates, agreed usability thresholds and independent company IT authorization (D-070/D-071). No test is reported PASS without evidence.
 
-**Later release acceptance remains subject to the starter-kit Ready to Release gate; no implementation, Pilot or production-release evidence exists yet.**
+**Ready to Release remains NOT MET:** BUILD 4 implementation and Windows CI evidence exist; Factory LAN verification, Official Pilot, production acceptance and company IT/security authorization remain NOT TESTED / NOT APPROVED.
 
 ## 12. Current Baseline
 
 **Requirements baseline:** DEFINE v0.38 — approved Closure Patch; 107 Decisions remain preserved  
-**Current lifecycle baseline:** DESIGN closed for the Increment 1 decision — v0.10 is the accepted scoped core UI/UX baseline (§7)  
-**Status:** DESIGN authorized on 2026-11-05 and the Project Owner accepted v0.10 and the closeout design decisions on 2026-11-08. Ready to Build is met for the Increment 1 decision. BUILD authorization is pending.  
+**Current lifecycle baseline:** DESIGN v0.10 accepted (2026-11-08); BUILD 4 accepted by Project Owner (2026-11-10) for subsequent Factory LAN verification with fictional data.  
+**Current implementation status:** Windows Prebuilt + Recovery Hardening implemented at Draft PR #1, source commit `7cef97e7e798debaf470f601d240549f47f40b56`; Windows CI and clean-machine automated tests PASS. The PR remains unmerged; Factory LAN V-01–V-08, live Recovery/RPO/RTO drill, IT security acceptance, Official Pilot and Production Release are NOT YET APPROVED / NOT TESTED.  
 **Rollout decision:** Pilot-first, with Cutting & Packing and 1–2 additional departments; following full Pilot PASS and the Project Owner's final GO decision (D-070), **all authorized factory departments can voluntarily start using the system**, with no mandatory adoption order or timetable (D-072). Specific Pilot departments/participants, detailed evidence scripts and IT/security operational approvals remain to be decided. The Hybrid Pilot and scoring rules are confirmed (D-053/D-054). Minimum sample size is ≥5 first-time users per department (D-011). The two-level exit policy (D-009), usability thresholds (D-010), and overall-plus-each-department task-completion evaluation (D-012) remain binding; Project Owner decides full vs targeted remedial retests (D-071).
 
 **Delivery strategy:** Custom-build the application for the factory (D-013); existing market products are references, not purchase candidates for the core solution. Open-source libraries/frameworks are allowed, finished use is internal-only, and no new monetary spending is permitted (D-014). This is not a claim of zero internal labor or existing-infrastructure cost.
@@ -801,7 +801,11 @@ The following is a **DEFINE-stage test protocol candidate**, not a UI/design ins
 
 **Host operating expectation:** Use Phil’s laptop as the interim Host while powered on, with app and backup startup at boot and two-hour backups retained 30 days (§7). The later shared LAN server with Float Monitor requires its own IT setup, migration and validation. Preserve all saved PDCA data, images and document references through the transfer (D-019).
 
-This file records confirmed requirements and the owner-authorized move to **DESIGN of UI/UX and mock-data prototypes**. No production implementation, substantive backend/database integration, real factory data processing, or deployment is authorized.
+**Current approval boundary:** BUILD implementation using synthetic data has been accepted. Factory deployment, access to real data and Official Pilot still require their separate security/acceptance gates. Nothing in the automated CI results authorizes production operation.
+
+### Historical DEFINE-stage requirement notes (2026-11-04; retained for traceability)
+
+The D-035–D-107 summaries below record the scope and authorization language **as of the DEFINE stage**. Phrases such as “BUILD not authorized,” “DESIGN only” or “DEFINE only” describe the historical decision date; they are superseded for *current lifecycle status* by BUILD 4 acceptance above. The technical requirements and decision IDs remain authoritative; this editorial clarification does not change them.
 
 **Node deletion:** D-035–D-039 establish recoverable Trash for seven days, automated final removal thereafter, authorized-user delete/restore, no cascade to other Nodes, and explicit confirmation identifying Node and relationship count. DESIGN is authorized for UI/UX with mock data only; BUILD is not authorized.
 **Core PDCA boundary (D-040–D-044):** Keep discovery/search simple; links stay within one PDCA; each PDCA can contain multiple Problem Nodes; there is no project-level closure-based edit lock; whole-PDCA deletion uses seven-day recoverable Trash followed by automatic permanent removal. Fine UI/UX decisions follow modern web conventions during DESIGN. DESIGN is authorized for UI/UX with mock data only; BUILD is not authorized.
@@ -983,7 +987,7 @@ This file records confirmed requirements and the owner-authorized move to **DESI
 
 # Decision Gates
 
-## Ready to Build — MET for Increment 1, authorization pending
+## Ready to Build — MET; BUILD 4 subsequently authorized and accepted
 
 - [x] **Problem and desired outcome.** §1–2 define traceable PDCA relationships, separate Action tracking, central persistence and collaborative use.
 - [x] **Scope, constraints, thresholds and important unknowns.** Closure-02 freezes Pilot scope. §7 and the [four increment plan](design/DESIGN_PRE_BUILD.md#build-สี่ช่วงสำหรับพิจารณา) identify the accepted direction, acceptance checks and prerequisites. Increment 1 uses fictional data in an isolated development environment.
@@ -1003,4 +1007,36 @@ Production release remains pending VERIFY, Official Pilot results, the Project O
 
 `DEFINE → DESIGN → BUILD → VERIFY → OPERATE → LEARN`
 
-Current stage: **DESIGN closeout recorded. BUILD Increment 1 is awaiting explicit owner authorization.**
+Current stage: **BUILD 4 accepted; Windows Prebuilt/Managed Recovery refinement under Draft PR. Factory VERIFY with fictional data pending; Official Pilot/Release not approved.**
+
+
+### Post-BUILD 4 deployment/recovery tooling decision (23 November 2026)
+
+Project Owner authorized combining a Windows Prebuilt Deployment Package and an IT-only Managed Recovery Operator before Factory LAN recovery verification. This is an operational implementation improvement addressing manual database-path selection, not a change to D-001–D-107 product scope, DESIGN v0.10 or Pilot pass criteria. The implementation adds an opt-in Active DB pointer, automatic Workspace/Audit validation on managed startup, and controlled ADOPT/RESTORE/PREPARE/ACTIVATE/ROLLBACK with explicit recovery-point acceptance for any possible lost non-Audit edits. Application core Node/Graph/Export functionality remains unchanged. Factory V-01..V-08 and IT authorizations remain independent mandatory gates. Technical CI and Factory acceptance must not be conflated.
+
+
+### Post-QA F-01 / F-05 / F-06 corrective increment (23 November 2026)
+
+Owner approved a single corrective increment before Factory handoff. F-01: a prepared recovery candidate is promoted into a **permanent Active DB directory outside Restore Staging** before cutover; former Workspace is preserved for controlled rollback. F-05: a **monotonic cross-file Workspace/Audit witness (generation + random token)** is updated in the SAME SQLite transaction for each legitimate application data mutation, including ordinary create/save/category writes that do not produce a deletion Audit event. On restart, a reverted Workspace copy is rejected even when its Deletion Audit cutoff has not changed. A controlled IT ADOPT/ACTIVATE/ROLLBACK reseals the selected pair and deliberately invalidates older copies. F-06: Full Inventory comparisons also include Workspace `last_save_id`, `scope_versions`, `save_receipts` and category `name_key`; changes to these internal values are material for Recovery/Conflict Safety. Existing Deletion Audit replay remains separate and does not automatically reconstruct unlogged edits. If a recovery candidate differs from the current Workspace, IT must explicitly accept the selected recovery point and possible data loss (`ACTIVATE-RECOVERY`).
+
+**Crash boundary:** The pointer is a separate file and cannot be committed atomically in the SQLite Workspace/Audit transaction. An interruption between witness reseal and pointer replacement deliberately results in STOP/NO-START; it is NOT silent self-recovery. IT must preserve existing files, investigate and re-run controlled Restore/Prepare with a fresh Stage rather than editing pointer/path by hand. **Legacy migration:** Pre-witness databases require IT-controlled baseline checks; the new witness cannot prove changes made before initial enrollment. Factory V-07 and full RPO/RTO drills remain NOT TESTED.
+
+
+**Preview safety adjustment after Windows regression:** BUILD 4 legacy preview tests were updated to use the IT-prepared `preview-audit.sqlite` snapshot rather than pairing an old staged candidate with live Audit. This preserves strict Witness checks without modifying the active Audit file during Preview.
+
+
+### Codex Recovery Hardening — C-01/C-02/C-03 (23 Nov 2026)
+
+Owner authorized fixing P1 C-01 SQLite Hot Journal startup failure, P2 C-02 retained pre-Witness Snapshot PREPARE failure, and P2 C-03 existing pre-Witness BUILD 4 ADOPT upgrade procedure in one controlled increment. C-01 permits SQLite native rollback of incomplete writes on existing Workspace/Audit files ONLY, before strict cross-file integrity and witness checks; stale/missing pairs remain BLOCKED. C-02 enrolls witness only on validated isolated Candidate + Preview Audit; original Backup and Live Audit are unchanged. C-03 is an IT-authorized stopped-service copy migration and review of original-preserving legacy pair before ADOPT, with explicit external configuration update to the reviewed candidate. No PDCA user-facing feature change. Factory V-07, RPO/RTO, IT and Owner approval remain mandatory, independent of Windows CI or Codex review.
+
+
+### F-07 Admin Status Read Contention — Targeted Corrective Test (24 Nov 2026)
+
+Before changing the application, independent Windows Server 2022 / Node.js 24.11.0 Probe on the approved Draft PR showed 292 of 297 IT Status attempts returning `database is locked` under 2×1,200 continuous synthetic PDCA creates. Writer persisted all 2,405 expected PDCA records. This is Operational Availability, not evidenced Data Corruption. The corrective scope is limited to **IT Status**: bounded retry (5 s nominal) of transient SQLite BUSY while preserving every strict Integrity/Audit/Witness requirement, with an explicit BUSY/RETRY failure after saturation. Do not change database journaling mode, startup/restore gates, or user-facing PDCA features. Gate: deterministic EXCLUSIVE-lock regression, Windows clean-machine tests and repeated write-contention Probe, plus factory verification separately.
+
+**F-07 validation refinement:** Stress on Windows for retry-only commit `212356e` improved diagnostic errors but remained 30/35 BUSY outcomes, and the two writer runs took 81–86 seconds versus about 45 seconds on the earlier runner. Runtime conditions differ; this is a possible upstream regression rather than proven causation. The next experiment adds a scoped SQLite read-only busy timeout and repeats the same probe before F-07 disposition. No journal-mode change or core PDCA feature changes.
+
+
+### Owner Laptop as Host + Client — Factory LAN dry-run preparation (24 November 2026)
+
+Project Owner authorized preparation of a Windows laptop-hosted LAN testing kit: the owner's laptop is the sole writable PDCA Host and simultaneously an authorized Edge client, while other authorized factory desktops use the exact same HTTPS URL without per-client static IP settings. The application remains loopback-only; an IT-controlled HTTPS reverse proxy on that laptop is the only network ingress and must preserve the app's Bearer authorization header, replace the ingress key, remove caller-supplied operator keys, and enforce company-approved user/device access. Reference configuration uses IT-issued mTLS certificates; other IT-approved proxy solutions are acceptable if the same gates pass. This is an implementation/deployment **preparation approval only**, not authorization to open LAN access, install unapproved software, use real factory data or begin Official Pilot. Verify V-01/V-02/V-05/V-07 and IT security separately. See [Laptop Host + Client test kit](deployment/LAPTOP_HOST_LAN_TEST.md).

@@ -8,6 +8,9 @@ import { startHost } from '../src/server.js';
 import { openStore } from '../src/store.js';
 import { edgeColors, statuses } from '../web/model.js';
 
+// Prevent accidentally seeding or serving a managed production Active DB from the demo launcher.
+// Use unmanaged demo:seed first; IT can then ADOPT and use src/server.js for managed recovery testing.
+if (process.env.PDCA_ACTIVE_DB_POINTER) throw new Error('Demo launcher cannot be run with PDCA_ACTIVE_DB_POINTER; use normal host after IT ADOPT.');
 const base = dirname(fileURLToPath(import.meta.url));
 const data = resolve(process.env.PDCA_DEMO_DIR || '.pdca-dev/pilot-demo');
 const port = Number(process.env.PDCA_PORT || 4175);

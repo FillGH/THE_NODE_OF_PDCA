@@ -24,6 +24,86 @@ const tableExists = (db, schema, table) =>
   !!db.prepare('SELECT 1 FROM ' + schema + '.sqlite_schema WHERE type = ? AND name = ?').get('table', table);
 const getPoint = (db, table) => db.prepare('SELECT ledger, seq, head FROM ' + table + ' WHERE singleton = 1').get();
 export const workspacePoint = db => getPoint(db, 'main.recovery_cut');
+
+export const witnessPoint = (db, schema = 'main') => db.prepare(
+  'SELECT generation, token FROM ' + schema + '.workspace_generation WHERE singleton = 1').get();
+
+// Every successful application transaction updates BOTH files as one SQLite multi-file commit.
+// This closes the gap left by deletion-only Audit events (create/save/category changes).
+export function advanceWorkspaceWitness(db) {
+  const current = witnessPoint(db);
+  const next = { generation: current.generation + 1, token: randomUUID() };
+  if (!Number.isSafeInteger(next.generation)) throw new Error('Workspace witness counter overflow');
+  for (const schema of ['main', 'audit']) {
+    db.prepare('UPDATE ' + schema + '.workspace_generation SET generation = ?, token = ? WHERE singleton = 1')
+      .run(next.generation, next.token);
+  }
+  return next;
+}
+
+export function inspectWitnessPair(workspaceFile, auditFile) {
+  const workspace = new DatabaseSync(workspaceFile, { readOnly: true });
+  const audit = new DatabaseSync(auditFile, { readOnly: true });
+  try {
+    const main = witnessPoint(workspace);
+    const counterpart = witnessPoint(audit);
+    if (!main || !counterpart || main.generation !== counterpart.generation || main.token !== counterpart.token) {
+      throw new Error('Workspace/Audit witness mismatch (stale or substituted Workspace)');
+    }
+    return main;
+  } finally { workspace.close(); audit.close(); }
+}
+
+// Enroll a pre-witness snapshot ONLY after independent Snapshot/Audit validation,
+// on a staged candidate paired with a COPIED Preview Audit, never with LIVE Audit.
+export function enrollLegacyPreviewWitness(candidate, previewAudit) {
+  const db = new DatabaseSync(candidate, { create: false });
+  try {
+    db.prepare('ATTACH DATABASE ? AS audit').run(previewAudit);
+    const wsCut = workspacePoint(db), auditCut = getPoint(db, 'audit.ledger_state');
+    if (!matches(wsCut, auditCut)) throw new Error('Legacy preview cutoff does not match Audit');
+    const mainHas = tableExists(db, 'main', 'workspace_generation');
+    const auditHas = tableExists(db, 'audit', 'workspace_generation');
+    if (!auditHas) throw new Error('Preview Audit witness missing; cannot enroll legacy candidate');
+    if (mainHas) return false;
+    const point = witnessPoint(db, 'audit');
+    if (!point) throw new Error('Preview Audit witness is incomplete');
+    return transaction(db, () => {
+      db.exec('CREATE TABLE main.workspace_generation (' +
+        'singleton INTEGER PRIMARY KEY CHECK(singleton=1), generation INTEGER NOT NULL, token TEXT NOT NULL) STRICT');
+      db.prepare('INSERT INTO main.workspace_generation VALUES (1, ?, ?)').run(point.generation, point.token);
+      return true;
+    });
+  } finally { db.close(); }
+}
+
+// IT-only reseal of an approved recovery candidate or validated rollback target.
+// Must be called only while the server and all other writers are stopped.
+export function resealWitness(workspaceFile, auditFile) {
+  const db = new DatabaseSync(workspaceFile);
+  try {
+    db.prepare('ATTACH DATABASE ? AS audit').run(auditFile);
+    for (const schema of ['main', 'audit']) {
+      if (db.prepare('PRAGMA ' + schema + '.journal_mode = DELETE').get().journal_mode !== 'delete') {
+        throw new Error('IT recovery witness requires DELETE journal mode');
+      }
+      db.exec('PRAGMA ' + schema + '.synchronous = FULL');
+    }
+    const wsCut = workspacePoint(db), auditCut = getPoint(db, 'audit.ledger_state');
+    if (!matches(wsCut, auditCut)) throw new Error('Recovery candidate does not match Audit cutoff');
+    return transaction(db, () => {
+      const latest = witnessPoint(db, 'audit');
+      const newPoint = { generation: latest.generation + 1, token: randomUUID() };
+      if (!Number.isSafeInteger(newPoint.generation)) throw new Error('Recovery witness counter overflow');
+      for (const schema of ['main', 'audit']) {
+        db.prepare('UPDATE ' + schema + '.workspace_generation SET generation = ?, token = ? WHERE singleton = 1')
+          .run(newPoint.generation, newPoint.token);
+      }
+      return newPoint;
+    });
+  } finally { db.close(); }
+}
+
 const matches = (a, b) => a && b && a.ledger === b.ledger && a.seq === b.seq && a.head === b.head;
 
 export function attachAudit(db, file) {
@@ -74,6 +154,27 @@ export function attachAudit(db, file) {
     const head = hash([ledger, seq]);
     for (const table of ['main.recovery_cut', 'audit.ledger_state']) {
       db.prepare('INSERT INTO ' + table + ' VALUES (1, ?, ?, ?)').run(ledger, seq, head);
+    }
+  });
+
+  transaction(db, () => {
+    const mainHas = tableExists(db, 'main', 'workspace_generation');
+    const auditHas = tableExists(db, 'audit', 'workspace_generation');
+    if (mainHas !== auditHas) throw new Error('Workspace/Audit witness is incomplete; IT review required');
+    if (!mainHas) {
+      for (const schema of ['main', 'audit']) {
+        db.exec('CREATE TABLE ' + schema + '.workspace_generation (' +
+          'singleton INTEGER PRIMARY KEY CHECK(singleton=1), generation INTEGER NOT NULL, token TEXT NOT NULL) STRICT');
+      }
+      const token = randomUUID();
+      for (const schema of ['main', 'audit']) {
+        db.prepare('INSERT INTO ' + schema + '.workspace_generation VALUES(1, 0, ?)').run(token);
+      }
+    } else {
+      const main = witnessPoint(db), paired = witnessPoint(db, 'audit');
+      if (!main || !paired || main.generation !== paired.generation || main.token !== paired.token) {
+        throw new Error('Workspace/Audit witness mismatch (stale or substituted Workspace)');
+      }
     }
   });
 

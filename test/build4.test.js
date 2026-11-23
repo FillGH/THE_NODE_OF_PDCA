@@ -303,7 +303,7 @@ test('B4-06 actual HTTP ingress and role checks, restored image, and startup bac
     root: join(f.dir, 'preview-backups'), recoveryRoot: join(f.dir, 'preview-restore') };
   await host.stop();
   host = null;
-  copyFileSync(f.auditFile, next.auditFile);
+  copyFileSync(candidate.previewAudit, next.auditFile);
   const preview = await startHost(hostEnv(next));
   try {
     const login = await http(preview, '/api/session', { body: { displayName: 'QA reader' } });

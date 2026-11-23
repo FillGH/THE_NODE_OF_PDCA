@@ -4,7 +4,7 @@ import {
   categoryNames, documentLink, edgeColors, statuses, widthsDefault,
 } from '../web/model.js';
 import { applyGraphOps, graphSnapshot, scope } from '../web/changes.js';
-import { attachAudit, auditPath, stagedApplicationId, transaction as sqliteTransaction } from './audit.js';
+import { advanceWorkspaceWitness, attachAudit, auditPath, stagedApplicationId, transaction as sqliteTransaction } from './audit.js';
 
 export class RequestError extends Error {
   constructor(status, message) {
@@ -272,7 +272,11 @@ export function openStore(file, { now = Date.now, auditFile = auditPath(file) } 
   const getReceipt = db.prepare('SELECT digest, revision FROM save_receipts WHERE pdca_id = ? AND session_id = ? AND save_id = ?');
   const addReceipt = db.prepare('INSERT INTO save_receipts VALUES (?, ?, ?, ?, ?)');
 
-  const transaction = write => sqliteTransaction(db, write);
+  const transaction = write => sqliteTransaction(db, () => {
+    const result = write();
+    advanceWorkspaceWitness(db);
+    return result;
+  });
 
   const trashFor = db.prepare('SELECT subject_id, deleted, expires FROM trash WHERE pdca_id = ?');
   const getTrash = db.prepare('SELECT expires FROM trash WHERE pdca_id = ? AND subject_id = ?');
@@ -580,15 +584,19 @@ export function openStore(file, { now = Date.now, auditFile = auditPath(file) } 
         title: requiredText(title, 'กรุณากรอกชื่อ PDCA'), nodes: [], edges: [],
         mode: 'snap', widths: widthsDefault, collapsed: categoryNames.map(() => false), lastActionNumber: 0,
       };
-      addWorkspace.run(id, JSON.stringify(graph));
-      return { id, revision: 0, ...graph };
+      return transaction(() => {
+        addWorkspace.run(id, JSON.stringify(graph));
+        return { id, revision: 0, ...graph };
+      });
     },
     load, save, apply, search, history, restoreOperation, trash, setVisibility, purge,
     listCategories: () => db.prepare('SELECT id, name FROM workspace_categories ORDER BY name_key').all(),
     changeCategory,
     removeCategory(id, expectedName) {
-      const result = db.prepare('DELETE FROM workspace_categories WHERE id = ? AND name = ?').run(id, expectedName);
-      if (!result.changes) throw new RequestError(409, 'หมวดเปลี่ยนแล้ว กรุณาเปิดรายการใหม่');
+      return transaction(() => {
+        const result = db.prepare('DELETE FROM workspace_categories WHERE id = ? AND name = ?').run(id, expectedName);
+        if (!result.changes) throw new RequestError(409, 'หมวดเปลี่ยนแล้ว กรุณาเปิดรายการใหม่');
+      });
     },
     assignCategory(id, categoryId, expectedCategoryId) {
       requireValue(categoryId === null || isId(categoryId), 'หมวด Workspace ไม่ถูกต้อง');

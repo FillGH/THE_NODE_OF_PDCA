@@ -4,7 +4,7 @@ import { copyFile, mkdir, open, readFile, readdir, rename, rm, stat, statfs, wri
 import { join } from 'node:path';
 import { backup, DatabaseSync } from 'node:sqlite';
 import { isMainThread, parentPort, Worker, workerData } from 'node:worker_threads';
-import { auditSuffix, stagedApplicationId, workspacePoint } from './audit.js';
+import { auditSuffix, enrollLegacyPreviewWitness, resealWitness, stagedApplicationId, workspacePoint } from './audit.js';
 import { imageType, normalizeWorkspace, reconcileWorkspace, trashLifetime } from './store.js';
 
 const hour = 3_600_000;
@@ -40,8 +40,10 @@ export function inspectWorkspace(db) {
   const nodeIds = new Map(db.prepare('SELECT id, pdca_id FROM node_ids').all().map(row => [row.id, row.pdca_id]));
   const imageIds = new Set(db.prepare('SELECT id FROM images').all().map(row => row.id));
   const historyFor = db.prepare('SELECT * FROM history WHERE pdca_id = ? ORDER BY seq');
-  const workspaces = db.prepare('SELECT id, graph, revision FROM workspaces ORDER BY id').all().map(row => {
-    const { id, revision } = row;
+  const scopeFor = db.prepare('SELECT scope, revision FROM scope_versions WHERE pdca_id = ? ORDER BY scope');
+  const receiptFor = db.prepare('SELECT session_id, save_id, digest, revision FROM save_receipts WHERE pdca_id = ? ORDER BY session_id, save_id');
+  const workspaces = db.prepare('SELECT id, graph, revision, last_save_id FROM workspaces ORDER BY id').all().map(row => {
+    const { id, revision, last_save_id: lastSaveId } = row;
     const graph = normalizeWorkspace(JSON.parse(row.graph));
     const history = historyFor.all(id);
     for (const entry of history) {
@@ -62,21 +64,25 @@ export function inspectWorkspace(db) {
       });
       return { id: node.id, documents: node.documents, images };
     });
-    return { id, revision, graphSha256: digest(row.graph), nodes, edges: graph.edges,
-      history: { count: history.length, sha256: digest(JSON.stringify(history)) }, trash };
+    const scopes = scopeFor.all(id);
+    const receipts = receiptFor.all(id);
+    return { id, revision, lastSaveId, graphSha256: digest(row.graph), nodes, edges: graph.edges,
+      history: { count: history.length, sha256: digest(JSON.stringify(history)) }, trash,
+      scopeVersions: { count: scopes.length, sha256: digest(JSON.stringify(scopes)) },
+      saveReceipts: { count: receipts.length, sha256: digest(JSON.stringify(receipts)) } };
   });
   check(!nodeIds.size && !imageIds.size, 'Orphan Node or image');
   check(!db.prepare('SELECT 1 FROM trash WHERE pdca_id NOT IN (SELECT id FROM workspaces)').get(), 'Orphan Trash entry');
   // Older snapshots predate Workspace categories and restore with no assignments.
   const hasCategories = db.prepare("SELECT 1 FROM sqlite_schema WHERE name = 'workspace_categories'").get();
-  const categories = hasCategories ? db.prepare('SELECT id, name FROM workspace_categories ORDER BY id').all() : [];
+  const categories = hasCategories ? db.prepare('SELECT id, name, name_key FROM workspace_categories ORDER BY id').all() : [];
   const categoryAssignments = hasCategories
     ? db.prepare('SELECT pdca_id, category_id FROM workspace_category_assignments ORDER BY pdca_id').all() : [];
   return { cut, workspaces, categories, categoryAssignments };
 }
 
-export function inspectWorkspaceFile(file) {
-  const db = new DatabaseSync(file, { readOnly: true });
+export function inspectWorkspaceFile(file, { busyTimeoutMs = 0 } = {}) {
+  const db = new DatabaseSync(file, { readOnly: true, timeout: busyTimeoutMs });
   try { return inspectWorkspace(db); } finally { db.close(); }
 }
 
@@ -205,14 +211,26 @@ export async function prepareRestore({ stageId, recoveryRoot, file: liveFile, au
   check(['ledger', 'seq', 'head'].every(key => cut[key] === report.through?.[key]), 'Reviewed cutoff changed');
   check(!auditSuffix(auditFile, cut, survivingPoint(liveFile)).events.length, 'Audit has advanced; reconcile again before preparing');
   const candidate = join(stage, 'candidate.sqlite');
+  const previewAudit = join(stage, 'preview-audit.sqlite');
   await copyFile(source, candidate, constants.COPYFILE_EXCL);
   try {
     const db = new DatabaseSync(candidate);
     try { db.exec('PRAGMA application_id = 0'); } finally { db.close(); }
+    // The prepared candidate's older witness must never be paired directly with LIVE Audit.
+    // Make an isolated online SQLite copy of the Audit ledger for Preview, then reseal only
+    // that candidate + preview Audit pair. LIVE Audit is never modified by PREPARE.
+    const liveAudit = new DatabaseSync(auditFile, { readOnly: true });
+    try { await backup(liveAudit, previewAudit); } finally { liveAudit.close(); }
+    check(!auditSuffix(previewAudit, cut, survivingPoint(liveFile)).events.length,
+      'Preview Audit advanced after Restore; repeat recovery before opening Preview');
+    enrollLegacyPreviewWitness(candidate, previewAudit);
+    resealWitness(candidate, previewAudit);
     await syncFile(candidate);
-    return { candidate, sha256: await hashFile(candidate), cut };
+    await syncFile(previewAudit);
+    return { candidate, previewAudit, sha256: await hashFile(candidate), cut };
   } catch (error) {
     await rm(candidate, { force: true });
+    await rm(previewAudit, { force: true });
     throw error;
   }
 }
