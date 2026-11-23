@@ -40,8 +40,10 @@ export function inspectWorkspace(db) {
   const nodeIds = new Map(db.prepare('SELECT id, pdca_id FROM node_ids').all().map(row => [row.id, row.pdca_id]));
   const imageIds = new Set(db.prepare('SELECT id FROM images').all().map(row => row.id));
   const historyFor = db.prepare('SELECT * FROM history WHERE pdca_id = ? ORDER BY seq');
-  const workspaces = db.prepare('SELECT id, graph, revision FROM workspaces ORDER BY id').all().map(row => {
-    const { id, revision } = row;
+  const scopeFor = db.prepare('SELECT scope, revision FROM scope_versions WHERE pdca_id = ? ORDER BY scope');
+  const receiptFor = db.prepare('SELECT session_id, save_id, digest, revision FROM save_receipts WHERE pdca_id = ? ORDER BY session_id, save_id');
+  const workspaces = db.prepare('SELECT id, graph, revision, last_save_id FROM workspaces ORDER BY id').all().map(row => {
+    const { id, revision, last_save_id: lastSaveId } = row;
     const graph = normalizeWorkspace(JSON.parse(row.graph));
     const history = historyFor.all(id);
     for (const entry of history) {
@@ -62,14 +64,18 @@ export function inspectWorkspace(db) {
       });
       return { id: node.id, documents: node.documents, images };
     });
-    return { id, revision, graphSha256: digest(row.graph), nodes, edges: graph.edges,
-      history: { count: history.length, sha256: digest(JSON.stringify(history)) }, trash };
+    const scopes = scopeFor.all(id);
+    const receipts = receiptFor.all(id);
+    return { id, revision, lastSaveId, graphSha256: digest(row.graph), nodes, edges: graph.edges,
+      history: { count: history.length, sha256: digest(JSON.stringify(history)) }, trash,
+      scopeVersions: { count: scopes.length, sha256: digest(JSON.stringify(scopes)) },
+      saveReceipts: { count: receipts.length, sha256: digest(JSON.stringify(receipts)) } };
   });
   check(!nodeIds.size && !imageIds.size, 'Orphan Node or image');
   check(!db.prepare('SELECT 1 FROM trash WHERE pdca_id NOT IN (SELECT id FROM workspaces)').get(), 'Orphan Trash entry');
   // Older snapshots predate Workspace categories and restore with no assignments.
   const hasCategories = db.prepare("SELECT 1 FROM sqlite_schema WHERE name = 'workspace_categories'").get();
-  const categories = hasCategories ? db.prepare('SELECT id, name FROM workspace_categories ORDER BY id').all() : [];
+  const categories = hasCategories ? db.prepare('SELECT id, name, name_key FROM workspace_categories ORDER BY id').all() : [];
   const categoryAssignments = hasCategories
     ? db.prepare('SELECT pdca_id, category_id FROM workspace_category_assignments ORDER BY pdca_id').all() : [];
   return { cut, workspaces, categories, categoryAssignments };

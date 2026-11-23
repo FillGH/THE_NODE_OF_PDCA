@@ -6,7 +6,7 @@
 
 ## 1. Scope และข้อกำหนดสำคัญ
 
-- **Server:** Windows ที่ IT ควบคุม, Node.js **24.x** ที่ตรงกับ Manifest, Local NTFS สำหรับ SQLite Workspace/Audit/Backup/Restore; Client ใช้ Desktop Microsoft Edge
+- **Server:** Windows ที่ IT ควบคุม, Node.js **24.11.0** สำหรับ Artifact ที่ทดสอบรุ่นนี้ (ตรงกับ `build.nodeVersion` ใน Manifest; Node 24 patch อื่นต้องได้รับอนุมัติและทดสอบใหม่), Local NTFS สำหรับ SQLite Workspace/Audit/Backup/Restore; Client ใช้ Desktop Microsoft Edge
 - **Installation:** ใช้ ZIP ชื่อ `PDCA-Windows-<source-sha>.zip` จาก Artifact `PDCA-Prebuilt-Windows-Verified` เท่านั้น; บน **Factory Server ไม่ต้องเรียก npm / npm Registry**
 - **Network:** Node.js รับเฉพาะ `127.0.0.1:PDCA_PORT`; IT ใช้ **HTTPS Reverse Proxy บน Host เดียวกัน** พร้อมควบคุมผู้ใช้/เครื่องที่ได้รับอนุญาต และป้องกัน Internet/VPN/Direct Port Access. จะใช้ DNS หรือ Server IP + Port ภายนอกก็ต้องเป็น HTTPS Origin ที่ตรงกับ Certificate และ `PDCA_ORIGIN` (ดู Test Plan)
 - **Proxy:** คง Host/Origin ให้ถูกต้อง, ลบ `x-pdca-ingress-key` / `x-pdca-operator-key` จาก Client ทุกครั้งและใส่ IT-owned Ingress Key ฝั่ง Proxy เท่านั้น; ห้ามใช้ Display Name ใน PDCA แทนการ Authentication
@@ -104,6 +104,10 @@ node --env-file="C:\PDCA-LAN-Test\config\host.env" src/server.js
 - IT เปิด `tools\recovery\recovery-menu.cmd "<host.env>"` → **1 Status → 2 List Backups → 4 Restore to Staging → Review `restore.json` → 5 Prepare** แล้วตรวจ Candidate ในพื้นที่แยก
 - ก่อน **6 ACTIVATE**: หยุดบริการและ Disable Auto-restart, ยืนยัน Candidate/Source/Audit และ Recovery Point. ACTIVATE ปกติจะ Block ถ้าข้อมูล Candidate ไม่ตรง Live; `ACTIVATE-RECOVERY` ใช้ได้เฉพาะเมื่อ IT ยืนยันผลกระทบต่อข้อมูลและยอมรับ Recovery Point อย่างชัดเจน
 - เมนู **7 ROLLBACK** จะ Block เมื่อมีข้อมูลใหม่หลัง Cutover (รวมการแก้ไขที่ไม่เกิด Deletion Audit). ห้าม Copy ทับ Workspace/Audit หรือแก้ Pointer ด้วยมือ
+- **F-01:** เมื่อ ACTIVATE สำเร็จ ระบบ Copy Candidate ไปยัง `PDCA_DATA_ROOT\active-db\release-<stage-id>-<serial>\workspace.sqlite` ก่อนสลับ Pointer. โฟลเดอร์ `restore\<stage-id>` ยังเป็นหลักฐานและสามารถจัดการอายุตามนโยบายได้โดยไม่กระทบฐาน Active. **ห้ามลบ `active-db` โดยคิดว่าเป็น Staging**
+- **F-05:** ทุกการเขียนที่ผ่านระบบจะเปลี่ยน Version Witness ใน Workspace และ Audit พร้อมกัน (รวม Create/Save/Category). หากพบ Database รุ่นเก่า/ไฟล์ถูกแทนที่ Startup, Status และ Backup ภายใต้ Managed Mode จะ Block เพื่อไม่ให้สร้าง Backup ผิดชุด
+- **F-06:** การตรวจยืนยันการเปลี่ยนฐานรวม `last_save_id`, `scope_versions`, `save_receipts` และชื่อหมวดภายใน ไม่ใช่เฉพาะ Node/History/Deletion Audit
+- **Crash Fail-closed:** ถ้าไฟดับระหว่าง Reseal Witness และเปลี่ยน Pointer จะต้องหยุดบริการเพื่อให้ IT ตรวจและสร้าง Recovery Stage ใหม่ ห้ามแก้ JSON Pointer หรือเปลี่ยน Path โดยมือ
 - หากบริการ/ข้อมูลเสียจน Audit ที่ถูกต้องไม่อยู่ ให้ **STOP** และ Escalate IT ไม่บังคับเปิดด้วยฐานข้อมูลเก่า
 
 **ข้อควรระวัง Source Rollback:** Source BUILD 4 รุ่นก่อนมี Active Pointer **ไม่รองรับ `PDCA_ACTIVE_DB_POINTER`**; ห้าม Unzip Source เก่าทับหรือ Start Source เก่าโดยตรงหลัง Activate เพราะอาจเปิดฐานเก่าผิดตัว (บทเรียนจาก Float Monitor). ต้องใช้แผน Source Downgrade ที่ IT อนุมัติและตรวจ Workspace/Audit ล่าสุดก่อนเท่านั้น
@@ -116,7 +120,8 @@ node --env-file="C:\PDCA-LAN-Test\config\host.env" src/server.js
 - [ ] Local Smoke PASS โดยไม่ใช้ npm, ฟอนต์/Export PDF–XLSX–JSON ทำงาน
 - [ ] IT บันทึก ACL, Service Account, Host/Proxy Origin, Key Handling, Allowed/Denied Client Evidence
 - [ ] Start/Restart/Backup อ่าน **Active Workspace/Audit คู่เดียวกัน**, ตรวจ Snapshot และ Log ได้
-- [ ] Recovery Drill: ADOPT / Restore / Prepare / Activate / Rollback และ Block Conditions ผ่าน พร้อมเวลาวัด RPO/RTO
+- [ ] Recovery Drill: ADOPT / Restore / Prepare / Activate / Rollback และ Block Conditions ผ่าน พร้อมเวลาวัด RPO/RTO; ทดสอบลบ Staging หลัง Activate แล้วฐาน Active ยังเปิดได้
+- [ ] Fault Injection: ย้อน Workspace เก่าโดย Audit Cutoff ไม่เปลี่ยนแล้วระบบต้องปฏิเสธ; ตรวจ Crash ระหว่าง Witness Reseal/Pointer Update โดยไม่เปิดฐานผิดชุด
 - [ ] IT ตรวจ Source Rollback / PowerShell Policy / Task Scheduler / Backup Failure Monitoring
 - [ ] ทุก Mandatory Gate ใน `PILOT_VERIFY.md` PASS และ Project Owner + IT อนุมัติแยกกัน
 

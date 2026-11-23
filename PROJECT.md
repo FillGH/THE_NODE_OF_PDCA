@@ -1,10 +1,10 @@
 # THE NODE OF PDCA — Project Definition
 
 > **Project Starter Development Kit v0.3** · Engineering Source of Truth  
-> **Lifecycle stage: DESIGN complete for the Increment 1 decision · BUILD authorization pending** · **Requirements baseline: DEFINE v0.38 (Closure Patch; D-001–D-107)**  
-> Last updated: 2026-11-08  
+> **Lifecycle stage: BUILD 4 accepted · Prebuilt/Recovery improvements in Draft PR · Factory VERIFY pending** · **Requirements baseline: DEFINE v0.38 (Closure Patch; D-001–D-107)**  
+> Last updated: 2026-11-23  
 > **Status legend:** Confirmed = owner agreed; Proposed = pending owner confirmation; Unknown = needs resolution.  
-> **DESIGN entry authorized by Project Owner (2026-11-05): UI/UX exploration and mock-data prototype only. BUILD, backend/database integration, real factory data processing and deployment remain unauthorized.** Requirements D-001–D-107 and Closure-01–05 remain the approved product baseline.
+> **Historical decision (2026-11-05): DESIGN exploration was authorized before BUILD. BUILD 4 was subsequently accepted on 2026-11-10 for fictional data; Factory LAN, real data and deployment remain subject to distinct IT/Project Owner approvals.** Requirements D-001–D-107 and Closure-01–05 remain the approved product baseline.
 
 ## 1. Problem
 
@@ -983,7 +983,7 @@ This file records confirmed requirements and the owner-authorized move to **DESI
 
 # Decision Gates
 
-## Ready to Build — MET for Increment 1, authorization pending
+## Ready to Build — MET; BUILD 4 subsequently authorized and accepted
 
 - [x] **Problem and desired outcome.** §1–2 define traceable PDCA relationships, separate Action tracking, central persistence and collaborative use.
 - [x] **Scope, constraints, thresholds and important unknowns.** Closure-02 freezes Pilot scope. §7 and the [four increment plan](design/DESIGN_PRE_BUILD.md#build-สี่ช่วงสำหรับพิจารณา) identify the accepted direction, acceptance checks and prerequisites. Increment 1 uses fictional data in an isolated development environment.
@@ -1003,9 +1003,16 @@ Production release remains pending VERIFY, Official Pilot results, the Project O
 
 `DEFINE → DESIGN → BUILD → VERIFY → OPERATE → LEARN`
 
-Current stage: **DESIGN closeout recorded. BUILD Increment 1 is awaiting explicit owner authorization.**
+Current stage: **BUILD 4 accepted; Windows Prebuilt/Managed Recovery refinement under Draft PR. Factory VERIFY with fictional data pending; Official Pilot/Release not approved.**
 
 
 ### Post-BUILD 4 deployment/recovery tooling decision (23 November 2026)
 
 Project Owner authorized combining a Windows Prebuilt Deployment Package and an IT-only Managed Recovery Operator before Factory LAN recovery verification. This is an operational implementation improvement addressing manual database-path selection, not a change to D-001–D-107 product scope, DESIGN v0.10 or Pilot pass criteria. The implementation adds an opt-in Active DB pointer, automatic Workspace/Audit validation on managed startup, and controlled ADOPT/RESTORE/PREPARE/ACTIVATE/ROLLBACK with explicit recovery-point acceptance for any possible lost non-Audit edits. Application core Node/Graph/Export functionality remains unchanged. Factory V-01..V-08 and IT authorizations remain independent mandatory gates. Technical CI and Factory acceptance must not be conflated.
+
+
+### Post-QA F-01 / F-05 / F-06 corrective increment (23 November 2026)
+
+Owner approved a single corrective increment before Factory handoff. F-01: a prepared recovery candidate is promoted into a **permanent Active DB directory outside Restore Staging** before cutover; former Workspace is preserved for controlled rollback. F-05: a **monotonic cross-file Workspace/Audit witness (generation + random token)** is updated in the SAME SQLite transaction for each legitimate application data mutation, including ordinary create/save/category writes that do not produce a deletion Audit event. On restart, a reverted Workspace copy is rejected even when its Deletion Audit cutoff has not changed. A controlled IT ADOPT/ACTIVATE/ROLLBACK reseals the selected pair and deliberately invalidates older copies. F-06: Full Inventory comparisons also include Workspace `last_save_id`, `scope_versions`, `save_receipts` and category `name_key`; changes to these internal values are material for Recovery/Conflict Safety. Existing Deletion Audit replay remains separate and does not automatically reconstruct unlogged edits. If a recovery candidate differs from the current Workspace, IT must explicitly accept the selected recovery point and possible data loss (`ACTIVATE-RECOVERY`).
+
+**Crash boundary:** The pointer is a separate file and cannot be committed atomically in the SQLite Workspace/Audit transaction. An interruption between witness reseal and pointer replacement deliberately results in STOP/NO-START; it is NOT silent self-recovery. IT must preserve existing files, investigate and re-run controlled Restore/Prepare with a fresh Stage rather than editing pointer/path by hand. **Legacy migration:** Pre-witness databases require IT-controlled baseline checks; the new witness cannot prove changes made before initial enrollment. Factory V-07 and full RPO/RTO drills remain NOT TESTED.

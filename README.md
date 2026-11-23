@@ -48,7 +48,7 @@ npm.cmd run demo:start
 
 - สถานะ Source/PR/Artifact/Factory Test ต้องแยกจากกัน; Draft PR ไม่ใช่ Release
 - Runtime Database, Audit, Backup, Pointer, Environment Keys และ Log ต้องอยู่ภายนอก Source และ ZIP ภายใต้สิทธิ์ IT
-- Active DB Pointer ใช้เลือก **Workspace + Audit** คู่ที่ถูกต้อง; ห้ามย้อนใช้ Source รุ่นก่อน Pointer โดยไม่ทำแผน Downgrade ตาม IT Runbook
+- Active DB Pointer ใช้เลือก **Workspace + Audit** คู่ที่ถูกต้อง; Witness ข้ามฐานตรวจป้องกันเปิด Workspace เก่าหลังมีการบันทึกที่ไม่ใช่ Deletion Event; ห้ามย้อนใช้ Source รุ่นก่อน Pointer โดยไม่ทำแผน Downgrade ตาม IT Runbook
 - ก่อน Official Pilot ต้องผ่าน Factory LAN V-01 ถึง V-08 และ IT Security/Recovery Acceptance
 
 _โครงการนี้เริ่มจาก [Project Starter Development Kit v0.3](https://github.com/FillGH/project-starter-development-kit) แต่ README นี้อธิบาย THE NODE OF PDCA โดยเฉพาะ ไม่ใช่คู่มือ Starter Kit_

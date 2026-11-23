@@ -29,12 +29,12 @@
 
 **ขั้นตอน:** `ADOPT → Status → List Backup → Restore to Staging → Review restore.json → IT Prepare → ACTIVATE / ACTIVATE-RECOVERY → Restart & Verify → Optional ROLLBACK`
 
-- `ADOPT` สร้าง Pointer หลังตรวจคู่ Workspace/Audit และต้องทำขณะ Server ปิด
+- `ADOPT` ตรวจคู่ Workspace/Audit, สร้าง Pointer และปรับ Witness ข้าม SQLite ทั้งสองไฟล์ให้เป็น Baseline ของชุด Active ใหม่ ต้องทำขณะ Server ปิด
 - `RESTORE` คัด Snapshot ไปยัง Staging ตรวจ Checksum และ Reconcile เหตุการณ์จาก Audit ที่มี Ledger/Sequence/Head ตรงกัน; `held` หมายถึง **ไม่ผ่าน**
 - `PREPARE` สำหรับ IT เท่านั้น สร้าง `candidate.sqlite` จาก Staging ที่ผ่าน; ไม่ Activate โดยอัตโนมัติ
-- `ACTIVATE` จะผ่านก็ต่อเมื่อ Candidate มี **Full Inventory** ตรงกับ Live Workspace/Audit รวมถึง Graph Edits ที่ไม่ได้เพิ่ม Deletion Audit Event
+- `ACTIVATE` จะผ่านก็ต่อเมื่อ Candidate มี **Full Inventory** ตรงกับ Live Workspace/Audit รวมถึง Graph Edits และ Conflict Metadata ที่ไม่ได้เพิ่ม Deletion Audit Event. Candidate จะถูก **Promote ไปยัง `PDCA_DATA_ROOT/active-db/.../workspace.sqlite`** นอก Restore Staging ก่อน Reseal Workspace/Audit Witness และเปลี่ยน Pointer
 - `ACTIVATE-RECOVERY` เป็นการยอมรับ Recovery Point และความเสี่ยงข้อมูลสูญหายอย่างเจาะจงโดย IT เมื่อ Live แตกต่าง/เสียหาย ต้องตรวจ Snapshot Time, Recent Work, Audit, RPO/RTO และ Record Evidence ก่อนดำเนินการ
-- `ROLLBACK` ใช้ได้ต่อเมื่อ Full Inventory ของ Current/Previous ตรงกัน; หากมีงานเขียนหลัง Cutover ปฏิเสธและให้ IT ทำ Recovery/Reconciliation แทน
+- `ROLLBACK` ใช้ได้ต่อเมื่อ Full Inventory ของ Current/Previous ตรงกัน รวมทั้ง `last_save_id`, `scope_versions` และ `save_receipts`; หากมีงานเขียนหลัง Cutover ปฏิเสธและให้ IT ทำ Recovery/Reconciliation แทน. หากผ่านจึง Reseal คู่ Previous/Audit ก่อนสลับ Pointer
 - Server Port Guard เป็นเพียงการตรวจ Port ที่ตั้งไว้; IT ยังต้อง Disable Auto-restart, ตรวจว่ามี Single Writer เท่านั้น และไม่แก้ DB Paths/Pointer เพื่อข้ามการป้องกัน
 
 **Audit-specific Limit:** Snapshot มี Workspace + Metadata แต่ไม่มีสำเนา Audit ทั้งชุด ต้องรักษา Latest Authorized Audit จาก Host ที่รับการเขียน ถ้า Audit หาย/ไม่ครบ การ Replay ไม่ถือว่าปลอดภัย ระบบต้องคง Candidate ไว้ใน Staging; ห้ามเปิดไฟล์เก่าโดยเดา
@@ -52,3 +52,12 @@ Source Rollback และ Database Rollback เป็นคนละขั้น
 - **NO-GO:** Source/Hash ไม่ตรง, Missing Audit/Pointer, ผู้ไม่รับอนุญาตผ่าน Proxy, Incorrect Active DB, Silent Data Loss, Permission/Restore Failure หรือไม่มีหลักฐาน Recovery
 
 Operational Runbook สำหรับ Detail/Host Migration: [design/BUILD4_HOST_RUNBOOK.md](../design/BUILD4_HOST_RUNBOOK.md). Historical IT Requirements: [design/IT_HANDOFF.md](../design/IT_HANDOFF.md).
+
+## F-01/F-05/F-06 — Data Integrity and Crash Recovery
+
+1. **Permanent Active Storage:** The activated Workspace is located under `PDCA_DATA_ROOT/active-db/release-<stageId>-<serial>/workspace.sqlite`. The staging candidate remains in `PDCA_RESTORE_DIR`; deleting old Restore Staging does not delete Active Workspace. IT MUST preserve the entire active-db directory as operational data, not a temporary staging directory.
+2. **Cross-file Mutation Witness:** Legitimate application writes update Workspace and Audit witness generation/token in a single SQLite multi-file transaction, including creates, saves, category changes, trash and purge. On managed Startup/Status, mismatched witness rejects an older Workspace even when Deletion Audit seq/head are unchanged. The witness is not a substitute for off-host backup or an independent forensic ledger.
+3. **Full Inventory:** Recovery compares graph, images, history, Trash, revisions, `last_save_id`, `scope_versions`, `save_receipts` and workspace category keys/assignments. Different non-deletion content requires IT-explicit `ACTIVATE-RECOVERY`, never silent rollback.
+4. **Cutover crash:** Pointer file replacement cannot be atomically committed alongside two SQLite files. If power fails after resealing candidate+Audit but before the pointer is written, the stale pointer fails closed. IT must STOP, preserve both versions and Audit, re-run Restore/Prepare from a fresh Stage and obtain recovery-point approval. Do not edit Active DB Pointer by hand.
+5. **Legacy data enrollment:** Earlier BUILD 4 databases without the witness have no proof of the previous non-Audit history. IT must preserve a verified baseline and migrate on an approved copy before managed adoption; never enable the new mode by blindly pointing at old files.
+6. **Acceptance:** Factory V-07 needs evidence for deleting Staging after ACTIVATE, a rejected pre-write Workspace substitution with unchanged deletion ledger, guarded Rollback of post-cutover metadata, and recovery from an interrupted cutover.

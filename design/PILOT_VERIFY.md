@@ -117,3 +117,11 @@ try {
 หากใช้งาน `PDCA_ACTIVE_DB_POINTER` ให้ IT บันทึกหลักฐานว่า Startup, Status, Backup และ Restore ใช้คู่ Workspace/Audit ตาม Pointer จริงหลัง Restart; ทดสอบ ADOPT, Restore to staging, Prepare, ACTIVATE, ROLLBACK และกรณีปฏิเสธเมื่อ Database หรือ Audit ไม่ตรงกัน รวมถึงกรณีที่มีการแก้ Node/PDCA แต่ไม่เกิด Deletion Audit Event ทั้งนี้ ACTIVATE-RECOVERY ต้องมี IT ยอมรับ Recovery Point และความเสี่ยงข้อมูลสูญหายอย่างชัดเจน ห้ามใช้ผล Automated Test แทน Factory V-07
 
 **Source Rollback Safety Gate (V-08):** ทดสอบและบันทึกว่า Task Scheduler/Start Script จะไม่เรียก Source BUILD 4 รุ่นเก่าที่ไม่รองรับ Active DB Pointer หลัง Managed ACTIVATE; การย้อนรุ่น Source ต้องมีแผน IT ที่รักษาคู่ Workspace/Audit ล่าสุด ทวนแผนข้อมูลใหม่หลัง Cutover และตรวจ Source SHA/Active DB ก่อนเปิดรับผู้ใช้
+
+### V-07 QA Addendum — Witness and Staging
+
+- ทดสอบ Copy Workspace เก่ากลับหลังสร้าง PDCA/แก้ Graph ใหม่โดยไม่มี Deletion Audit Event: `Status` และ Managed Startup ต้องปฏิเสธ, ห้ามสร้าง Backup ใหม่จาก Workspace เก่า
+- ทดสอบ Restore → Prepare → ACTIVATE จากนั้นจัดเก็บ/ลบ Staging ตามนโยบาย แล้ว Restart/Backup ต้องใช้งานได้ด้วย Workspace ที่ Promote ไป `active-db/` อย่างถูกต้อง
+- ทดสอบ ROLLBACK หลังเปลี่ยน `scope_versions`, `save_receipts` หรือ `last_save_id` ต้องไม่สูญข้อมูลเงียบ; ตรวจค่า Full Inventory และหลักฐานเหตุการณ์
+- จำลองการขัดข้องระหว่าง Reseal Witness กับ Pointer Replacement; ต้อง Fail Closed และต้องมี IT-controlled Recovery Plan ไม่แก้ Pointer JSON ด้วยมือ
+- บันทึก Node.js Build/Run Version ตาม Manifest; รุ่นที่ CI ทดสอบคือ 24.11.0. หากใช้ Node Patch อื่น ให้แยกผล Revalidation/IT Approval ชัดเจน

@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { existsSync, readFileSync, realpathSync } from 'node:fs';
-import { open, readFile, rename } from 'node:fs/promises';
+import { constants } from 'node:fs';
+import { copyFile, mkdir, open, readFile, rename, rm } from 'node:fs/promises';
 import { createServer } from 'node:net';
 import { isAbsolute, join, relative, resolve } from 'node:path';
 import { DatabaseSync } from 'node:sqlite';
-import { auditSuffix } from './audit.js';
+import { auditSuffix, inspectWitnessPair, resealWitness } from './audit.js';
 import { inspectWorkspaceFile } from './recovery.js';
 
 function requireState(ok, message) {
@@ -57,6 +58,7 @@ export function inspectActivePair(file, auditFile) {
   } finally { db.close(); }
   requireState(auditSuffix(auditFile, inventory.cut).events.length === 0,
     'Workspace/Audit mismatch: Audit has newer events; recover instead of selecting a stale database');
+  inspectWitnessPair(file, auditFile);
   return inventory;
 }
 
@@ -67,7 +69,15 @@ export function readActiveState(env) {
   const state = JSON.parse(readFileSync(config.pointer, 'utf8'));
   requireState(state?.version === 1 && Number.isSafeInteger(state.serial) && state.serial >= 1,
     'Malformed Active DB pointer');
-  return { config, state: { ...state, current: pair(config, state.current),
+  const current = pair(config, state.current);
+  const restoreRoot = config.permitted(resolve(env.PDCA_RESTORE_DIR));
+  const within = (path, folder) => {
+    const rel = relative(folder, path);
+    return rel === '' || (!rel.startsWith('..') && !isAbsolute(rel));
+  };
+  requireState(!within(current.workspace, restoreRoot),
+    'Active Workspace is inside temporary Restore Staging; migrate to a durable directory before startup');
+  return { config, state: { ...state, current,
     previous: state.previous === null ? null : pair(config, state.previous) } };
 }
 
@@ -109,6 +119,7 @@ export async function adoptActive(env, role, confirmation) {
     requireState(!existsSync(config.pointer), 'Active DB pointer exists: ADOPT refused');
     const current = pair(config, { workspace: resolve(env.PDCA_DB), audit: resolve(env.PDCA_AUDIT) });
     const inventory = inspectActivePair(current.workspace, current.audit);
+    resealWitness(current.workspace, current.audit); // make previously copied files stale
     const state = { version: 1, serial: 1, current, previous: null, action: 'adopt',
       changedAtUtc: new Date().toISOString(), cut: inventory.cut };
     await atomicPointer(config.pointer, state);
@@ -141,7 +152,13 @@ export async function activatePrepared(env, role, stageId, confirmation) {
     const report = JSON.parse(await readFile(join(stage, 'restore.json'), 'utf8'));
     requireState(report.stageId === stageId && report.status === 'awaiting-it-review', 'Stage not IT-reviewed');
     const candidate = config.permitted(join(stage, 'candidate.sqlite'));
-    const prepared = inspectActivePair(candidate, state.current.audit);
+    // Prepared candidates can come from older snapshots, so their witness is old until IT cutover.
+    const prepared = inspectWorkspaceFile(candidate);
+    const check = new DatabaseSync(candidate, { readOnly: true });
+    try { requireState(check.prepare('PRAGMA application_id').get().application_id === 0,
+      'Prepared candidate is still isolated'); } finally { check.close(); }
+    requireState(auditSuffix(state.current.audit, prepared.cut).events.length === 0,
+      'Audit has advanced since IT prepared this candidate');
     requireState(JSON.stringify(prepared) === JSON.stringify(report.inventory),
       'Prepared candidate contents differ from reviewed restore inventory');
     requireState(['ledger','seq','head'].every(k => prepared.cut[k] === report.through?.[k]),
@@ -149,8 +166,22 @@ export async function activatePrepared(env, role, stageId, confirmation) {
     const sameAsLive = current && JSON.stringify(current) === JSON.stringify(prepared);
     requireState(confirmation === 'ACTIVATE-RECOVERY' || sameAsLive,
       'Candidate differs from live data (including unlogged edits), or live DB is unreadable; use explicit ACTIVATE-RECOVERY after IT recovery-point approval');
+    // F-01: promote into immutable per-cutover storage outside transient Restore Staging.
+    const activeRoot = config.permitted(join(config.root, 'active-db'));
+    await mkdir(activeRoot, { recursive: true });
+    const permanentDir = config.permitted(join(activeRoot, 'release-' + stageId + '-' + (state.serial + 1)));
+    await mkdir(permanentDir); // fail if already activated; never overwrite existing storage
+    const permanent = config.permitted(join(permanentDir, 'workspace.sqlite'));
+    await copyFile(candidate, permanent, constants.COPYFILE_EXCL);
+    const descriptor = await open(permanent, 'r+');
+    try { await descriptor.sync(); } finally { await descriptor.close(); }
+    // The new active Workspace gets a fresh cross-file witness, invalidating the old copy.
+    // A crash before pointer replacement intentionally fails closed; IT can re-run recovery.
+    resealWitness(permanent, state.current.audit);
+    const selected = inspectActivePair(permanent, state.current.audit);
+    requireState(JSON.stringify(selected) === JSON.stringify(prepared), 'Promoted Workspace content changed');
     const next = { ...state, serial: state.serial + 1,
-      previous: state.current, current: { workspace: candidate, audit: state.current.audit },
+      previous: state.current, current: { workspace: permanent, audit: state.current.audit },
       action: confirmation === 'ACTIVATE' ? 'activate' : 'activate-recovery',
       previousReadable: Boolean(current), previousError: currentError,
       changedAtUtc: new Date().toISOString(), cut: prepared.cut };
@@ -166,9 +197,15 @@ export async function rollbackActive(env, role, confirmation) {
     const { config, state } = readActiveState(env);
     requireState(state.previous, 'No previous database to roll back to');
     const current = inspectActivePair(state.current.workspace, state.current.audit);
-    const prior = inspectActivePair(state.previous.workspace, state.previous.audit);
+    // Previous Workspace has an older witness by design. Compare the FULL persisted inventory
+    // and deletion Audit cutoff before re-sealing it as the only active pair.
+    const prior = inspectWorkspaceFile(state.previous.workspace);
+    requireState(auditSuffix(state.previous.audit, prior.cut).events.length === 0,
+      'Rollback would discard newer Audit events; recover/reconcile with IT instead');
     requireState(JSON.stringify(current) === JSON.stringify(prior),
       'Rollback would lose post-cutover changes (even those not in Audit): recover/reconcile with IT instead');
+    resealWitness(state.previous.workspace, state.previous.audit);
+    inspectActivePair(state.previous.workspace, state.previous.audit);
     const next = { ...state, serial: state.serial + 1, current: state.previous, previous: state.current,
       action: 'rollback', changedAtUtc: new Date().toISOString(), cut: prior.cut };
     await atomicPointer(config.pointer, next);

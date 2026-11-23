@@ -35,6 +35,7 @@ assert.equal(manifest.runtime.nodeMajor, 24);
 assert.equal(process.platform, manifest.runtime.platform, 'Package requires a Windows host');
 assert.equal(process.arch, manifest.runtime.arch, 'Package architecture mismatch');
 assert.equal(Number(process.versions.node.split('.')[0]), manifest.runtime.nodeMajor, 'Node major mismatch');
+assert.equal(process.version, manifest.build.nodeVersion, 'Node patch mismatch: rerun target environment validation and approve deviation before deployment');
 assert.equal(await sha256(join(root, 'package-lock.json')), manifest.packageLockSha256);
 const expected = manifest.files.map(file => file.path);
 const actual = (await walk(root)).filter(path => path !== 'DEPLOYMENT_MANIFEST.json').sort();
