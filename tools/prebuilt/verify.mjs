@@ -23,6 +23,10 @@ async function walk(dir) {
   return found;
 }
 const manifest = JSON.parse(await readFile(join(root, 'DEPLOYMENT_MANIFEST.json'), 'utf8'));
+for (const required of ['README.md', 'README4IT.md', 'tools/recovery/recovery-menu.cmd',
+  'tools/recovery/recovery-menu.ps1', 'deployment/PREBUILT_WINDOWS.md']) {
+  await stat(join(root, required));
+}
 assert.equal(manifest.schemaVersion, 1);
 assert.equal(manifest.kind, 'THE_NODE_OF_PDCA_WINDOWS_PREBUILT');
 assert.match(manifest.sourceCommit, /^[0-9a-f]{40}$/);

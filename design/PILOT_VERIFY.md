@@ -1,12 +1,14 @@
 # THE NODE OF PDCA · VERIFY และ LAN Test
 
+> **เอกสารนี้เป็น Test Plan/Evidence Matrix ไม่ใช่คู่มือติดตั้งล่าสุด** สำหรับการส่งมอบ **Prebuilt ZIP** ให้ IT เริ่มที่ **[README4IT.md](../README4IT.md)** ก่อน คำสั่ง `git clone` / `npm.cmd ci` ด้านล่างเป็นวิธี Development Source Checkout ย้อนหลังเท่านั้น **ไม่จำเป็นบน Factory Server** หลัง ADOPT เข้าสู่ Managed Mode ให้เปิดด้วย `src/server.js` ไม่ใช่ Demo Launcher
+
 วันที่ส่งมอบ 10 พฤศจิกายน 2026 · สาขา `codex/build-increment-4`
 
 เจ้าของโครงการรับ BUILD 4 และให้ส่งแพ็กเกจเพื่อเริ่ม LAN Test ด้วยข้อมูลสมมติ ใช้ชุดนี้เก็บหลักฐานบน Laptop บริษัทและเครื่องลูกข่ายที่ IT อนุญาต ก่อนพิจารณา Official Pilot และก่อนนำข้อมูลจริงเข้าระบบ [ข้อกำหนดและเกณฑ์ตัดสิน](../PROJECT.md)
 
-## 1. เตรียมเครื่องและเปิด Demo บน Laptop
+## 1. ทางเลือก Developer Source Checkout (Historical) และชุด Demo ทดสอบ
 
-ใช้ Git และ Node.js 24 ตาม `package.json` ตั้งพื้นที่ทดสอบบนดิสก์ภายในเครื่อง เช่น `C:\PDCA-LAN-Test` ภายใต้สิทธิ์ที่ IT จัดให้ เก็บ SQLite, Audit และ Backup บน volume เดียวกันในโฟลเดอร์ที่ผู้ใช้ LAN เข้าถึงผ่านแอปเท่านั้น
+วิธีนี้สำหรับผู้พัฒนาเท่านั้น ไม่ใช่ขั้นตอนที่ IT ต้องทำเมื่อได้รับ Verified ZIP. ใช้ Git และ Node.js 24 ตาม `package.json` ตั้งพื้นที่ทดสอบบนดิสก์ภายในเครื่อง เช่น `C:\PDCA-LAN-Test` ภายใต้สิทธิ์ที่ IT จัดให้ เก็บ SQLite, Audit และ Backup บน volume เดียวกันในโฟลเดอร์ที่ผู้ใช้ LAN เข้าถึงผ่านแอปเท่านั้น
 
 ```powershell
 git clone --branch codex/build-increment-4 --single-branch https://github.com/FillGH/THE_NODE_OF_PDCA.git

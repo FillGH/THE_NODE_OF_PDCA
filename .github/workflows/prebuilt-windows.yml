@@ -93,6 +93,7 @@ jobs:
           $extract = Join-Path $env:RUNNER_TEMP 'pdca-clean-machine-extract'
           Expand-Archive -LiteralPath $zip.FullName -DestinationPath $extract
           node (Join-Path $extract 'tools/prebuilt/verify.mjs') $extract
+          if (-not (Test-Path -LiteralPath (Join-Path $extract 'README4IT.md'))) { throw 'Missing IT entry-point documentation' }
           if ($LASTEXITCODE -ne 0) { throw 'Package verification failed' }
           node (Join-Path $extract 'tools/prebuilt/smoke.mjs') $extract
           if ($LASTEXITCODE -ne 0) { throw 'Clean-runner smoke failed' }

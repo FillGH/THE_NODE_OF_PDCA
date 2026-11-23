@@ -1,5 +1,7 @@
 # BUILD 4 · คู่มือสำรอง กู้คืน และย้าย Host
 
+> **IT Quick Start:** [README4IT.md](../README4IT.md) เป็นจุดเริ่มติดตั้ง/ตรวจ Package/ใช้งาน Recovery Menu; เอกสารนี้อธิบายการกู้เชิงลึก, Audit Reconciliation และ Host Migration ขั้นตอนที่ใช้ `npm.cmd` ด้านล่างเป็น DEV/Historical Source Checkout เท่านั้น ไม่ใช่ข้อบังคับของ Prebuilt Factory Server
+
 **UPDATE — Prebuilt Recovery Operator:** สำหรับโหมดที่ IT ตั้งค่า `PDCA_ACTIVE_DB_POINTER` ให้ใช้ขั้นตอน Managed Recovery Operator ใน `deployment/PREBUILT_WINDOWS.md` เป็นวิธีหลักในการ ADOPT / Restore / Prepare / Activate / Rollback แทนการแก้ DB Path ด้วยมือ ส่วนขั้นตอน CLI ด้านล่างเป็นประวัติ BUILD 4 และแนวทางกู้ทางเทคนิค โดยต้องไม่ข้ามการตรวจ Workspace + Audit และไม่สลับระหว่าง Managed/Legacy Mode โดยไม่ผ่าน Change Control
 
 ใช้ข้อมูลสมมติใน BUILD 4 การเปิดบริการบน LAN โรงงาน บัญชีและสิทธิ์จริง การตั้งค่าเครื่อง และการใช้ข้อมูลจริงอยู่ใน VERIFY หลังได้รับอนุมัติแยก เกณฑ์ D-068, D-069, D-106, Closure-04 และ IT-01–IT-06 อยู่ใน [PROJECT](../PROJECT.md) และ [IT handoff](IT_HANDOFF.md)

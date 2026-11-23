@@ -9,11 +9,13 @@ const root = fileURLToPath(new URL('../../', import.meta.url));
 const stage = resolve(process.argv[2] || '');
 const sourceSha = process.argv[3];
 const included = [
-  'package.json', 'package-lock.json', 'src', 'web', 'demo', 'assets',
+  'README.md', 'README4IT.md', 'package.json', 'package-lock.json', 'src', 'web', 'demo', 'assets',
   'node_modules', 'tools/prebuilt/verify.mjs', 'tools/prebuilt/smoke.mjs',
   'tools/recovery/recovery-menu.ps1', 'tools/recovery/recovery-menu.cmd',
   'test/recovery-operator.test.js',
   'PROJECT.md', 'AGENTS.md', 'design/BUILD4_HOST_RUNBOOK.md', 'design/PILOT_VERIFY.md',
+  'design/BUILD3_EXPORT_CONTRACT.md', 'design/qa/COLLABORATION_ACCEPTANCE.md',
+  'design/prototypes/DESIGN_collaboration-recovery.html',
   'design/IT_HANDOFF.md', 'deployment/PREBUILT_WINDOWS.md',
 ];
 
