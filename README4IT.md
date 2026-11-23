@@ -155,3 +155,8 @@ node --env-file="C:\PDCA-LAN-Test\config\host.env" src/server.js
 | Requirements / Hard Gates / Official Pilot | [PROJECT.md](PROJECT.md) |
 
 **ไฟล์ช่วยดำเนินงาน:** มีเพียง `tools/recovery/recovery-menu.cmd` (Launcher) และ `recovery-menu.ps1` (Menu Logic). ทั้งคู่ทำงานร่วมกัน จึงไม่ควรลบตัวใดตัวหนึ่ง. ไม่ต้องเพิ่มไฟล์ Setup/Start BAT เพิ่มเพื่อใช้งาน Prebuilt Package
+
+
+### F-07 — IT Status ระหว่างมีผู้ใช้บันทึกต่อเนื่อง
+
+คำสั่ง `Status` ตรวจ Workspace, Audit และ Cross-file Witness ทุกครั้ง หาก SQLite กำลังถูก Writer Lock ชั่วคราว ระบบจะ Retry เฉพาะ `SQLITE_BUSY` ภายในกรอบ **5 วินาที** แล้วคืนผลที่ยืนยันได้เท่านั้น หาก Lock ยังคงอยู่จะแสดง `IT Status temporarily BUSY after bounded retries` และ Exit แบบ Failure ให้ IT ลองใหม่เมื่อ Write Load ลดลง **ห้ามตีความ BUSY เป็น Database Corruption หรือ Verified PASS**. การตรวจ Integrity/Witness, Missing File และ Invalid Credentials ยังคง Fail Closed เช่นเดิม ข้อจำกัดของการทดลอง Heavy Writer ไม่ใช่ Guarantee ว่า Status จะสำเร็จในทุกระดับโหลด

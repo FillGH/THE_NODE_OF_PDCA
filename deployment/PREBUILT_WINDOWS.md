@@ -69,3 +69,8 @@ Operational Runbook สำหรับ Detail/Host Migration: [design/BUILD4_HOS
 - **C-02:** Original pre-Witness Snapshot remains immutable. Following checksum, cutoff, and Audit validation, `prepareRestore()` enrolls any missing Witness table ONLY on isolated `candidate.sqlite` + COPIED `preview-audit.sqlite`. Never mutate original Backup or authoritative Live Audit to permit Preview.
 - **C-03:** IT stops all writers and preserves the existing original Workspace/Audit pair. With Active Pointer ABSENT, Menu Option **8 MIGRATE LEGACY COPY** creates and migrates an isolated pair under `PDCA_DATA_ROOT/legacy-upgrade-<UUID>`. IT compares Inventory, then sets external `PDCA_DB`/`PDCA_AUDIT` to approved candidate paths BEFORE ADOPT. No automatic cutover.
 - SQLite-native hot journal rollback of an uncommitted transaction is DISTINCT from an interruption between successful cross-file Witness reseal and separate Active JSON Pointer replacement; the latter remains FAIL CLOSED requiring IT-controlled recovery.
+
+
+### F-07 — Operational Status contention control
+
+IT-only `activeStatus()` retries only SQLite `SQLITE_BUSY` / exact `database is locked` errors from the complete Active Workspace/Audit validation, with a nominal 5,000 ms retry window and 75 ms delay between attempts. Errors outside transient SQLite contention (including witness/ledger mismatch and missing database) are NEVER retried as success. A sustained writer may cause a clear nonzero `BUSY/RETRY` result; this is not proof of corruption and not a verified status. Existing managed Startup, Backup, Restore, and Rollback controls are unchanged. Test with concurrent writes on the target Windows runtime and record the observed latency/failure counts before accepting F-07.

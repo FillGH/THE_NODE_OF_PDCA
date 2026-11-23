@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { spawn, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { copyFileSync, existsSync, mkdtempSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
@@ -360,4 +360,51 @@ test('R-14 C-03 IT migration on a COPY preserves legacy originals before ADOPT',
   await adoptActive(copiedEnv, 'IT', 'ADOPT');
   assert.equal((await activeStatus(copiedEnv, 'IT')).projects, 1);
   await assert.rejects(prepareLegacyAdoption(copiedEnv, 'IT', 'MIGRATE-LEGACY'), /pointer exists/);
+});
+
+
+test('R-15 F-07 IT Status retries transient SQLite busy but never bypasses full validation', async t => {
+  const f = setup(t);
+  f.env.PDCA_PORT = '42747';
+  await adoptActive(f.env, 'IT', 'ADOPT');
+  const writer = [
+    "import { DatabaseSync } from 'node:sqlite';",
+    'const db = new DatabaseSync(process.argv[1], { create: false });',
+    "db.exec('BEGIN EXCLUSIVE');",
+    "process.stdout.write('LOCKED\\n');",
+    "setTimeout(() => { db.exec('ROLLBACK'); db.close(); }, 3500);",
+  ].join('\n');
+  const child = spawn(process.execPath, ['--input-type=module', '--eval', writer, f.file], {
+    stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, NODE_NO_WARNINGS: '1' },
+  });
+  let stderr = '';
+  child.stderr.on('data', bytes => { stderr += bytes; });
+  const ended = new Promise((resolve, reject) => {
+    child.on('error', reject);
+    child.on('close', code => resolve(code));
+  });
+  let timeout;
+  try {
+    const locked = new Promise((resolve, reject) => {
+      let output = '';
+      child.stdout.on('data', bytes => {
+        output += bytes.toString();
+        if (output.includes('LOCKED')) resolve();
+      });
+      child.on('error', reject);
+      child.on('close', () => reject(new Error('Writer exited before lock: ' + stderr)));
+    });
+    const alarm = new Promise((_, reject) => {
+      timeout = setTimeout(() => reject(new Error('Writer failed to acquire EXCLUSIVE lock')), 8000);
+      timeout.unref();
+    });
+    await Promise.race([locked, alarm]);
+    const start = Date.now();
+    const status = await activeStatus(f.env, 'IT');
+    assert.equal(status.projects, 1);
+    assert.ok(Date.now() - start < 10000, 'Busy retry must be bounded');
+  } finally {
+    clearTimeout(timeout);
+    assert.equal(await ended, 0, stderr);
+  }
 });

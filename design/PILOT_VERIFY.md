@@ -133,3 +133,11 @@ try {
 - C-02: Restore an authentic BUILD 4 pre-Witness Snapshot; PREPARE only on isolated Preview Audit, immutable Source Snapshot and unchanged authoritative Audit; test corruption and mismatch refusals.
 - C-03: With all writers stopped and originals secured, migrate a pre-Witness pair to NEW COPIES, verify content, ADOPT using approved candidate paths, and reject migration after Pointer exists.
 - Record Source SHA, Node/Windows Version, test evidence, Owner and RPO/RTO; CI success does not establish Factory V-07 acceptance.
+
+
+### F-07 — Windows Admin Status under concurrent edits
+
+- เรียก IT Status ขณะมี Writer บันทึก PDCA ต่อเนื่องและตรวจว่าผล Status มี Integrity/Witness Verification ครบ; transient SQLite BUSY ต้อง Retry แบบมีขอบเขต ไม่ใช่การยกเว้นการตรวจ
+- ทดสอบ SQLite EXCLUSIVE Lock 3.5 วินาทีจาก Process แยก: Status ต้องกลับมา PASS หลัง Lock ถูกปล่อย และไม่มีการสร้าง DB/Audit ใหม่
+- ทดสอบ Sustained Heavy Load เกินช่วง Retry: ผลอาจเป็น `BUSY/RETRY` พร้อม Exit Failure อย่างชัดเจน ห้ามรายงานว่า PASS; ตรวจความครบของ Saved PDCAs หลัง Load
+- ทดสอบ Workspace/Audit Witness ไม่ตรงและ Unauthorized IT key: ต้อง Fail Closed โดยไม่ถูก Retry ให้ PASS; บันทึก Runtime Version และหลักฐาน Windows Factory แยกจาก CI

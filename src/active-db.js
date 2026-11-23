@@ -185,7 +185,24 @@ export async function activeStatus(env, role) {
   const selection = readActiveState(env);
   requireState(selection, 'Managed recovery is not configured');
   const { state, config } = selection;
-  const inventory = inspectActivePair(state.current.workspace, state.current.audit);
+  // F-07: Retry only transient SQLITE_BUSY on administrative Status.
+  // Permanent integrity, cutoff, witness, missing-file and authorization failures propagate.
+  // A sustained writer may still cause a bounded BUSY/RETRY response; never claim PASS.
+  const deadline = Date.now() + 5000;
+  let inventory;
+  for (;;) {
+    try {
+      inventory = inspectActivePair(state.current.workspace, state.current.audit);
+      break;
+    } catch (error) {
+      const busy = error?.code === 'SQLITE_BUSY' || /^database is locked$/i.test(error?.message || '');
+      if (!busy) throw error;
+      if (Date.now() >= deadline) {
+        throw new Error('IT Status temporarily BUSY after bounded retries; retry when writes settle', { cause: error });
+      }
+      await new Promise(resolve => setTimeout(resolve, 75));
+    }
+  }
   return { action: 'status', pointer: config.pointer, serial: state.serial, current: state.current,
     previous: state.previous, currentCut: inventory.cut, projects: inventory.workspaces.length };
 }
