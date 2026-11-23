@@ -96,6 +96,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Package verification failed' }
           node (Join-Path $extract 'tools/prebuilt/smoke.mjs') $extract
           if ($LASTEXITCODE -ne 0) { throw 'Clean-runner smoke failed' }
+          & cmd.exe /c (Join-Path $extract 'tools\recovery\recovery-menu.cmd')
+          if ($LASTEXITCODE -ne 2) { throw 'CMD Recovery launcher usage guard failed' }
           node --test (Join-Path $extract 'test/recovery-operator.test.js')
           if ($LASTEXITCODE -ne 0) { throw 'Clean-runner recovery/rollback regression failed' }
       - name: Publish verified delivery candidate

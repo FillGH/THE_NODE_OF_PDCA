@@ -75,6 +75,8 @@ All paths MUST be absolute, under the same PDCA_DATA_ROOT directory and on IT-co
 3. Stop and disable automatic restart of the Node service. Run the PowerShell operator from the extracted Prebuilt directory, using the external environment file:
 
 ```powershell
+.\tools\recovery\recovery-menu.cmd 'C:\PDCA-LAN-Test\config\host.env'
+# Or invoke PowerShell directly when company policy allows it:
 powershell.exe -NoProfile -File .\tools\recovery\recovery-menu.ps1 -EnvFile 'C:\PDCA-LAN-Test\config\host.env'
 ```
 
