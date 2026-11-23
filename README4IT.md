@@ -105,6 +105,10 @@ node --env-file="C:\PDCA-LAN-Test\config\host.env" src/server.js
 **C-01 Hot Journal:** Startup/IT Status อนุญาต SQLite Native Rollback บนไฟล์ Workspace/Audit **ที่มีอยู่แล้ว** ก่อน Strict Integrity/Audit/Witness Validation เท่านั้น ไม่สร้างฐานใหม่หรือเปิดฐานที่ Witness ผิด; ห้ามลบ Journal ด้วยมือ
 
 
+## 5A. Owner Laptop as Host + Client — Prepared LAN Test Kit
+
+สำหรับการทดสอบชั่วคราว เจ้าของโครงการใช้ Laptop เป็น **Host และ Client พร้อมกัน**; PC ทีมงานเข้า URL HTTPS กลางเดียวกันได้หลัง IT อนุญาต. โค้ด Node.js ยังคงรับเฉพาะ `127.0.0.1`; **ห้ามเปิดพอร์ต 4175 ให้ LAN โดยตรง**. คู่มือพร้อมแม่แบบ Reverse Proxy แบบ mTLS, สคริปต์ Start Proxy และ Preflight อยู่ที่ [Laptop-hosted LAN Test](deployment/LAPTOP_HOST_LAN_TEST.md) และ `tools/lan/`. ตัวอย่างนี้ไม่ดาวน์โหลด/ติดตั้ง Caddy, ไม่แก้ Firewall/DNS, ไม่สร้าง Certificate และไม่ให้สิทธิ์ IT อัตโนมัติ. เนื่องจากแอปใช้ `Authorization: Bearer`, ห้ามใช้ HTTP Basic Auth ที่ชน Header นี้โดยไม่ออกแบบ Session ใหม่. เมื่อส่งมอบ CI ต้องแยก **PREPARED** ออกจาก LAN Test **NOT TESTED**.
+
 ## 5. Network Test และ Acceptance
 
 ให้ IT ตั้ง HTTPS Reverse Proxy บนเครื่องเดียวกับ Node Host และทดสอบว่า Browser ที่ได้รับสิทธิ์เข้า URL ภายนอกได้ แต่ Browser/Client ที่ไม่ได้รับสิทธิ์ รวมถึงการเชื่อมต่อ Node Port โดยตรงเข้าไม่ได้. `127.0.0.1:4175` เป็น Loopback ภายใน Host เท่านั้น ไม่ใช่ URL สำหรับ Client

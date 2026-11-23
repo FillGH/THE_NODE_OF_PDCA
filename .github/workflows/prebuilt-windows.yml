@@ -34,6 +34,11 @@ jobs:
           $tokens = $null; $parseErrors = $null
           [System.Management.Automation.Language.Parser]::ParseFile('tools/recovery/recovery-menu.ps1', [ref]$tokens, [ref]$parseErrors) | Out-Null
           if ($parseErrors.Count -gt 0) { throw ('Recovery operator PowerShell syntax invalid: ' + ($parseErrors -join '; ')) }
+          foreach ($script in @('tools/lan/verify-laptop.ps1', 'tools/lan/start-proxy.ps1', 'tools/lan/verify-client.ps1')) {
+            $lanTokens = $null; $lanErrors = $null
+            [System.Management.Automation.Language.Parser]::ParseFile($script, [ref]$lanTokens, [ref]$lanErrors) | Out-Null
+            if ($lanErrors.Count -gt 0) { throw ('Laptop LAN script syntax invalid (' + $script + '): ' + ($lanErrors -join '; ')) }
+          }
           npm.cmd ci --no-audit --no-fund
           if ($LASTEXITCODE -ne 0) { throw 'npm ci failed' }
           npm.cmd test
@@ -97,6 +102,12 @@ jobs:
           Expand-Archive -LiteralPath $zip.FullName -DestinationPath $extract
           node (Join-Path $extract 'tools/prebuilt/verify.mjs') $extract
           if (-not (Test-Path -LiteralPath (Join-Path $extract 'README4IT.md'))) { throw 'Missing IT entry-point documentation' }
+          foreach ($name in @('deployment/LAPTOP_HOST_LAN_TEST.md','tools/lan/Caddyfile.laptop.template',
+            'tools/lan/verify-laptop.ps1','tools/lan/start-proxy.ps1','tools/lan/verify-client.ps1','test/laptop-lan.test.js')) {
+            if (-not (Test-Path -LiteralPath (Join-Path $extract $name))) { throw ('Missing Laptop LAN kit file: ' + $name) }
+          }
+          node --test (Join-Path $extract 'test/laptop-lan.test.js')
+          if ($LASTEXITCODE -ne 0) { throw 'Laptop LAN package contract tests failed' }
           if ($LASTEXITCODE -ne 0) { throw 'Package verification failed' }
           node (Join-Path $extract 'tools/prebuilt/smoke.mjs') $extract
           if ($LASTEXITCODE -ne 0) { throw 'Clean-runner smoke failed' }
