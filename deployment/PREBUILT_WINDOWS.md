@@ -1,6 +1,6 @@
 # THE NODE OF PDCA — Prebuilt Windows Deployment (BUILD 4)
 
-Status: Packaging workflow proposed/implemented on a separate branch. This is NOT a Production Release or Factory LAN acceptance. No application logic has been changed.
+Status: Packaging workflow proposed/implemented on a separate branch. This is NOT a Production Release or Factory LAN acceptance. Core PDCA UI/graph features remain unchanged; recovery operator and managed DB selection have been added. Production acceptance is still pending.
 
 ## Decision and scope
 
@@ -48,3 +48,57 @@ The clean-machine smoke PASS proves packaging and LOCAL runtime behavior on a Gi
 Retain the prior known-working ZIP and its manifest outside the live directory. IT must stop the old service, snapshot and validate the current Workspace plus Audit, deploy to a separate directory, and validate before cutover. Rollback application source and database selection are separate decisions; never overwrite or select an older SQLite Workspace without comparing the latest Audit and approved recovery point. Follow design/BUILD4_HOST_RUNBOOK.md for Host migration and recovery. Avoid multiple writable hosts.
 
 The presence of an artifact is NOT an instruction to deploy it. IT security/operations approval and Project Owner go/no-go are still required.
+
+
+## Managed Recovery Operator — after PR #1 upgrade
+
+The recovery operator is an OPTIONAL, IT-controlled mode enabled by setting an Active DB pointer in the external host environment. This is the approved pre-Factory-LAN improvement; it does not change graph/edit/export behavior. DO NOT enable it on existing data without preserving a verified copy and confirming exact Workspace/Audit paths with IT.
+
+### First-time managed setup
+
+1. Seed fictional demo data WITHOUT `PDCA_ACTIVE_DB_POINTER` using the existing demo instructions, then STOP the demo service. The demo launcher explicitly refuses managed mode, to prevent accidentally opening or seeding the selected live database.
+2. IT prepares a SEPARATE host environment outside the repo. Example placeholders (adjust paths and approved security settings):
+
+```dotenv
+PDCA_DB=C:\PDCA-LAN-Test\data\workspace.sqlite
+PDCA_AUDIT=C:\PDCA-LAN-Test\data\workspace.audit.sqlite
+PDCA_DATA_ROOT=C:\PDCA-LAN-Test\data
+PDCA_ACTIVE_DB_POINTER=C:\PDCA-LAN-Test\data\active-db.json
+PDCA_BACKUP_DIR=C:\PDCA-LAN-Test\data\backups
+PDCA_RESTORE_DIR=C:\PDCA-LAN-Test\data\restore
+PDCA_OPS_LOG=C:\PDCA-LAN-Test\data\operations.jsonl
+PDCA_PORT=4175
+```
+
+All paths MUST be absolute, under the same PDCA_DATA_ROOT directory and on IT-controlled local storage. The active pointer MUST NOT be included in source control or in the Prebuilt ZIP; protect it using Windows ACL. Add `PDCA_ORIGIN`, `PDCA_INGRESS_KEY`, IT/Phil operator keys and reverse-proxy settings under the existing IT security requirements. Ensure the audit filename matches the actual Audit created by the application — DO NOT copy a sample value blindly.
+
+3. Stop and disable automatic restart of the Node service. Run the PowerShell operator from the extracted Prebuilt directory, using the external environment file:
+
+```powershell
+powershell.exe -NoProfile -File .\tools\recovery\recovery-menu.ps1 -EnvFile 'C:\PDCA-LAN-Test\config\host.env'
+```
+
+4. Enter the IT key in the hidden prompt. Choose **3 ADOPT** once; it checks the current Workspace/Audit and atomically creates the pointer. For operational inspection choose **1 Status**. Once adopted, start the NORMAL application via `node --env-file="<host.env>" src/server.js` (not `demo/demo.mjs serve`) so startup, backup, diagnostics and recovery use the selected database pair.
+
+### Controlled restore sequence
+
+```text
+1 Status → 2 List Backups → 4 Restore <snapshot ID> to isolated staging
+→ review restore.json and inventory → 5 Prepare <stage ID> (IT only)
+→ STOP & disable Node service → 6 ACTIVATE <stage ID> → start host → Status and data verification
+```
+
+**ACTIVATE** (non-destructive) is allowed only when the candidate's FULL inventory matches the current live inventory, including non-Audit graph changes. If the current database is lost/corrupt or the candidate differs, the command blocks and requires **ACTIVATE-RECOVERY** (IT-controlled, deliberate recovery-point acceptance). The IT approver MUST separately review the incident, possible data loss, latest snapshot timestamp, User/Node records, backup RPO and retained evidence before typing ACTIVATE-RECOVERY. This command never silently merges newer content or overwrites the former DB.
+
+**ROLLBACK** returns to the previous pair only when full inventories are identical. It refuses when even a non-Audit edit could be lost. If blocked, leave the service stopped and use the formal recovery/reconciliation process rather than editing paths. A port-availability guard blocks activation while the configured Node port is occupied, but it is not a distributed lock; IT must also stop other writable instances and disable auto-restart during switching.
+
+The new `active-db.json` pointer is the single database-selection authority in managed mode. DO NOT manually edit the pointer or `PDCA_DB` to bypass it. A missing/malformed pointer or stale Workspace/Audit pair BLOCKS startup. The operator must run from the approved service Host with the same external environment configuration; update the configured Source at IT-controlled change control.
+
+### Minimum V-07 recovery gates before Factory acceptance
+
+- Verify active-db pointer, source SHA, selected Workspace/Audit pair, and actual DB content after every restart.
+- Demonstrate ADOPT only once, restore to Staging, Prepare, ACTIVATE, and ROLLBACK without newer data.
+- Demonstrate refusal with a running service, invalid IT credentials, tampered candidate, stale Audit, wrong pointer, and **new post-cutover edit not recorded in the deletion Audit**.
+- Demonstrate full disaster recovery from a lost Workspace using surviving valid Audit and explicit ACTIVATE-RECOVERY approval (with incident/RPO/RTO documentation).
+- Run actual Backup/Restore timing checks, retention, fail/retry and Host access checks against the approved Factory LAN environment.
+- A ZIP or automated test PASS alone does not satisfy IT security approval or V-07 Factory recovery acceptance.

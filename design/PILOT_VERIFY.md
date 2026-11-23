@@ -109,3 +109,7 @@ try {
 | | | | | NOT TESTED | | |
 
 เมื่อปิดผล LAN Test และข้อบังคับที่เกี่ยวข้องแล้ว ให้เจ้าของโครงการกับ IT ทวน Hard Gates ก่อนเริ่ม Official Pilot ช่วง Pilot ใช้เวลา 3 วันทำการ มี Cutting & Packing และอีก 1–2 แผนก ใช้ผู้ทดสอบครั้งแรกอย่างน้อย 5 คนและกรณีงานจริงที่ได้รับอนุมัติ 1 ผังต่อแผนก แต่ละคนต้องทำงานสำคัญครบและทำงานทั้งหมดได้อย่างน้อย 80% โดยไม่รับคำแนะนำ ให้ผ่านอย่างน้อย 80% ทั้งภาพรวมและในทุกแผนก คะแนนใช้ง่ายเฉลี่ยอย่างน้อย 4/5 เจ้าของโครงการตัดสิน GO, ปรับแล้วทดสอบซ้ำ หรือ NO-GO จากหลักฐานและการอนุมัติของ IT [เกณฑ์ Pilot และการวัดผล](../PROJECT.md#9-acceptance-criteria)
+
+## V-07 Addendum — Prebuilt Managed Recovery
+
+หากใช้งาน `PDCA_ACTIVE_DB_POINTER` ให้ IT บันทึกหลักฐานว่า Startup, Status, Backup และ Restore ใช้คู่ Workspace/Audit ตาม Pointer จริงหลัง Restart; ทดสอบ ADOPT, Restore to staging, Prepare, ACTIVATE, ROLLBACK และกรณีปฏิเสธเมื่อ Database หรือ Audit ไม่ตรงกัน รวมถึงกรณีที่มีการแก้ Node/PDCA แต่ไม่เกิด Deletion Audit Event ทั้งนี้ ACTIVATE-RECOVERY ต้องมี IT ยอมรับ Recovery Point และความเสี่ยงข้อมูลสูญหายอย่างชัดเจน ห้ามใช้ผล Automated Test แทน Factory V-07

@@ -1004,3 +1004,8 @@ Production release remains pending VERIFY, Official Pilot results, the Project O
 `DEFINE → DESIGN → BUILD → VERIFY → OPERATE → LEARN`
 
 Current stage: **DESIGN closeout recorded. BUILD Increment 1 is awaiting explicit owner authorization.**
+
+
+### Post-BUILD 4 deployment/recovery tooling decision (23 November 2026)
+
+Project Owner authorized combining a Windows Prebuilt Deployment Package and an IT-only Managed Recovery Operator before Factory LAN recovery verification. This is an operational implementation improvement addressing manual database-path selection, not a change to D-001–D-107 product scope, DESIGN v0.10 or Pilot pass criteria. The implementation adds an opt-in Active DB pointer, automatic Workspace/Audit validation on managed startup, and controlled ADOPT/RESTORE/PREPARE/ACTIVATE/ROLLBACK with explicit recovery-point acceptance for any possible lost non-Audit edits. Application core Node/Graph/Export functionality remains unchanged. Factory V-01..V-08 and IT authorizations remain independent mandatory gates. Technical CI and Factory acceptance must not be conflated.

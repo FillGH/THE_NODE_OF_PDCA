@@ -31,6 +31,9 @@ jobs:
         shell: pwsh
         run: |
           node --version
+          $tokens = $null; $parseErrors = $null
+          [System.Management.Automation.Language.Parser]::ParseFile('tools/recovery/recovery-menu.ps1', [ref]$tokens, [ref]$parseErrors) | Out-Null
+          if ($parseErrors.Count -gt 0) { throw ('Recovery operator PowerShell syntax invalid: ' + ($parseErrors -join '; ')) }
           npm.cmd ci --no-audit --no-fund
           if ($LASTEXITCODE -ne 0) { throw 'npm ci failed' }
           npm.cmd test
@@ -93,6 +96,8 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Package verification failed' }
           node (Join-Path $extract 'tools/prebuilt/smoke.mjs') $extract
           if ($LASTEXITCODE -ne 0) { throw 'Clean-runner smoke failed' }
+          node --test (Join-Path $extract 'test/recovery-operator.test.js')
+          if ($LASTEXITCODE -ne 0) { throw 'Clean-runner recovery/rollback regression failed' }
       - name: Publish verified delivery candidate
         uses: actions/upload-artifact@v4
         with:

@@ -11,7 +11,9 @@ const sourceSha = process.argv[3];
 const included = [
   'package.json', 'package-lock.json', 'src', 'web', 'demo', 'assets',
   'node_modules', 'tools/prebuilt/verify.mjs', 'tools/prebuilt/smoke.mjs',
-  'deployment/PREBUILT_WINDOWS.md',
+  'tools/recovery/recovery-menu.ps1', 'test/recovery-operator.test.js',
+  'PROJECT.md', 'AGENTS.md', 'design/BUILD4_HOST_RUNBOOK.md', 'design/PILOT_VERIFY.md',
+  'design/IT_HANDOFF.md', 'deployment/PREBUILT_WINDOWS.md',
 ];
 
 assert.equal(process.platform, 'win32', 'Build a Windows package on a Windows runner');

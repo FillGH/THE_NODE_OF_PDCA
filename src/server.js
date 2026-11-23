@@ -9,6 +9,7 @@ import { openStore, RequestError } from './store.js';
 import { collaboration } from './collaboration.js';
 import { operationsConfig, secretMatches } from './ops.js';
 import { runRecovery, startBackups } from './recovery.js';
+import { inspectActivePair } from './active-db.js';
 
 const files = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
@@ -249,6 +250,8 @@ export async function startHost(env = process.env, { demoEvidence = false } = {}
     if (event.event !== 'backup-verified') console.error(line);
   };
   for (const path of [file, auditFile, log]) await mkdir(dirname(path), { recursive: true });
+  // A managed pointer must select a fully consistent Workspace/Audit pair before opening the live store.
+  if (env.PDCA_ACTIVE_DB_POINTER) inspectActivePair(file, auditFile);
   const store = openStore(file, { auditFile });
   const allowRequest = req => !origin || secretMatches(req.headers['x-pdca-ingress-key'], ingress);
   let restoring = false;
