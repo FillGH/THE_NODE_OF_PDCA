@@ -20,3 +20,7 @@ Owner authorization and F-10 closure: PROJECT.md; WP-07 only. No WP-08/09, relea
 
 ## Change review
 This increment adds CI/test evidence only, not runtime/schema/security/recovery changes. Confirm exact diff and new run results before recommendation. Endpoint preflight is point-in-time and does not eliminate race; keep independent ADOPT guard and IT approved endpoint. HTTP remains cleartext, display name not authentication; IT admission and data scope are independent. Historical EACCES OS mechanism unconfirmed. No new release artifact. Gate II HOLD until verification results and remaining scope reviewed with owner.
+
+## Owner disposition (24 November 2026)
+
+[Additional CI 45332235054](https://github.com/FillGH/THE_NODE_OF_PDCA/actions/runs/45332235054) at `7666598bceb170932f4d5b5abc6e1a71c868c8f8`: 4/4 success, 3/3 full/staged/installation/extended Edge/actual sibling-tab/offline explicit draft review/security PASS, no skips/failures. F-07: 200/200 edits each, revision 201, integrity PASS; baseline 21234 ms / p95 1548 ms, polling 19667 ms / p95 1105 ms; 55/55 Status, no surfaced BUSY/other, median 315 ms, p95 820 ms, max 942 ms. Paired observation only; Factory remains OPEN. [Focused review and boundary](https://github.com/FillGH/THE_NODE_OF_PDCA/pull/3#issuecomment-7123594841). Owner accepted local candidate Gate II and closed WP-07; final archive/independent target gate deferred to WP-08, now authorized. No Factory acceptance. The accepted source SHA stays pinned for packaging.

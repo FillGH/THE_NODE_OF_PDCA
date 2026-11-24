@@ -1,6 +1,6 @@
 # Direct Private-IP LAN — Implementation Plan
 
-**Status: OWNER APPROVED WP-07 FORMAL VERIFICATION; WP-08–09 HOLD; NO MERGE / DEPLOY.** Date 2026-11-24. Owner explicitly approved ADR-001 rev2 and WP-02–06 with regression tests on 24 November 2026. ADR-001 revision 2 selects Direct HTTP/no proxy as planning direction. Runtime baseline `428885c44dda6aef7dd0bfbc8bd9cce13922388f`. Draft PR #1 remains untouched; planning-only PR #2. No time, budget or named IT assignee is assumed.
+**Status: WP-07 LOCAL ENGINEERING ACCEPTED; WP-08 AUTHORIZED; WP-09 / RELEASE / MERGE / DEPLOY HOLD.** Date 2026-11-24. Owner explicitly approved ADR-001 rev2 and WP-02–06 with regression tests on 24 November 2026. ADR-001 revision 2 selects Direct HTTP/no proxy as planning direction. Runtime baseline `428885c44dda6aef7dd0bfbc8bd9cce13922388f`. Draft PR #1 remains untouched; planning-only PR #2. No time, budget or named IT assignee is assumed.
 
 ## 1. Definition of Done
 
@@ -71,3 +71,7 @@ Owner command: "อนุมัติ ADR-001 revision 2 และแผน Dire
 Owner accepted F-10 (CI 45330657130, 3/3 fresh installs, 8/8 criteria) and approved WP-07 only. Gate II is not yet accepted. Reuse previous evidence only where the implementation is unchanged and the check maps to the requirement. Keep F-07 synthetic and Factory evidence separate. WP-08/09, Release, Merge, Deploy and real data/Pilot remain HOLD. Historical EACCES OS cause not established; retain bind/lease guards.
 
 WP-07 evidence is tracked in [WP07_ENGINEERING_EVIDENCE.md](WP07_ENGINEERING_EVIDENCE.md). Gate II remains pending; no later work package is authorized.
+
+### WP-08 authorization (24 November 2026)
+
+Owner accepted WP-07 local candidate engineering at `7666598bceb170932f4d5b5abc6e1a71c868c8f8` ([run 45332235054](https://github.com/FillGH/THE_NODE_OF_PDCA/actions/runs/45332235054)), deferring final package acceptance to WP-08. Package the pinned accepted source, not the subsequent CI/documentation commit. Independent runner receives archive/checksum and separate QA harness from same source, no repository checkout, exact Node 24.11.0; isolate node.exe from npm/npx and caches, no npm/registry commands, synthetic data outside archive, verify hash, manifest, Direct/Recovery tests, documented Setup/Seed/ADOPT/Diagnose/Start/Edge/restart and ACL. Candidate only; no release/merge/deploy/real data. WP-09 handover and IT-facing documentation reconciliation remain HOLD.
