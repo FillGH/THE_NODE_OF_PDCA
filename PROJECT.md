@@ -1007,7 +1007,7 @@ Production release remains pending VERIFY, Official Pilot results, the Project O
 
 `DEFINE → DESIGN → BUILD → VERIFY → OPERATE → LEARN`
 
-Current stage: **BUILD 4 / WP-01–09 / Lean Simplification V0.1 accepted. Double-click Candidate 4f47463 OWNER ACCEPTED / FROZEN in Engineering / Windows CI scope for further synthetic Laptop testing. Historical 13a2d7b local startup PASS; new candidate actual Laptop and Factory LAN verification pending. Gate III synthetic Laptop test authorized subject to confirmed IT controls. Gate IV, Merge, Release, Production Deploy, Real Data and Official Pilot HOLD.**
+Current stage: **BUILD 4 / WP-01–09 / Lean Simplification V0.1 accepted. Double-click Candidate 4f47463 OWNER ACCEPTED / FROZEN; Engineering / Windows CI PASS and Synthetic Laptop Test 9/9 PASS (Owner-reported). Next: actual Gate III Factory LAN verification under confirmed IT authorization and controls. Gate IV, Merge, Release, Production Deploy, Real Data and Official Pilot HOLD.**
 
 
 ### Post-BUILD 4 deployment/recovery tooling decision (23 November 2026)
@@ -1223,3 +1223,19 @@ Scope: external SETUP.cmd and START.cmd with a small local Node helper (no new i
 **Decision: ACCEPTED / FROZEN.** Owner explicitly accepts Double-click Candidate `4f474639a3c310fc6c5330f1c8baa7df247a7a20` for Synthetic Laptop Test subject to the existing IT authorization and controls. Use the exact [Artifact 14934170779](https://github.com/FillGH/THE_NODE_OF_PDCA/actions/runs/45420886586/artifacts/14934170779) and the engineering evidence immediately above; no rebuild or further software modification under this authorization. Preserve frozen 13a2d7b and its existing local data unchanged. Extract the new delivery to a separate fresh folder; do not run a second Host concurrently. SETUP.cmd is fresh synthetic setup only, not an upgrade or migration; START.cmd is subsequent managed startup. No target npm, manual archive SHA or manual IT key handling during fresh setup. Existing IT endpoint/ACL confirmation, explicit fresh ADOPT authorization, managed data and recovery controls remain in force.
 
 New candidate interactive Explorer double-click, default-browser opening, graceful console shutdown and local restart/persistence remain to be verified on the actual Laptop. Earlier 13a2d7b local startup evidence does not establish these results for the new launcher. Actual Factory LAN, concurrent use/F-07, IT-N01–N14 / V-01–V-08 and timed recovery remain pending (IT-N04 design N/A); no actual IT permission or server unattended lifecycle verification claimed. Gate IV, Merge, Release, Production Deploy, Real Data and Official Pilot remain HOLD. WP-01–09 closed; S14 durable artifact retention open; S04 deferred. PR #3 Draft/Open/Unmerged. This C0 record-only commit is not packaged source and requires no rebuild or new regression run.
+
+
+### Lean installation increment — Synthetic Laptop Test result (24 November 2026)
+
+**Owner-reported PASS — 9/9.** For frozen candidate `4f474639a3c310fc6c5330f1c8baa7df247a7a20`, Owner explicitly submitted all nine acceptance checklist items as PASS:
+1. Extract package into a new folder.
+2. Stop the previous Host before testing.
+3. Double-click SETUP.cmd.
+4. Enter IP/port and confirm GO under the stated IT conditions.
+5. Browser opens automatically.
+6. Create and save a PDCA.
+7. Stop Host using Ctrl+C.
+8. Double-click START.cmd.
+9. Verify data remains intact.
+
+Disposition: synthetic Laptop installation/usability and reported restart/persistence acceptance PASS; demonstrated manual onboarding issue closed within this scope. No further software modification or package rebuild necessary for this finding. Evidence is the Owner's submitted checklist, not independently observed Laptop logs, ACL or formal IT permission records. Do not infer Factory LAN, multi-client/concurrent access, F-07, timed recovery, network admission/revocation, or unattended Server lifecycle PASS. Next step is actual Gate III Factory LAN verification using the same frozen artifact 14934170779, synthetic data only, subject to confirmed IT controls and existing IT-N01–N14 / V-01–V-08 criteria (IT-N04 design N/A). S14 durable retention open; S04 deferred. WP-01–09 remain closed. Gate IV, Merge, Release, Production Deploy, Real Data and Official Pilot remain HOLD. PR #3 Draft/Open/Unmerged. C0 record-only update; no rebuild or regression required.
