@@ -183,3 +183,20 @@ test('DIRECT-11 hard links and dangling aliases fail closed',async t=>{
   assert.throws(()=>rejectUnmanagedManagedRoot(dangling,f.env.PDCA_AUDIT),/cannot admit unmanaged database/);
   const host=await startHost(f.env);await host.stop();
 });
+
+test('DIRECT-12 occupied private endpoint refuses ADOPT without mutating pair or pointer', {skip:!assigned}, async t=>{
+  const dir=root(t);
+  const listener=createServer(socket=>socket.destroy());
+  await new Promise((ok,fail)=>listener.once('error',fail).listen({host:assigned,port:0,exclusive:true},ok));
+  try {
+    const env=normalizeEnv({PDCA_BIND_HOST:assigned,PDCA_PORT:String(listener.address().port),PDCA_DATA_ROOT:dir,PDCA_IT_KEY:it,PDCA_PHIL_KEY:phil});
+    const store=openStore(env.PDCA_DB,{auditFile:env.PDCA_AUDIT});
+    try {store.create('Synthetic blocked ADOPT');} finally {store.close();}
+    const before=[readFileSync(env.PDCA_DB),readFileSync(env.PDCA_AUDIT)];
+    await assert.rejects(adoptActive(env,'IT','ADOPT'),/port is occupied or cannot be reserved/);
+    assert.equal(existsSync(env.PDCA_ACTIVE_DB_POINTER),false);
+    assert.deepEqual([readFileSync(env.PDCA_DB),readFileSync(env.PDCA_AUDIT)],before);
+    // Lease must be released even after the failed socket reservation.
+    const release=acquireManagedLease(env);release();
+  } finally {await new Promise((ok,fail)=>listener.close(e=>e?fail(e):ok()));}
+});

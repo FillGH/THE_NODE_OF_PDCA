@@ -46,9 +46,11 @@ jobs:
           $configDir = Join-Path $env:RUNNER_TEMP 'pdca-direct-bat-config'
           New-Item -ItemType Directory -Path $root,$configDir | Out-Null
           $file = Join-Path $configDir 'host.env'
-          $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -match '^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)' } | Select-Object -First 1).IPAddress
-          if (-not $ip) { throw 'No assigned private IPv4; target direct-IP test not verified' }
-          & (Join-Path $stage 'tools/direct/setup.cmd') $file $ip '49173' $root
+          $selection = node tools/qa/direct-endpoint-preflight.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'No bindable assigned private endpoint; installation NOT VERIFIED' }
+          $endpoint = $selection | ConvertFrom-Json
+          Write-Host ("DIRECT ENDPOINT PREFLIGHT PASS: " + $endpoint.ip + ":" + $endpoint.port + " (fixed for this installation)")
+          & (Join-Path $stage 'tools/direct/setup.cmd') $file $endpoint.ip ([string]$endpoint.port) $root
           if ($LASTEXITCODE -ne 0) { throw 'First BAT setup failed' }
           $hash = (Get-FileHash -LiteralPath $file).Hash
           & (Join-Path $stage 'tools/direct/setup.cmd') $file

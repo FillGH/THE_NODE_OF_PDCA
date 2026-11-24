@@ -4,7 +4,7 @@
 
 ## Prepare (IT only, synthetic data first)
 1. Stop and disable any previous PDCA Host, including old versions not participating in the new managed exclusion. Ensure one canonical local NTFS data root per dataset, no aliases/nested alternate roots, no network/mapped disk, and restrict config, data and operator keys with IT-controlled ACL. Never delete/replace .pdca-host-exclusion.sqlite; it is the persistent SQLite OS-lock coordination file, not Workspace or Audit. Do not share or copy it as data.
-2. Use the verified package and approved Node version. In a clean CMD without ambient PDCA_* variables, create an external config directory and an empty external data directory with restricted ACL. IT chooses real assigned RFC1918 IP and free port. Example only:
+2. Use the verified package and approved Node version. In a clean CMD without ambient PDCA_* variables, create an external config directory and an empty external data directory with restricted ACL. IT chooses a real assigned RFC1918 IP and an approved fixed port. Before Setup/ADOPT, confirm the exact endpoint can be bound on the intended Host (not just that it responds to ping or has no listed listener); if denied or occupied, STOP and have IT resolve the endpoint. Do not automatically modify OS reservations/firewall, retry ADOPT or bypass its independent port/lease checks. A preflight is point-in-time evidence only. CI may choose an OS-allocated available port for synthetic tests; this is not the Factory configuration procedure. Example only:
    ~~~cmd
    tools\direct\setup.cmd "C:\PDCA-config\host.env" 192.168.1.50 4175 "D:\PDCA\data"
    ~~~
