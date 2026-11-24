@@ -1,7 +1,5 @@
 # THE NODE OF PDCA — IT Quick Start
 
-**เปิด [README4IT.html](README4IT.html) ด้วย Edge ฉบับภายนอกจากชุด Candidate ที่อนุมัติ ใน Folder ที่มี ZIP โปรแกรม** (แตก Actions Artifact ชั้นนอกก่อน) ไม่ต้องเปิด Web Server หรือ npm.
+แตก Actions Artifact ชั้นนอกทั้งหมดลง Folder ใหม่ แล้วดับเบิลคลิก **SETUP.cmd** สำหรับครั้งแรก (ข้อมูลสมมติเท่านั้น) และ **START.cmd** สำหรับเปิดครั้งถัดไป. ใช้ Windows x64 Node 24.x ตั้งแต่ 24.11.0 ที่ IT อนุมัติ ไม่ต้อง npm, SHA หรือ Copy PowerShell. เก็บ _support ไว้ด้วย.
 
-ชื่อ Candidate ถูกกำหนดอัตโนมัติ ไม่ต้องกรอก SHA-256 กรอกเฉพาะ IP/Port ที่ IT อนุมัติ (Node 24.x ตั้งแต่ 24.11.0 ขึ้นไป) แล้วใช้ปุ่ม Copy Command สำหรับ First-time Setup, ADOPT และ Daily Start. คู่มือ HTML เป็นจุดเริ่มต้นหลัก ไม่ต้องทำตามคำสั่ง Markdown ซ้ำ.
-
-สำหรับข้อกำหนดเชิงลึก: [Direct operator guide](deployment/DIRECT_PRIVATE_IP_CANDIDATE.md), [IT Network Acceptance](deployment/IT_NETWORK_ACCEPTANCE_PHASE0.md), [Factory Verification](design/PILOT_VERIFY.md), [Technical appendix](deployment/PREBUILT_WINDOWS.md). ใช้ข้อมูลสมมติและ IT-approved LAN เท่านั้น; ไม่มีการอนุมัติ production, real data หรือ Pilot จากเอกสารนี้.
+[README4IT.html](README4IT.html) สำหรับคำแนะนำและ Manual fallback. ห้าม Setup ทับข้อมูลเดิม. ยืนยัน IT endpoint/ACL และ fresh ADOPT ก่อน GO; ห้าม Real Data, Production Deploy หรือ Official Pilot.

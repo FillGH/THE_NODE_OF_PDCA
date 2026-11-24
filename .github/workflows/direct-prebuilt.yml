@@ -7,6 +7,7 @@ on:
       - 'tools/prebuilt/package.mjs'
       - 'tools/prebuilt/verify.mjs'
       - 'README4IT.html'
+      - 'tools/onboarding/**'
   workflow_dispatch:
 permissions:
   contents: read
@@ -58,7 +59,13 @@ jobs:
           "archive_sha256=$sha" >> $env:GITHUB_OUTPUT
           Write-Host ("Direct ARCHIVE BUILT: source="+$env:ACCEPTED_SOURCE+" sha256="+$sha+" bytes="+(Get-Item $zip).Length+" files="+$manifest.files.Count)
           Copy-Item (Join-Path $stage 'README4IT.html') (Join-Path $dist 'README4IT.html')
-          Copy-Item tools/qa/direct-edge.mjs,tools/qa/direct-endpoint-preflight.mjs,tools/qa/it-guide-commands.mjs (Join-Path $qa 'tools/qa')
+          New-Item -ItemType Directory -Path (Join-Path $dist '_support') | Out-Null
+          Copy-Item tools/onboarding/SETUP.cmd,tools/onboarding/START.cmd $dist
+          $launcher = [IO.File]::ReadAllText((Join-Path $PWD 'tools/onboarding/launcher.mjs'))
+          if ([regex]::Matches($launcher,'const DELIVERY = null;').Count -ne 1) { throw 'Invalid launcher template' }
+          $metadata = @{source=$env:ACCEPTED_SOURCE;zip=(Split-Path $zip -Leaf)} | ConvertTo-Json -Compress
+          [IO.File]::WriteAllText((Join-Path $dist '_support/launcher.mjs'),$launcher.Replace('const DELIVERY = null;',('const DELIVERY = '+$metadata+';')),[Text.UTF8Encoding]::new($false))
+          Copy-Item tools/qa/direct-edge.mjs,tools/qa/direct-endpoint-preflight.mjs,tools/qa/it-guide-commands.mjs,tools/qa/double-click.mjs (Join-Path $qa 'tools/qa')
           Copy-Item src/network-config.js (Join-Path $qa 'src')
           Copy-Item test/direct-lan.test.js,test/recovery-operator.test.js (Join-Path $qa 'test')
           Copy-Item package.json (Join-Path $qa 'package.json')
@@ -112,7 +119,7 @@ jobs:
           $zip = $zips[0].FullName
           $actual = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($actual -ne $env:EXPECTED_ARCHIVE_SHA) { throw 'CI artifact transfer mismatch' }
-          if (@(Get-ChildItem -LiteralPath $download -Force).Count -ne 2) { throw 'Delivery must contain only ZIP and HTML' }
+          if (@(Get-ChildItem -LiteralPath $download -Force).Count -ne 5 -or -not (Test-Path (Join-Path $download '_support/launcher.mjs'))) { throw 'Incorrect delivery layout' }
           $extract = Join-Path $env:RUNNER_TEMP 'direct-clean extract'
           if (Test-Path $extract) { throw 'Target is not clean' }
           Expand-Archive -LiteralPath $zip -DestinationPath $extract
@@ -184,53 +191,14 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'Extracted package changed during runtime' }
             if ((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $actual) { throw 'Archive changed' }
             if (Test-Path $env:npm_config_cache) { throw 'Unexpected npm cache created' }
-            # Exercise the actual generated guide commands on a separate synthetic dataset.
-            # No firewall/policy changes, no automatic recovery credential use.
-            $guideBase = Join-Path $env:RUNNER_TEMP 'PDCA Guide Test (Offline)'
-            New-Item -ItemType Directory -Path $guideBase | Out-Null
-            Copy-Item -LiteralPath $guide -Destination $guideBase
-            $renamedZip = 'PDCA Test.zip'
-            Copy-Item -LiteralPath $zip -Destination (Join-Path $guideBase $renamedZip)
+            # Exercise delivered CMD launchers on a separate synthetic dataset.
+            $guideBase = Join-Path $env:RUNNER_TEMP 'PDCA Double Click (Offline)'
+            Copy-Item -LiteralPath $download -Destination $guideBase -Recurse
             $selectedGuide = node (Join-Path $qa 'tools/qa/direct-endpoint-preflight.mjs')
-            if ($LASTEXITCODE -ne 0) { throw 'Guide endpoint preflight failed' }
+            if ($LASTEXITCODE -ne 0) { throw 'Launcher endpoint preflight failed' }
             $guideEndpoint = $selectedGuide | ConvertFrom-Json
-            $guidePlanJson = node (Join-Path $qa 'tools/qa/it-guide-commands.mjs') $guide $guideBase $renamedZip $guideEndpoint.ip ([string]$guideEndpoint.port)
-            if ($LASTEXITCODE -ne 0) { throw 'Guide command generation failed' }
-            $guidePlan = $guidePlanJson | ConvertFrom-Json
-            if (-not $guidePlan.prepare -or -not $guidePlan.setup) { throw 'Guide omitted required commands' }
-            & ([scriptblock]::Create($guidePlan.prepare))
-            if (-not (Test-Path -LiteralPath (Join-Path $guidePlan.app 'DEPLOYMENT_MANIFEST.json'))) { throw 'Guide extraction failed' }
-            # CI-only confirmation fixture: synthetic private endpoint and local runner-owned directories.
-            # Production users must have actual IT permission and ACL confirmation.
-            & {
-              $allowAcl = $false
-              function Read-Host {
-                param([string]$Prompt)
-                if ($Prompt -eq 'IT approved endpoint, synthetic data, stopped other writers? Type GO') { return 'GO' }
-                if ($Prompt -eq 'IT verified actual ACL and empty data directory? Type GO') {
-                  if (-not (Test-Path -LiteralPath $guidePlan.cfg -PathType Container) -or -not (Test-Path -LiteralPath $guidePlan.data -PathType Container) -or (Get-ChildItem -LiteralPath $guidePlan.data -Force)) { throw 'CI guide ACL precondition failed' }
-                  Get-Acl -LiteralPath $guidePlan.cfg | Out-Null
-                  Get-Acl -LiteralPath $guidePlan.data | Out-Null
-                  if ($allowAcl) { return 'GO' } else { return 'NO' }
-                }
-                throw 'Unexpected guide confirmation prompt'
-              }
-              $paused = $false
-              try { & ([scriptblock]::Create($guidePlan.setup)) } catch { if ($_.Exception.Message -match 'ACL not confirmed') { $paused = $true } else { throw } }
-              if (-not $paused -or (Test-Path -LiteralPath $guidePlan.config) -or (Get-ChildItem -LiteralPath $guidePlan.cfg -Force) -or (Get-ChildItem -LiteralPath $guidePlan.data -Force)) { throw 'Interrupted setup did not preserve empty folders' }
-              $allowAcl = $true
-              & ([scriptblock]::Create($guidePlan.setup))
-              Write-Host 'HTML GUIDE SAFE RESUME PASS: cancelled before config/seed, empty folders reused, no overwrite'
-            }
-            if (-not (Test-Path -LiteralPath $guidePlan.config -PathType Leaf)) { throw 'Guide config missing' }
-            if (-not (Test-Path -LiteralPath (Join-Path $guidePlan.data 'demo.json'))) { throw 'Guide seed missing' }
-            if (Test-Path Env:PDCA_DEMO_DIR) { throw 'Guide leaked ambient PDCA variable' }
-            $repeatBlocked = $false
-            try { & ([scriptblock]::Create($guidePlan.setup)) } catch { if ($_.Exception.Message -match 'config/data exists') { $repeatBlocked = $true } else { throw } }
-            if (-not $repeatBlocked) { throw 'Guide repeat setup was not blocked' }
-            node (Join-Path $guidePlan.app 'tools/prebuilt/verify.mjs') $guidePlan.app
-            if ($LASTEXITCODE -ne 0) { throw 'Guide package changed' }
-            Write-Host 'HTML GUIDE COMMANDS PASS: identical internal/external guide, renamed ZIP, spaced path, automatic extracted manifest verification without delivery checksum, synthetic setup/seed, repeat refused, manifest intact'
+            node (Join-Path $qa 'tools/qa/double-click.mjs') $guideBase $guideEndpoint.ip ([string]$guideEndpoint.port) $env:ACCEPTED_SOURCE
+            if ($LASTEXITCODE -ne 0) { throw 'Double-click end-to-end failed' }
             Write-Host 'Direct CLEAN TARGET PASS: exact archive and manifest, isolated Node runtime, extracted Direct/Recovery regression, Setup/Seed/ADOPT/Diagnose/Start/Edge, restart, ACL and unchanged package; no npm command in target'
           } finally {
             Remove-NetFirewallRule -Name $ruleName -ErrorAction Stop

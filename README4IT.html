@@ -9,15 +9,15 @@
 </style>
 </head>
 <body><main>
-<header><h1>THE NODE OF PDCA</h1><p>คู่มือเปิดใช้งานบน Windows · Offline Quick Start</p></header>
+<header><h1>THE NODE OF PDCA</h1><p>คู่มือเปิดใช้งานบน Windows · Double-click Quick Start</p></header>
 <div class="card notice"><strong>สำหรับ Factory Test ด้วยข้อมูลสมมติเท่านั้น</strong><br>ก่อนเปิด LAN ให้ IT ยืนยันเครื่อง, IP/Port, สิทธิ์เข้าถึงและ ACL รวมถึงความเสี่ยง HTTP (ไม่เข้ารหัส; Display Name ไม่ใช่การยืนยันตัวตน) ห้ามเปิดให้ Guest/VPN/Internet หรือเครื่องที่ไม่ได้รับอนุญาต หาก IT กำหนด TLS ให้หยุด ไม่เปลี่ยน Firewall หรือ Policy เอง</div>
-<nav class="tabs" aria-label="เลือกงาน">
+<section class="card"><h2>เริ่มใช้งาน — ไม่ต้อง Copy คำสั่ง</h2><p><strong>ครั้งแรก:</strong> แตก ZIP ชั้นนอกทั้งหมดลง Folder ใหม่ เปิด SETUP.cmd กรอก IP และ Port ที่ IT อนุมัติ (Enter ใช้ 4175 เมื่อ IT อนุมัติ) ตรวจ ACL และพิมพ์ GO เพียงครั้งเดียว ระบบจะเตรียมข้อมูลสมมติ ตรวจฐานข้อมูล และเปิด Browser ให้เอง</p><p><strong>ครั้งต่อไป:</strong> เปิด START.cmd เท่านั้น ไม่ต้อง Seed หรือ ADOPT ซ้ำ ปิด Host ด้วย Ctrl+C หลังจัดการ Draft และปิดการเข้าถึงตาม IT policy</p><p class="notice">เก็บ _support ไว้ด้วย หากมีข้อมูลเดิม ห้าม Setup ใหม่ใน Folder เดิมหรือย้ายฐานข้อมูลเอง ให้ใช้คู่มือเดิม/IT migration หากมี STOP ให้เก็บข้อมูลทั้งหมดไว้ ไม่แก้ Firewall หรือ Execution Policy เอง</p></section><details><summary>ขั้นตอนเดิมแบบ Manual (สำหรับ IT Troubleshooting เท่านั้น)</summary><nav class="tabs" aria-label="เลือกงาน">
 <button type="button" id="firstTab" aria-selected="true">ติดตั้งครั้งแรก</button>
 <button type="button" id="dailyTab" aria-selected="false">เปิดโปรแกรมครั้งต่อไป</button>
 </nav>
 <section class="card">
 <h2>1. ระบุตำแหน่งไฟล์</h2>
-<p>แตก ZIP ชั้นนอกที่ดาวน์โหลดจาก Artifact ที่ได้รับอนุมัติ จะได้ 2 ไฟล์: README4IT.html และ ZIP โปรแกรม วางไว้ด้วยกัน แล้วเปิด HTML ด้วย Edge ไม่ต้องเปิด Server</p>
+<p>สำหรับ Manual fallback เท่านั้น: ใช้ ZIP โปรแกรมและ HTML จากชุดที่ได้รับอนุมัติใน Folder เดียวกัน</p>
 <label for="base">Folder ที่วางไฟล์</label><input id="base" placeholder="D:\PDCA Test" autocomplete="off" spellcheck="false">
 <div class="grid">
 <div class="full"><label for="zip">ชื่อ Candidate ZIP</label><input id="zip" placeholder="PDCA-Direct-Windows-CANDIDATE-xxxxxxxxxxxx.zip" autocomplete="off" spellcheck="false"><small>ชื่อ ZIP ถูกเติมให้อัตโนมัติ หากเปลี่ยนชื่อไฟล์ให้เลือก ZIP ใหม่</small><input id="pick" type="file" accept=".zip" aria-label="เลือก Inner ZIP"></div>
@@ -48,7 +48,7 @@
 <p><strong>เปิด URL ที่หน้าต่าง Host แสดง</strong> ใน Edge และเปิด URL เดียวกันจากเครื่องลูกข่ายที่ IT อนุญาต ห้ามใช้ข้อมูลจริง ให้หน้าต่าง PowerShell ทำงานอยู่ตลอด เมื่อหยุดงานให้บันทึกและจัดการ Draft ก่อนปิด access, กด Ctrl+C แล้วตรวจว่า process จบ</p>
 <div id="copyStatus" class="status" aria-live="polite" role="status"></div>
 </section>
-<section class="card"><h2>ถ้าเปิดไม่ได้</h2>
+</details><section class="card"><h2>ถ้าเปิดไม่ได้</h2>
 <details><summary>Node ไม่พบ / Version ไม่ตรง</summary><p>ให้ IT จัด Node.js 24.x ตั้งแต่ 24.11.0 ขึ้นไปที่อนุญาตและมี Security Patch เหมาะสม หากอัปเดต Runtime ให้ทดสอบเปิด/บันทึก/Backup/Recovery ก่อนใช้จริง ไม่ติดตั้ง npm package หรือดาวน์โหลด Registry บน Target</p></details>
 <details><summary>แตก ZIP ไม่สำเร็จ / Manifest ไม่ตรง หรือมี Folder เดิม</summary><p>STOP ใช้ ZIP จากชุดที่ได้รับอนุมัติ ห้ามแก้ไฟล์ใน app หรือแตกทับเดิม หากมี Config/Data เดิมใช้ Daily Start หรือ Migration ที่ได้รับการตรวจ</p></details>
 <details><summary>IP/Port ไม่ผ่าน / เครื่องอื่นเข้าไม่ได้</summary><p>ให้ IT ตรวจ assigned private IP, port bind, Firewall/ACL/NAC, guest/VPN/Internet และ access revocation ห้ามเปลี่ยนเป็น 0.0.0.0, ปิด Firewall หรือข้าม IT policy</p></details>
