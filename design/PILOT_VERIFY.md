@@ -13,7 +13,7 @@ Roadmap ที่ Owner อนุมัติ 25 พฤศจิกายน 202
 
 ## Phase 1 — Server Readiness
 
-**Entry:** Candidate ผ่าน Engineering และ Owner acceptance; IT และ Owner ยืนยัน Server/เครือข่าย/ขอบเขตข้อมูลสมมติที่อนุญาตก่อนติดตั้ง. การอนุมัติ Laptop เดิมไม่ใช่การอนุมัติ Server. Frozen 5e0b877 และ Image Viewer ที่ยัง VERIFY แยกกัน ต้องระบุ Candidate ที่ใช้จริง ไม่ใช้รุ่นที่ยังไม่ผ่านตรวจรับ.
+**Entry:** Candidate ผ่าน Engineering และ Owner acceptance; IT และ Owner ยืนยัน Server/เครือข่าย/ขอบเขตข้อมูลสมมติที่อนุญาตก่อนติดตั้ง. การอนุมัติ Laptop เดิมไม่ใช่การอนุมัติ Server. Image Viewer Candidate `57c54860958b41479b4886883af3713370cfd909` ผ่าน Engineering และ Owner acceptance / FROZEN เป็น Baseline ปัจจุบัน ([Artifact 14971614509](https://github.com/FillGH/THE_NODE_OF_PDCA/actions/runs/45505656996/artifacts/14971614509)); เก็บ Frozen 5e0b877 เดิมและข้อมูลเดิมไว้ ระบุ Candidate ที่ใช้จริง ไม่ Rebuild หรือใช้รุ่นที่ยังไม่ผ่านตรวจรับ. เอกสารที่อยู่ใน ZIP เดิมเป็น snapshot ณ วัน Build; ใช้ Test Plan ฉบับปัจจุบันนี้สำหรับ Phase 1 โดยไม่แก้ ZIP.
 
 ## 1. ชุด Demo ทดสอบ — Verified Prebuilt ZIP เท่านั้น
 
