@@ -8,6 +8,8 @@ on:
       - 'tools/prebuilt/verify.mjs'
       - 'README4IT.html'
       - 'tools/onboarding/**'
+      - 'web/**'
+      - 'tools/qa/direct-edge.mjs'
   workflow_dispatch:
 permissions:
   contents: read

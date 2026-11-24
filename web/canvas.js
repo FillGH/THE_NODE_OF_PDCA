@@ -3,7 +3,7 @@ import { installRecords } from './build3.js';
 // Canvas interactions adapted from the accepted DESIGN v0.10 (684bc50).
 import { edgeColors, documentLink, widthsDefault } from './model.js';
 import { installWorkspaces, defaultCamera, escapeHTML, imageUrl } from './workspaces.js';
-import { inspectorFields, previewFigure } from './inspector.js';
+import { inspectorFields, previewFigure, installFigureViewer } from './inspector.js';
 import { confirmAction } from './dialogs.js';
 
 const $=id=>document.getElementById(id);
@@ -811,6 +811,7 @@ function createNode(cat, title) {
 }
 
 function openWorkspace(workspace, nodeId) {
+  if ($('figureDialog').open) $('figureDialog').close();
   endInlineTitle();
   lastCardClick = undefined;
   current = workspace;
@@ -829,6 +830,7 @@ function openWorkspace(workspace, nodeId) {
 }
 
 function openWorkspaces() {
+  if ($('figureDialog').open) $('figureDialog').close();
   endInlineTitle();
   lastCardClick = undefined;
   cameraMotion++;
@@ -1347,7 +1349,10 @@ function cardFigure(node) {
 
 function openFigure(node, imageId) {
   const image = node?.images.find(item => item.id === imageId);
-  if (image && session.imageAvailable(imageId)) previewFigure(image, $('figureDialog'));
+  if (image && session.imageAvailable(imageId)) {
+    hideTooltip();
+    previewFigure(image, $('figureDialog'));
+  }
 }
 
 async function attachImage(event) {
@@ -2010,6 +2015,7 @@ cards.addEventListener('pointerover', event => {
 cards.addEventListener('pointerout', event => {
   if (event.target.closest('[data-node-id]')) hideTooltip();
 });
+installFigureViewer($('figureDialog'));
 $('closeFigure').addEventListener('click', () => dismissDialog($('figureDialog')));
 closeOnBackdrop($('figureDialog'), () => dismissDialog($('figureDialog')));
 closeOnBackdrop($('recordDialog'));

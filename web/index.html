@@ -191,9 +191,14 @@
     </div>
   </form>
 </dialog>
-<dialog id="figureDialog" aria-labelledby="figureCaption">
-  <figure class="figure-panel"><button class="iconbutton" id="closeFigure" aria-label="ปิดภาพ" autofocus>×</button>
-    <img id="figureImage" alt=""><figcaption id="figureCaption"></figcaption>
+<dialog id="figureDialog" data-zoom="normal" aria-labelledby="figureCaption" aria-describedby="figureHint">
+  <figure class="figure-panel">
+    <div class="figure-heading"><figcaption id="figureCaption"></figcaption>
+      <button type="button" class="iconbutton" id="closeFigure" aria-label="ปิดภาพ" autofocus>×</button></div>
+    <div class="figure-viewport" id="figureViewport" tabindex="0" aria-label="พื้นที่แสดงภาพ · เลื่อนดูเมื่อซูม">
+      <button type="button" id="figureZoom" aria-label="ขยายเต็มหน้าจอ"><img id="figureImage" alt=""></button>
+    </div>
+    <div id="figureHint" role="status" aria-live="polite">Preview · คลิกภาพเพื่อขยายเต็มหน้าจอ</div>
   </figure>
 </dialog>
 <dialog id="confirmDialog" aria-labelledby="confirmHeading" aria-describedby="confirmMessage">

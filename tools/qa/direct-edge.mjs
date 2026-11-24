@@ -163,6 +163,84 @@ try {
   const imageResponse=await fetch(config.origin+'/api/images/'+attached.id,{headers});
   assert.equal(imageResponse.status,200);
   assert.ok((await imageResponse.arrayBuffer()).byteLength>0);
+
+  // Image viewer: use the actual attached evidence, browser event handlers and native dialog.
+  const inspectorPreview='#drawerContent [data-preview-image="'+attached.id+'"]';
+  const cardPreview='#cards [data-preview-image="'+attached.id+'"]';
+  const viewerState=()=>evaluate("(()=>{const d=document.querySelector('#figureDialog'),v=document.querySelector('#figureViewport'),b=document.querySelector('#figureZoom'),i=document.querySelector('#figureImage'),r=b.getBoundingClientRect();return {open:d.open,mode:d.dataset.zoom,w:r.width,h:r.height,nw:i.naturalWidth,nh:i.naturalHeight,vw:v.clientWidth,vh:v.clientHeight,sw:v.scrollWidth,sh:v.scrollHeight,x:v.scrollLeft,y:v.scrollTop,dialogW:d.getBoundingClientRect().width,windowW:innerWidth,disabled:b.disabled,hint:document.querySelector('#figureHint').textContent};})()");
+  const state=async mode=>until('Viewer '+mode,async()=>{const s=await viewerState();return s.open&&s.mode===mode&&!s.disabled&&s.nw>0&&s.w>0&&s.h>0?s:null;});
+  const clickAt=async(x,y)=>{
+    await cdp('Input.dispatchMouseEvent',{type:'mousePressed',x,y,button:'left',clickCount:1});
+    await cdp('Input.dispatchMouseEvent',{type:'mouseReleased',x,y,button:'left',clickCount:1});
+  };
+  const clickImage=async()=>{
+    const pt=await evaluate("(()=>{const b=document.querySelector('#figureZoom').getBoundingClientRect(),v=document.querySelector('#figureViewport').getBoundingClientRect();return {x:(Math.max(b.left,v.left)+Math.min(b.right,v.right))/2,y:(Math.max(b.top,v.top)+Math.min(b.bottom,v.bottom))/2};})()");
+    await clickAt(pt.x,pt.y);
+  };
+  const aspect=s=>assert.ok(Math.abs(s.w-s.h*s.nw/s.nh)<=Math.max(3,s.w*.015),'Image aspect ratio changed');
+  const uiState=()=>evaluate("JSON.stringify({node:document.querySelector('#nodeTitle')?.value,drawer:document.querySelector('#drawer').inert,camera:document.querySelector('#stage').style.transform,zoom:document.querySelector('#zoomLabel').textContent,x:document.querySelector('#viewport').scrollLeft,y:document.querySelector('#viewport').scrollTop})");
+  await ready(inspectorPreview);
+  const beforeViewer=await graph(),beforeUi=await uiState();
+  await click(inspectorPreview);
+  const normal=await state('normal');
+  assert.match(normal.hint,/Preview/);
+  await clickImage();
+  const fit=await state('fit');aspect(fit);
+  assert.ok(fit.dialogW>=fit.windowW-34&&fit.w<=fit.vw+1&&fit.h<=fit.vh+1,'Fit does not fit viewport');
+  assert.ok(fit.dialogW>=normal.dialogW,'Fit dialog smaller than preview');
+  await clickImage();
+  const zoomed=await state('zoom');aspect(zoomed);
+  assert.ok(Math.abs(zoomed.w-fit.w*2)<=2&&Math.abs(zoomed.h-fit.h*2)<=2,'Not twice fit scale');
+  assert.ok(zoomed.sw>zoomed.vw||zoomed.sh>zoomed.vh,'Zoom is not scrollable');
+  await evaluate("(()=>{const v=document.querySelector('#figureViewport');v.scrollLeft=0;v.scrollTop=0;return true;})()");
+  const top=await viewerState();assert.equal(top.x,0);assert.equal(top.y,0);
+  await evaluate("(()=>{const v=document.querySelector('#figureViewport');v.scrollLeft=v.scrollWidth;v.scrollTop=v.scrollHeight;return true;})()");
+  const bottom=await viewerState();assert.ok(bottom.x>0||bottom.y>0,'Could not reach far side of image');
+  assert.ok(Math.abs(bottom.x-(bottom.sw-bottom.vw))<=1&&Math.abs(bottom.y-(bottom.sh-bottom.vh))<=1);
+  await clickImage();
+  const reset=await state('normal');assert.ok(Math.abs(reset.dialogW-normal.dialogW)<=1);
+  assert.equal(reset.x,0);assert.equal(reset.y,0);
+  await click('#closeFigure');
+  await until('Viewer closed with X',()=>evaluate("!document.querySelector('#figureDialog').open"));
+  assert.equal(await uiState(),beforeUi,'Viewer altered selection or camera');
+  assert.equal((await graph()).revision,beforeViewer.revision,'Viewer modified saved graph');
+
+  // Preview from thumbnail, keyboard zoom and native Escape. Preserve inspector.
+  await ready(cardPreview);await click(cardPreview);await state('normal');
+  await evaluate("document.querySelector('#figureZoom').focus();true");
+  await cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+  await cdp('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+  await state('fit');
+  await cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+  await cdp('Input.dispatchKeyEvent',{type:'keyUp',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
+  await until('Viewer closed with Escape',()=>evaluate("!document.querySelector('#figureDialog').open"));
+  assert.equal(await uiState(),beforeUi);
+  await click(inspectorPreview);await state('normal');await clickImage();await state('fit');
+  // The near-full-viewport dialog intentionally leaves a backdrop margin.
+  await clickAt(2,2);
+  await until('Viewer closed with backdrop',()=>evaluate("!document.querySelector('#figureDialog').open"));
+  assert.equal(await uiState(),beforeUi);
+  assert.equal((await graph()).revision,beforeViewer.revision);
+
+  // Resize while enlarged, then reset; display-only geometry must follow viewport.
+  await click(inspectorPreview);await state('normal');await clickImage();await state('fit');
+  await cdp('Emulation.setDeviceMetricsOverride',{width:640,height:760,deviceScaleFactor:1,mobile:false});
+  await until('Fit resized',async()=>{const s=await viewerState();return s.mode==='fit'&&s.windowW===640&&s.w<=s.vw+1&&s.h<=s.vh+1&&s.dialogW<=640?s:null;});
+  const small=await state('fit');aspect(small);
+  await clickImage();const smallZoom=await state('zoom');aspect(smallZoom);
+  assert.ok(Math.abs(smallZoom.w-small.w*2)<=2&&Math.abs(smallZoom.h-small.h*2)<=2);
+  await click('#closeFigure');
+  await until('Resized viewer closed',()=>evaluate("!document.querySelector('#figureDialog').open"));
+  await cdp('Emulation.clearDeviceMetricsOverride');
+
+  // Editing/autosave continues via existing handlers; the viewer must not discard text.
+  await until('Side note editable',()=>evaluate("document.querySelector('#sideNote')&&!document.querySelector('#sideNote').readOnly"));
+  await evaluate("(()=>{const f=document.querySelector('#sideNote');f.value='Viewer preserves pending edit';f.dispatchEvent(new Event('input',{bubbles:true}));document.querySelector("+JSON.stringify(inspectorPreview)+").click();return true;})()");
+  await state('normal');await clickImage();await state('fit');await click('#closeFigure');
+  await until('Editing viewer closed',()=>evaluate("!document.querySelector('#figureDialog').open"));
+  assert.equal(await evaluate("document.querySelector('#sideNote').value"),'Viewer preserves pending edit');
+  await until('Edit saved across viewer',async()=> (await graph()).nodes.find(n=>n.id===second.id)?.sideNote==='Viewer preserves pending edit');
+  console.log('IMAGE VIEWER PASS: thumbnail and inspector, normal/fit/2x/reset, aspect, scroll extents, resize, keyboard/X/Escape/backdrop, unchanged graph/selection/camera, autosave preserved.');
   await click('#closeDrawer');
   await until('Drawer closed',()=>evaluate("document.querySelector('#drawer').inert"));
   await click('#showHistory');

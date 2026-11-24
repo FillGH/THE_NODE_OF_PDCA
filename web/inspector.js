@@ -50,10 +50,81 @@ export function inspectorFields(node, cats, imageAvailable, overdue) {
     <div class="inline-kv"><label>Record ID</label><span class="record-id">${node.id}</span></div>`;
 }
 
+// The viewer is display-only: no workspace, camera, edit lease or storage mutations.
+const figureModes = ['normal', 'fit', 'zoom'];
+const figureHints = {
+  normal: ['Preview · คลิกภาพเพื่อขยายเต็มหน้าจอ', 'ขยายเต็มหน้าจอ'],
+  fit: ['Fit to screen · คลิกภาพเพื่อซูม 2×', 'ซูม 2 เท่าจากขนาดเต็มหน้าจอ'],
+  zoom: ['Zoom 2× · เลื่อนดูภาพ · คลิกภาพเพื่อกลับขนาดเดิม', 'กลับขนาด Preview เดิม'],
+};
+
+function sizeFigure(dialog, resetScroll = false) {
+  const view = dialog.querySelector('#figureViewport');
+  const button = dialog.querySelector('#figureZoom');
+  const image = dialog.querySelector('#figureImage');
+  const mode = dialog.dataset.zoom;
+  button.style.removeProperty('width');
+  button.style.removeProperty('height');
+  if (mode !== 'normal' && image.naturalWidth && image.naturalHeight) {
+    // Use the same full viewport box for Fit and 2x, excluding only the scrollbar
+    // from the visible area, not from the Fit reference size.
+    const scale = Math.min(view.offsetWidth / image.naturalWidth, view.offsetHeight / image.naturalHeight);
+    const factor = mode === 'zoom' ? 2 : 1;
+    button.style.width = Math.max(1, Math.floor(image.naturalWidth * scale * factor)) + 'px';
+    button.style.height = Math.max(1, Math.floor(image.naturalHeight * scale * factor)) + 'px';
+  }
+  if (resetScroll) {
+    view.scrollLeft = mode === 'zoom' ? (view.scrollWidth - view.clientWidth) / 2 : 0;
+    view.scrollTop = mode === 'zoom' ? (view.scrollHeight - view.clientHeight) / 2 : 0;
+  }
+}
+
+function setFigureMode(dialog, mode) {
+  dialog.dataset.zoom = mode;
+  const [hint, action] = figureHints[mode];
+  dialog.querySelector('#figureHint').textContent = hint;
+  dialog.querySelector('#figureZoom').setAttribute('aria-label', action);
+  sizeFigure(dialog, true);
+}
+
+export function installFigureViewer(dialog) {
+  const image = dialog.querySelector('#figureImage');
+  const button = dialog.querySelector('#figureZoom');
+  button.addEventListener('click', () => {
+    if (!dialog.open || dialog.dataset.closing || !image.naturalWidth) return;
+    setFigureMode(dialog, figureModes[(figureModes.indexOf(dialog.dataset.zoom) + 1) % figureModes.length]);
+  });
+  image.addEventListener('load', () => {
+    if (!dialog.open) return;
+    button.disabled = false;
+    setFigureMode(dialog, dialog.dataset.zoom);
+  });
+  image.addEventListener('error', () => {
+    if (!dialog.open) return;
+    button.disabled = true;
+    dialog.querySelector('#figureHint').textContent = 'ไม่สามารถแสดงภาพได้ · ปิดภาพแล้วลองเปิดใหม่';
+  });
+  window.addEventListener('resize', () => {
+    if (dialog.open && dialog.dataset.zoom !== 'normal') sizeFigure(dialog);
+  });
+  dialog.addEventListener('close', () => {
+    if (dialog.open) return;
+    setFigureMode(dialog, 'normal');
+    button.disabled = true;
+    image.removeAttribute('src');
+    image.alt = '';
+  });
+}
+
 export function previewFigure(image, dialog) {
-  const element = document.getElementById('figureImage');
-  document.getElementById('figureCaption').textContent = image.name;
-  element.src = imageUrl(image.id);
+  if (dialog.open) return;
+  const element = dialog.querySelector('#figureImage');
+  const button = dialog.querySelector('#figureZoom');
+  dialog.querySelector('#figureCaption').textContent = image.name;
   element.alt = image.name;
+  button.disabled = true;
+  setFigureMode(dialog, 'normal');
   dialog.showModal();
+  element.src = imageUrl(image.id);
+  if (element.complete && element.naturalWidth) button.disabled = false;
 }
