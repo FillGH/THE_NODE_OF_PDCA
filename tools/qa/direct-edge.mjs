@@ -29,7 +29,7 @@ assert.deepEqual([hash(config.file),hash(config.auditFile),hash(file)],original)
 console.log('DIRECT SEED PASS: documented seed succeeded; repeat rejected; Workspace/Audit/config hashes unchanged');
 const adopt=spawnSync(process.execPath,['--env-file='+file,join(stage,'src/ops.js'),'adopt','ADOPT'],
   {env:{...process.env,PDCA_OPERATOR_KEY:env.PDCA_IT_KEY},encoding:'utf8',timeout:20000});
-assert.equal(adopt.status,0,'Local ADOPT did not complete');
+assert.equal(adopt.status,0,'Local ADOPT did not complete: '+adopt.stderr);
 const cmdargs=name=>['/d','/s','/c','""'+join(stage,'tools/direct',name+'.cmd')+'" "'+file+'""'];
 const diagnose=spawnSync(process.env.ComSpec,cmdargs('diagnose'),{windowsVerbatimArguments:true,encoding:'utf8',timeout:20000});
 assert.equal(diagnose.status,0,'Diagnose after ADOPT: '+diagnose.stderr);
