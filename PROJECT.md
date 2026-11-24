@@ -1007,7 +1007,7 @@ Production release remains pending VERIFY, Official Pilot results, the Project O
 
 `DEFINE → DESIGN → BUILD → VERIFY → OPERATE → LEARN`
 
-Current stage: **BUILD 4 / WP-01–09 / Lean Simplification V0.1 accepted in Engineering / Windows CI candidate scope. Gate III preparation authorized; Factory synthetic execution conditional on confirmed IT authorization and controls, NOT TESTED. Lean candidate 03c804c; Gate IV, Merge, Release, Factory Deploy, real data and Official Pilot HOLD.**
+Current stage: **BUILD 4 / WP-01–09 / Lean Simplification V0.1 accepted. Easy Setup Candidate aa8188e OWNER ACCEPTED / FROZEN in Engineering / Windows CI scope. Gate III Factory Laptop synthetic test authorized subject to confirmed IT controls; actual results NOT TESTED. Gate IV, Merge, Final Release, Production Deploy, real data and Official Pilot HOLD.**
 
 
 ### Post-BUILD 4 deployment/recovery tooling decision (23 November 2026)
@@ -1167,3 +1167,10 @@ Candidate source `aa8188edb6e740476c64524e64b729c2438ffb56`. [Regression 4539659
 [Artifact 14922335056](https://github.com/FillGH/THE_NODE_OF_PDCA/actions/runs/45396596605/artifacts/14922335056) expires 2026-12-08 12:46:08 UTC. Wrapper contains README4IT.html, inner ZIP `PDCA-Direct-Windows-CANDIDATE-aa8188edb6e7.zip` and its sidecar. Inner ZIP 15,505,863 bytes; SHA-256 `e2a5fac1e8611d6d988ef27a32eeba847ff0ed4b55ca3afc9fcd010a6c427ae6`. Independently downloaded and verified exact source/profile, all 6,895 manifest entries by bytes/size/hash, and external/inner HTML byte identity (27,028 bytes). All 6,885 scoped runtime/dependency/launcher/recovery/demo/asset files match accepted Lean candidate 03c804c exactly by size and hash.
 
 Engineering disposition: PASS; recommend no more speculative onboarding changes before actual Factory Laptop usability feedback. Manual IT key entry and trusted acceptance-record hash retained; daily shortcut deferred. Owner acceptance of this new candidate and actual IT permission/controls remain required before synthetic Factory execution. This record-only commit does not change the packaged source or require rebuild. No WP reopened; Gate III actual verification NOT TESTED, Gate IV, production deployment, Merge, Final Release, real data and Official Pilot HOLD. S14 durable authorized retention remains open; retain exact approved artifacts/sidecars and verify copies. S04 remains deferred.
+
+
+### Easy Setup — Owner acceptance / freeze (24 November 2026)
+
+**Decision: ACCEPTED / FROZEN.** Owner explicitly accepted Easy Setup Candidate `aa8188edb6e740476c64524e64b729c2438ffb56` and authorized Gate III Factory Laptop Test using synthetic data only, subject to actual IT authorization and controls. The accepted inner ZIP, SHA-256, manifest, CI and Codex evidence are exactly those in the preceding engineering review. Use artifact 14922335056 and its original companion HTML/checksum, not a rebuilt archive or later branch HEAD. Earlier accepted frozen candidates remain distinct historical identities. Do not rebuild or modify software under this approval.
+
+Factory Laptop preparation and conditional synthetic execution authorized; actual installation, network admission, usability, IT-N01–N14 / V-01–V-08, F-07 and recovery evidence remain NOT TESTED (IT-N04 design N/A). Follow existing IT approval, HTTP residual risk, assigned private endpoint, ACL, one writable Host, local operator ADOPT/Status and data integrity controls. Stop on missing permission, wrong package, unauthorized access, data integrity/security failure or unsupported environment. No actual Factory evidence or IT permission is claimed by this record. No new WP or reopen WP-01–09; S14 authorized durable retention and hash confirmation remains OPEN, S04 Manual Dispatch DEFERRED. Gate IV, Merge, Final Release, Production Deploy, real data and Official Pilot remain HOLD. PR #3 Draft/Open/Unmerged. This C0 record-only commit is not packaged source and requires no rebuild or runtime regression.
