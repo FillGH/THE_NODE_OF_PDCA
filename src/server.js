@@ -281,18 +281,14 @@ export async function startHost(env = process.env, { demoEvidence = false } = {}
       }
     },
   });
-  try {
-    store.purge();
-    await new Promise((ready, reject) => {
-      server.once('error', reject);
-      server.listen({ port, host: bind, exclusive: true }, () => {
-        server.off('error', reject);
-        ready();
-      });
+  store.purge();
+  await new Promise((ready, reject) => {
+    server.once('error', reject);
+    server.listen({ port, host: bind, exclusive: true }, () => {
+      server.off('error', reject);
+      ready();
     });
-  } catch (error) {
-    throw error;
-  }
+  });
   const backups = startBackups({ file, auditFile, root, notify, lowSpaceBytes,
     snapshot: () => runRecovery('backup', { file, auditFile, root }),
   });

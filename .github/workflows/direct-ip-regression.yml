@@ -53,3 +53,11 @@ jobs:
           if ($LASTEXITCODE -ne 1) { throw 'Diagnose must block before ADOPT' }
           if (Get-ChildItem -LiteralPath $root -Force) { throw 'Setup unexpectedly created data' }
           Write-Host 'DIRECT BAT GUARDS PASS: initial config only, repeat unchanged, pre-ADOPT blocked'
+          exit 0
+      - name: Actual Edge HTTP private-IP UI and staged BAT launch
+        shell: pwsh
+        run: |
+          $stage = Join-Path $env:RUNNER_TEMP 'pdca-direct-test-stage'
+          $file = Join-Path $env:RUNNER_TEMP 'pdca-direct-bat-config\host.env'
+          node tools/qa/direct-edge.mjs $stage $file
+          if ($LASTEXITCODE -ne 0) { throw 'Actual Edge/BAT smoke failed' }

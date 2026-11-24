@@ -46,6 +46,7 @@ export function normalizeEnv(input) {
     if (env[key] !== undefined && !env[key]) throw new Error('Empty explicit path: ' + key);
     env[key] ??= key === 'PDCA_AUDIT' ? env.PDCA_DB + '.audit.sqlite' : join(root,name);
     if (!isAbsolute(env[key])) throw new Error('Managed database paths must be absolute: ' + key);
+    pathUnderRoot(root,env[key]);
   }
   return env;
 }
