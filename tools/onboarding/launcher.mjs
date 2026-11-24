@@ -26,7 +26,7 @@ function present(path){
 function localPath(path){
   if(!/^[A-Za-z]:\\/.test(path)||/[%!&|<>^"\r\n]/u.test(path))fail('Use an absolute local Windows folder without CMD metacharacters.');
   const parts=path.slice(3).split('\\');
-  if(parts.some(s=>!s||s==='.'||s==='..'||/[. ]$/.test(s)||/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i.test(s)))fail('Use a normal local folder path.');
+  if(parts.some(s=>!s||s==='.'||s==='..'||/[:*?\/\x00-\x1f]/u.test(s)||/[. ]$/.test(s)||/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i.test(s)))fail('Use a normal local folder path.');
   return resolve(path);
 }
 function within(parent,child){

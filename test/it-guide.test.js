@@ -23,3 +23,9 @@ test('Fresh setup checks unrelated target, local path and empty data before crea
   assert.match(launcher,/freshRoot\(\);[\s\S]+mkdirSync\(app\);[\s\S]+manifest\(\);[\s\S]+directory\(path,true\)/);
   assert.doesNotMatch(launcher,/Remove-Item|rmSync|Set-ExecutionPolicy|New-NetFirewallRule/);
 });
+
+test('Recovery still uses authenticated existing menu; daily launch contains no setup action',()=>{
+  assert.match(read('tools/onboarding/START.cmd'),/launcher\.mjs" start/);
+  assert.doesNotMatch(read('tools/onboarding/START.cmd'),/seed|adopt|setup/);
+  assert.match(read('tools/onboarding/RECOVERY.cmd'),/recovery-menu\.cmd/);
+});

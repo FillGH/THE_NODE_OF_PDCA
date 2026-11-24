@@ -42,9 +42,19 @@ try{
   assert.equal(blocked.status,1);assert.match(blocked.stdout+blocked.stderr,/Existing installation or unrelated files/);
   assert.equal(readFileSync(join(old,'data-abcdef012345','sentinel.txt'),'utf8'),'preserve');
   const same=sync('SETUP',delivery+'\r\n');assert.equal(same.status,1);assert.match(same.stdout+same.stderr,/Install outside/);
+  const bad=sync('SETUP','\r\n8.8.8.8\r\n'+port+'\r\n');
+  assert.equal(bad.status,1);assert.match(bad.stdout+bad.stderr,/Invalid endpoint/);assert.ok(!existsSync(root));
+  const badPort=sync('SETUP','\r\n'+ip+'\r\n80\r\n');
+  assert.equal(badPort.status,1);assert.match(badPort.stdout+badPort.stderr,/Invalid endpoint/);assert.ok(!existsSync(root));
+  const custom=join(dirname(delivery),'Custom Install (IT)');
+  const customCancel=sync('SETUP',custom+'\r\n'+ip+'\r\n'+port+'\r\nNO\r\n');
+  assert.equal(customCancel.status,1);assert.match(customCancel.stdout+customCancel.stderr,/Cancelled before config/);
+  assert.deepEqual(readdirSync(custom).sort(),['Configuration','Data']);
+  assert.ok(!readdirSync(join(custom,'Configuration')).length&&!readdirSync(join(custom,'Data')).length);
   const cancelled=sync('SETUP','\r\n'+ip+'\r\n'+port+'\r\nNO\r\n');
   assert.equal(cancelled.status,1);assert.match(cancelled.stdout+cancelled.stderr,/Cancelled before config/);
   assert.ok(!existsSync(cfg)&&!readdirSync(data).length);
+  renameSync(join(delivery,'PDCA.zip'),join(delivery,'PDCA Test.zip'));
   const first=await launch('SETUP','\r\n'+ip+'\r\n'+port+'\r\nGO\r\n');
   assert.match(first,/SETUP READY/);assert.ok(existsSync(join(data,'active-db.json')));
   const env=parseEnv(readFileSync(cfg,'utf8'));
@@ -64,7 +74,7 @@ try{
   const again=await launch('START','');assert.ok(!again.includes('SETUP READY'));
   assert.deepEqual(await projects(),before);
   assert.ok(!again.includes(env.PDCA_IT_KEY)&&!again.includes(env.PDCA_PHIL_KEY));
-  console.log('DOUBLE CLICK PASS: actual CMD, cancellation, one GO, seed/adopt/status, exact five-item installed tree, legacy target refused, delivery moved away, restart, repeat refusal, no key in output.');
+  console.log('DOUBLE CLICK PASS: actual CMD, cancellation, one GO, seed/adopt/status, exact five-item installed tree, renamed ZIP, invalid endpoint refused, legacy target refused, delivery moved away, restart, repeat refusal, no key in output.');
 }finally{await stop();}
 const env=parseEnv(readFileSync(cfg,'utf8'));
 const status=spawnSync(process.execPath,['--env-file='+cfg,join(app,'src/ops.js'),'status'],{env:{...process.env,PDCA_OPERATOR_KEY:env.PDCA_IT_KEY},encoding:'utf8'});
