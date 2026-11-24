@@ -7,7 +7,7 @@
 ## 1. Packaging Provenance & Dependency Boundary
 
 - WP-08/WP-09 are historical accepted candidates. For new changes, use PROJECT.md risk-based C0–C3 policy: record-only changes do not rebuild; a changed ZIP needs new identity, SHA-256, manifest, runtime/dependency equivalence and impact-based independent verification. Use the approved run, inner ZIP SHA-256 sidecar and manifest source commit, not an older hash. GitHub Artifact wrapper digest differs from inner ZIP hash.
-- Windows CI Node.js 24.11.0 runs locked npm ci and tests; independent Windows target has no source checkout, uses extracted node_modules, isolated Node runtime, verifies manifest and runs applicable Direct/Recovery regression and actual Edge. Historical LAN contracts remain source-level tests for lean Direct-IP packaging. No npm/Registry dependency on target. Not a physical airgap.
+- Windows CI Node.js 24.11.0 installs locked dependencies; the separate regression workflow runs the full source suite for material source/packaging/CI changes. Package workflow independently verifies the archive and affected extracted runtime; independent Windows target has no source checkout, uses extracted node_modules, isolated Node runtime, verifies manifest and runs applicable Direct/Recovery regression and actual Edge. Historical LAN contracts remain source-level tests for lean Direct-IP packaging. No npm/Registry dependency on target. Not a physical airgap.
 - Allowlist packages app, dependencies, tools and docs only. Runtime data/config/keys external. SHA-256 is integrity, not source authentication; compare approved GitHub source/run/record.
 - Candidate artifact is NOT RELEASE until separate authorization. Historic proxy workflow artifacts do not authorize Direct deployment.
 

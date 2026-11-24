@@ -12,11 +12,10 @@ on:
       - 'deployment/PREBUILT_WINDOWS.md'
       - 'deployment/IT_NETWORK_ACCEPTANCE_PHASE0.md'
       - 'design/PILOT_VERIFY.md'
-      - '.github/workflows/direct-prebuilt.yml'
+      - 'design/qa/COLLABORATION_ACCEPTANCE.md'
+      - 'design/BUILD3_EXPORT_CONTRACT.md'
       - '.github/workflows/wp08-direct-prebuilt.yml'
       - '.github/workflows/wp09-direct-handover.yml'
-      - 'tools/prebuilt/package.mjs'
-      - 'tools/prebuilt/verify.mjs'
   workflow_dispatch:
     inputs:
       extended:
