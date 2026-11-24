@@ -12,11 +12,11 @@ const included = [
   'README.md', 'README4IT.md', 'package.json', 'package-lock.json', 'src', 'web', 'demo', 'assets',
   'node_modules', 'tools/prebuilt/verify.mjs', 'tools/prebuilt/smoke.mjs',
   'tools/recovery/recovery-menu.ps1', 'tools/recovery/recovery-menu.cmd',
-  'test/recovery-operator.test.js', 'test/laptop-lan.test.js', 'tools/lan',
+  'test/recovery-operator.test.js', 'test/laptop-lan.test.js', 'test/direct-lan.test.js', 'tools/lan', 'tools/direct',
   'PROJECT.md', 'AGENTS.md', 'design/BUILD4_HOST_RUNBOOK.md', 'design/PILOT_VERIFY.md',
   'design/BUILD3_EXPORT_CONTRACT.md', 'design/qa/COLLABORATION_ACCEPTANCE.md',
   'design/prototypes/DESIGN_collaboration-recovery.html',
-  'design/IT_HANDOFF.md', 'deployment/PREBUILT_WINDOWS.md', 'deployment/LAPTOP_HOST_LAN_TEST.md',
+  'design/IT_HANDOFF.md', 'deployment/PREBUILT_WINDOWS.md', 'deployment/LAPTOP_HOST_LAN_TEST.md', 'deployment/DIRECT_PRIVATE_IP_CANDIDATE.md', 'deployment/DIRECT_PRIVATE_IP_IMPLEMENTATION_PLAN.md', 'deployment/IT_NETWORK_ACCEPTANCE_PHASE0.md', 'design/architecture/ADR-001-private-ip-lan-transport.md',
 ];
 
 assert.equal(process.platform, 'win32', 'Build a Windows package on a Windows runner');

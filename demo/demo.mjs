@@ -10,6 +10,7 @@ import { edgeColors, statuses } from '../web/model.js';
 
 // Prevent accidentally seeding or serving a managed production Active DB from the demo launcher.
 // Use unmanaged demo:seed first; IT can then ADOPT and use src/server.js for managed recovery testing.
+if (process.env.PDCA_BIND_HOST && process.env.PDCA_BIND_HOST !== '127.0.0.1') throw new Error('Direct LAN uses managed Host after explicit local demo seed and ADOPT');
 if (process.env.PDCA_ACTIVE_DB_POINTER) throw new Error('Demo launcher cannot be run with PDCA_ACTIVE_DB_POINTER; use normal host after IT ADOPT.');
 const base = dirname(fileURLToPath(import.meta.url));
 const data = resolve(process.env.PDCA_DEMO_DIR || '.pdca-dev/pilot-demo');

@@ -1,0 +1,55 @@
+name: PDCA Direct-IP candidate regression
+on:
+  push:
+    branches: [codex/direct-private-ip-implementation]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-regression:
+    runs-on: windows-2022
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.0'
+      - name: Full regression plus Direct LAN and Recovery
+        shell: pwsh
+        run: |
+          npm.cmd ci --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { throw 'npm ci failed' }
+          npm.cmd test
+          if ($LASTEXITCODE -ne 0) { throw 'Full regression failed' }
+      - name: Stage candidate for launcher tests only (no release artifact)
+        shell: pwsh
+        run: |
+          $stage = Join-Path $env:RUNNER_TEMP 'pdca-direct-test-stage'
+          node tools/prebuilt/package.mjs $stage (git rev-parse HEAD).Trim()
+          if ($LASTEXITCODE -ne 0) { throw 'Candidate staging failed' }
+          node tools/prebuilt/verify.mjs $stage
+          if ($LASTEXITCODE -ne 0) { throw 'Candidate verification failed' }
+          node --test (Join-Path $stage 'test/direct-lan.test.js') (Join-Path $stage 'test/recovery-operator.test.js')
+          if ($LASTEXITCODE -ne 0) { throw 'Staged candidate tests failed' }
+      - name: Windows BAT first setup / repeat / diagnose guards
+        shell: pwsh
+        run: |
+          $stage = Join-Path $env:RUNNER_TEMP 'pdca-direct-test-stage'
+          $root = Join-Path $env:RUNNER_TEMP 'pdca-direct-bat-data'
+          $configDir = Join-Path $env:RUNNER_TEMP 'pdca-direct-bat-config'
+          New-Item -ItemType Directory -Path $root,$configDir | Out-Null
+          $file = Join-Path $configDir 'host.env'
+          $ip = (Get-NetIPAddress -AddressFamily IPv4 | Where-Object { $_.IPAddress -match '^(10\.|192\.168\.|172\.(1[6-9]|2[0-9]|3[01])\.)' } | Select-Object -First 1).IPAddress
+          if (-not $ip) { throw 'No assigned private IPv4; target direct-IP test not verified' }
+          & (Join-Path $stage 'tools/direct/setup.cmd') $file $ip '49173' $root
+          if ($LASTEXITCODE -ne 0) { throw 'First BAT setup failed' }
+          $hash = (Get-FileHash -LiteralPath $file).Hash
+          & (Join-Path $stage 'tools/direct/setup.cmd') $file
+          if ($LASTEXITCODE -ne 0) { throw 'Repeat BAT setup failed' }
+          if ((Get-FileHash -LiteralPath $file).Hash -ne $hash) { throw 'Repeat setup rewrote config' }
+          & (Join-Path $stage 'tools/direct/diagnose.cmd') $file
+          if ($LASTEXITCODE -ne 1) { throw 'Diagnose must block before ADOPT' }
+          if (Get-ChildItem -LiteralPath $root -Force) { throw 'Setup unexpectedly created data' }
+          Write-Host 'DIRECT BAT GUARDS PASS: initial config only, repeat unchanged, pre-ADOPT blocked'

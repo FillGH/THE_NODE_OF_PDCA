@@ -1,4 +1,5 @@
 import { timingSafeEqual } from 'node:crypto';
+import { networkConfig, normalizeEnv } from './network-config.js';
 import { mkdir, readdir, readFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -13,17 +14,20 @@ export function secretMatches(value, secret) {
 }
 
 export function operationsConfig(env, { skipPointer = false } = {}) {
+  env = normalizeEnv(env);
+  const network = networkConfig(env);
   const original = resolve(env.PDCA_DB || '.pdca-dev/pdca.sqlite');
   const selected = !skipPointer && selectedFiles(env);
   const file = selected?.workspace || original;
   const auditFile = selected?.audit || resolve(env.PDCA_AUDIT || auditPath(original));
   const root = resolve(env.PDCA_BACKUP_DIR || resolve(dirname(original), 'backups'));
   const recoveryRoot = resolve(env.PDCA_RESTORE_DIR || resolve(dirname(original), 'restore'));
-  const { PDCA_ORIGIN: origin, PDCA_INGRESS_KEY: ingress, PDCA_IT_KEY: it, PDCA_PHIL_KEY: phil } = env;
+  const { PDCA_INGRESS_KEY: ingress, PDCA_IT_KEY: it, PDCA_PHIL_KEY: phil } = env;
+  const { origin, direct, bind, port } = network;
   const keys = [ingress, it, phil].filter(Boolean);
   if (keys.some(key => !/^[A-Za-z0-9_-]{32,}$/.test(key)) || new Set(keys).size !== keys.length ||
-      (origin && (new URL(origin).origin !== origin || !origin.startsWith('https://') || !ingress)) ||
-      (ingress && !origin)) throw new Error('Invalid Host origin or operation keys');
+      (!direct && origin && (new URL(origin).origin !== origin || !origin.startsWith('https://') || !ingress)) ||
+      (ingress && !origin) || (direct && (!it || !phil))) throw new Error('Invalid Host origin or operation keys');
   if (file.toLowerCase() === auditFile.toLowerCase() || root.toLowerCase() === recoveryRoot.toLowerCase()) {
     throw new Error('Workspace, Audit, Backup and Restore require separate locations');
   }
@@ -32,7 +36,7 @@ export function operationsConfig(env, { skipPointer = false } = {}) {
     if (secretMatches(key, phil)) return 'Phil';
     return null;
   }
-  return { file, auditFile, root, recoveryRoot, origin, ingress, authorize };
+  return { file, auditFile, root, recoveryRoot, origin, ingress, authorize, direct, bind, port };
 }
 
 export function inspectPair(file, auditFile) {
@@ -44,15 +48,16 @@ export function inspectPair(file, auditFile) {
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
   const [command, id, confirmation] = process.argv.slice(2);
   try {
-    const { PDCA_OPERATOR_KEY: key } = process.env;
-    const config = operationsConfig(process.env, { skipPointer: command === 'adopt' || command === 'migrate-legacy' });
+    const env = normalizeEnv(process.env);
+    const { PDCA_OPERATOR_KEY: key } = env;
+    const config = operationsConfig(env, { skipPointer: command === 'adopt' || command === 'migrate-legacy' });
     const role = config.authorize(key);
     let result;
-    if (command === 'adopt') result = await adoptActive(process.env, role, id);
-    else if (command === 'migrate-legacy') result = await prepareLegacyAdoption(process.env, role, id);
-    else if (command === 'status') result = await activeStatus(process.env, role);
-    else if (command === 'activate') result = await activatePrepared(process.env, role, id, confirmation);
-    else if (command === 'rollback') result = await rollbackActive(process.env, role, id);
+    if (command === 'adopt') result = await adoptActive(env, role, id);
+    else if (command === 'migrate-legacy') result = await prepareLegacyAdoption(env, role, id);
+    else if (command === 'status') result = await activeStatus(env, role);
+    else if (command === 'activate') result = await activatePrepared(env, role, id, confirmation);
+    else if (command === 'rollback') result = await rollbackActive(env, role, id);
     else if (command === 'backups' && role === 'IT') {
       const records = [];
       await mkdir(config.root, { recursive: true });
@@ -70,7 +75,7 @@ if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.m
     else if (command === 'prepare') result = await prepareRestore({ ...config, stageId: id, role });
     else if (command === 'inspect' && role === 'IT') result = inspectPair(config.file, config.auditFile);
     else if (command === 'backup' && role === 'IT') {
-      if (process.env.PDCA_ACTIVE_DB_POINTER) inspectActivePair(config.file, config.auditFile);
+      if (env.PDCA_ACTIVE_DB_POINTER) inspectActivePair(config.file, config.auditFile);
       await mkdir(config.root, { recursive: true });
       result = await createSnapshot(config);
     } else throw new Error('Use status, backups, migrate-legacy MIGRATE-LEGACY, adopt ADOPT, restore <snapshot ID>, prepare <stage ID>, activate <stage ID> ACTIVATE|ACTIVATE-RECOVERY, rollback ROLLBACK, inspect, or backup with the required role');

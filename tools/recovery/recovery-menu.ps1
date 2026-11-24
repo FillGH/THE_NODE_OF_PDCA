@@ -5,6 +5,7 @@ $ops = Join-Path $repo 'src\ops.js'
 if (-not (Test-Path -LiteralPath $EnvFile -PathType Leaf)) { throw 'IT environment file not found' }
 $envFilePath = (Resolve-Path -LiteralPath $EnvFile).Path
 $node = (Get-Command node -ErrorAction Stop).Source
+if (Get-ChildItem Env: | Where-Object { $_.Name -like 'PDCA_*' }) { throw 'STOP: use a clean IT shell; ambient PDCA_* would override host.env' }
 Write-Host 'PDCA Recovery Operator — Offline IT Control' -ForegroundColor Cyan
 Write-Host 'STOP and disable the PDCA service before ADOPT / ACTIVATE / ROLLBACK.'
 $secret = Read-Host 'IT operator key (not displayed)' -AsSecureString

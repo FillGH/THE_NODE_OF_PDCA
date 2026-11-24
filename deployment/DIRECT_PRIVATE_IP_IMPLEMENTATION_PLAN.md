@@ -1,6 +1,6 @@
 # Direct Private-IP LAN — Implementation Plan
 
-**Status: PLANNED / NOT STARTED (except WP-01 documentation).** Date 2026-11-24. Owner explicitly requested preparing the plan and issuing execution instructions later. ADR-001 revision 2 selects Direct HTTP/no proxy as planning direction. Runtime baseline `428885c44dda6aef7dd0bfbc8bd9cce13922388f`. Draft PR #1 remains untouched; planning-only PR #2. No time, budget or named IT assignee is assumed.
+**Status: OWNER APPROVED WP-02–06; CANDIDATE UNDER VERIFICATION; NO MERGE / DEPLOY.** Date 2026-11-24. Owner explicitly approved ADR-001 rev2 and WP-02–06 with regression tests on 24 November 2026. ADR-001 revision 2 selects Direct HTTP/no proxy as planning direction. Runtime baseline `428885c44dda6aef7dd0bfbc8bd9cce13922388f`. Draft PR #1 remains untouched; planning-only PR #2. No time, budget or named IT assignee is assumed.
 
 ## 1. Definition of Done
 
@@ -60,8 +60,8 @@ Use same artifact SHA; different external config and independent dataset/credent
 
 Stop if network scope unverified or changed, unauthorized client accepted, remote operator path accessible, cleartext risk not accepted for intended data, browser compatibility fails, exclusivity can be bypassed, wrong data pair, integrity/recovery regression, or required approval/evidence absent. Block ingress via IT controls; stop new writes and preserve latest data/evidence using approved procedure. Restore prior validated runtime only after compatibility and data-state checks; no blind overwrite of live files or active pointer. Preserve current HTTPS baseline as historical rollback/reference, not an additional runtime prerequisite.
 
-## 6. Next instruction (not yet issued)
+## 6. Authorization record (issued)
 
-Suggested Owner command: "อนุมัติ ADR-001 revision 2 และแผน Direct Private-IP LAN ให้เริ่ม Implementation Phase 1–3 ตาม WP-02 ถึง WP-06 โดยรักษา Recovery exclusivity และ Data Integrity; ห้าม Merge/Deploy หรือใช้ข้อมูลจริงจนกว่าจะผ่าน Gate ที่กำหนด"
+Owner command: "อนุมัติ ADR-001 revision 2 และแผน Direct Private-IP LAN ให้เริ่ม Implementation Phase 1–3 ตาม WP-02 ถึง WP-06 โดยรักษา Recovery exclusivity และ Data Integrity; ห้าม Merge/Deploy หรือใช้ข้อมูลจริงจนกว่าจะผ่าน Gate ที่กำหนด"
 
-**Disposition: WP-01 PREPARED; WP-02–09 HOLD.** No software modification, CI run, LAN configuration, deployment or Factory acceptance is claimed by this plan.
+**Disposition: WP-01 PREPARED; WP-02–06 AUTHORIZED / CANDIDATE IMPLEMENTATION; WP-07–09 HOLD except regression checks authorized within WP-02–06.** Verification results must be recorded separately. No Factory LAN configuration, deployment or acceptance is claimed.

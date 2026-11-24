@@ -1,3 +1,4 @@
+import { uuidV4 } from './uuid.js';
 import { installRecords } from './build3.js';
 // Canvas interactions adapted from the accepted DESIGN v0.10 (684bc50).
 import { edgeColors, documentLink, widthsDefault } from './model.js';
@@ -426,7 +427,7 @@ function addEdge(source, target) {
     toast(error);
     return;
   }
-  cur().edges.push({id: crypto.randomUUID(), from: source.id, to: target.id, label: '', color: 'slate'});
+  cur().edges.push({id: uuidV4(), from: source.id, to: target.id, label: '', color: 'slate'});
   session.mark();
   renderAll();
 }
@@ -787,7 +788,7 @@ function createNode(cat, title) {
   const workspace = cur();
   const peers = workspace.nodes.filter(node => node.cat === cat);
   const node = {
-    id: crypto.randomUUID(), cat, title: title || 'New ' + cats[cat].label + ' Node',
+    id: uuidV4(), cat, title: title || 'New ' + cats[cat].label + ' Node',
     sideNote: '', pic: '', status: 'Not Started', due: '', images: [], documents: [],
     snapY: Math.max(70, ...peers.map(peer =>
       peer.snapY + snapHeight(peer, workspace.widths[cat] - 26) + 25)),

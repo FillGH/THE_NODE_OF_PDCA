@@ -3,7 +3,7 @@
 | Item | Record |
 |---|---|
 | Date | 2026-11-24 (Asia/Bangkok) |
-| Status | **OWNER DIRECTION RECORDED / IMPLEMENTATION PLAN PREPARED / BUILD HOLD** |
+| Status | **OWNER APPROVED ADR / WP-02–06 BUILD AUTHORIZED / FACTORY HOLD** |
 | Selected direction | A — Direct HTTP to a concrete private IPv4, no reverse proxy |
 | Operational reference | Float Monitor V1.5.0 |
 | Authority | Project Owner (architecture/product); IT (network, security, infrastructure) |
@@ -15,7 +15,7 @@
 
 On 24 November 2026 the Project Owner stated: no reverse proxy; use the simplest IT-compatible approach with minimal configuration, as used in Float Monitor; IT has already permitted this approach; IT Server must not need to fetch npm packages. The subsequent instruction is to prepare the plan and wait for a separate execution instruction.
 
-**Decision for planning:** adopt Float Monitor-style Direct HTTP/private IPv4 for Laptop Host+Client and Dedicated IT Server, with the existing PDCA prebuilt Windows distribution. IT permission is **owner-reported**, not independently verified by CI. Scope, accepted HTTP risk, actual network controls and authority to use real PDCA records still require evidence in the ordinary IT/Factory acceptance process. Do not introduce application approval IDs or fake approval flags. This revision does NOT authorize source implementation, network changes, a merge, deployment, live data or Official Pilot.
+**Decision for planning:** adopt Float Monitor-style Direct HTTP/private IPv4 for Laptop Host+Client and Dedicated IT Server, with the existing PDCA prebuilt Windows distribution. IT permission is **owner-reported**, not independently verified by CI. Scope, accepted HTTP risk, actual network controls and authority to use real PDCA records still require evidence in the ordinary IT/Factory acceptance process. Do not introduce application approval IDs or fake approval flags. Subsequently the Owner explicitly approved this ADR and WP-02–06 implementation with regression tests on 24 November 2026. This authorizes candidate code only, not network changes, a merge, deployment, live data or Official Pilot.
 
 ## 2. Verified source baseline and decision drivers
 
@@ -54,7 +54,7 @@ Selection reflects operational simplicity, not security equivalence. HTTP does n
 
 ## 5. Implementation and IT gate
 
-Execute only after separate Owner instruction, following [the detailed plan](../../deployment/DIRECT_PRIVATE_IP_IMPLEMENTATION_PLAN.md). WP-01 documentation is prepared here; WP-02 onward are HOLD. Verify factory network in both environments (not Float Monitor by inference) using [IT acceptance matrix](../../deployment/IT_NETWORK_ACCEPTANCE_PHASE0.md). No true production records before appropriate IT/data authorization and applicable acceptance. No extra numerical performance target is invented. Existing D-065/D-066, V-01–V-08, G-07/G-11 and usability/recovery criteria remain.
+Execute only after separate Owner instruction, following [the detailed plan](../../deployment/DIRECT_PRIVATE_IP_IMPLEMENTATION_PLAN.md). WP-01 documentation prepared; WP-02–06 authorized; WP-07–09 remain gated (regression tests within WP-02–06 authorized). Verify factory network in both environments (not Float Monitor by inference) using [IT acceptance matrix](../../deployment/IT_NETWORK_ACCEPTANCE_PHASE0.md). No true production records before appropriate IT/data authorization and applicable acceptance. No extra numerical performance target is invented. Existing D-065/D-066, V-01–V-08, G-07/G-11 and usability/recovery criteria remain.
 
 ## 6. References
 
