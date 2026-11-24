@@ -27,6 +27,19 @@ for (const required of ['README.md', 'README4IT.md', 'tools/recovery/recovery-me
   'tools/recovery/recovery-menu.ps1', 'deployment/PREBUILT_WINDOWS.md']) {
   await stat(join(root, required));
 }
+if (manifest.profile !== undefined) {
+  assert.equal(manifest.profile, 'direct-ip', 'Unknown package profile');
+  for (const required of ['tools/direct/setup.cmd', 'tools/direct/start.cmd', 'tools/direct/diagnose.cmd',
+    'tools/direct/host.mjs', 'demo/demo.mjs', 'demo/assets/cutting.png', 'src/server.js', 'web/index.html',
+    'deployment/DIRECT_PRIVATE_IP_CANDIDATE.md', 'deployment/IT_NETWORK_ACCEPTANCE_PHASE0.md',
+    'design/PILOT_VERIFY.md', 'design/BUILD3_EXPORT_CONTRACT.md', 'design/qa/COLLABORATION_ACCEPTANCE.md']) {
+    await stat(join(root, required));
+  }
+  for (const entry of manifest.files) {
+    assert.ok(!/^(tools\/lan\/|tools\/qa\/|test\/|design\/prototypes\/|PROJECT\.md$|AGENTS\.md$|deployment\/DIRECT_PRIVATE_IP_IMPLEMENTATION_PLAN\.md$)/.test(entry.path),
+      'Developer or legacy content in Direct-IP package: ' + entry.path);
+  }
+}
 assert.equal(manifest.schemaVersion, 1);
 assert.equal(manifest.kind, 'THE_NODE_OF_PDCA_WINDOWS_PREBUILT');
 assert.match(manifest.sourceCommit, /^[0-9a-f]{40}$/);
