@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import {createHash} from 'node:crypto';
 import {spawn,spawnSync} from 'node:child_process';
 import {existsSync,readFileSync,mkdtempSync,rmSync} from 'node:fs';
 import {join,resolve} from 'node:path';
@@ -12,10 +13,20 @@ const [stage,file]=process.argv.slice(2).map(p=>resolve(p));
 const env=parseEnv(readFileSync(file,'utf8'));
 const moduleAt=p=>import(pathToFileURL(join(stage,p)).href);
 const {operationsConfig}=await moduleAt('src/ops.js');
-const {openStore}=await moduleAt('src/store.js');
 const config=operationsConfig(env,{skipPointer:true});
-const store=openStore(config.file,{auditFile:config.auditFile});
-try {store.create('Synthetic initial fixture');}finally{store.close();}
+// Exercise the exact documented seed command on the IT-prepared directory.
+const seedEnv={...process.env,PDCA_DEMO_DIR:env.PDCA_DATA_ROOT};
+const seedArgs=[join(stage,'demo/demo.mjs'),'seed','--existing-empty'];
+const seed=spawnSync(process.execPath,seedArgs,{env:seedEnv,encoding:'utf8',timeout:120000});
+assert.equal(seed.status,0,'Documented seed failed: '+seed.stderr);
+assert.ok(existsSync(config.file)&&existsSync(config.auditFile));
+const hash=p=>createHash('sha256').update(readFileSync(p)).digest('hex');
+const original=[hash(config.file),hash(config.auditFile),hash(file)];
+const retry=spawnSync(process.execPath,seedArgs,{env:seedEnv,encoding:'utf8',timeout:20000});
+assert.equal(retry.status,1,'Repeat seed must refuse existing data');
+assert.match(retry.stderr,/requires an empty directory/);
+assert.deepEqual([hash(config.file),hash(config.auditFile),hash(file)],original);
+console.log('DIRECT SEED PASS: documented seed succeeded; repeat rejected; Workspace/Audit/config hashes unchanged');
 const adopt=spawnSync(process.execPath,['--env-file='+file,join(stage,'src/ops.js'),'adopt','ADOPT'],
   {env:{...process.env,PDCA_OPERATOR_KEY:env.PDCA_IT_KEY},encoding:'utf8',timeout:20000});
 assert.equal(adopt.status,0,'Local ADOPT did not complete');

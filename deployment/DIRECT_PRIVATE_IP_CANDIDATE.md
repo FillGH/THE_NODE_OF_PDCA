@@ -9,10 +9,10 @@
    tools\direct\setup.cmd "C:\PDCA-config\host.env" 192.168.1.50 4175 "D:\PDCA\data"
    ~~~
    Setup verifies manifest and generates two distinct operator keys once in external host.env, never displays values, never overwrites files. Repeat without the final three arguments to preview existing config; use local NTFS permissions (Windows mode bits do not guarantee ACL).
-3. For fresh synthetic testing only, seed using the existing **local-only** demo launcher, with PDCA_DEMO_DIR set to the empty configured data root in a separate clean CMD. Do NOT load host.env for demo seed. Close that CMD afterward (clear ambient PDCA_*). The seeded example document links may reference loopback; do not mistake those links for LAN connectivity. For existing data STOP and use reviewed migration; never seed over data.
+3. For fresh synthetic testing only, seed using the existing **local-only** demo launcher, with PDCA_DEMO_DIR set to the empty configured data root in a separate clean CMD. Do NOT load host.env for demo seed. Close that CMD afterward (clear ambient PDCA_*). The seeded example document links may reference loopback; do not mistake those links for LAN connectivity. The explicit --existing-empty option preserves the existing directory/ACL and rejects any nonempty or aliased directory; do not retry over a partially initialized directory. For existing data STOP and use reviewed migration; never seed over data.
    ~~~cmd
    set "PDCA_DEMO_DIR=D:\PDCA\data"
-   node demo\demo.mjs seed
+   node demo\demo.mjs seed --existing-empty
    ~~~
 4. IT uses tools\recovery\recovery-menu.cmd with host.env and the local IT key (not remote HTTP) to ADOPT the validated Workspace/Audit. The Active Pointer is required; setup never invents a new database or resets a pointer.
 5. Run tools\direct\diagnose.cmd "C:\PDCA-config\host.env". This only validates configuration and active paths; run local IT Status to verify pair integrity.

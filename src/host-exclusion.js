@@ -32,16 +32,53 @@ export function acquireManagedLease(env) {
   };
 }
 
-// An accidental unmanaged launch of the new binary must not bypass a managed root lease.
+// Resolve the actual file identity, including a missing leaf below an existing
+// directory alias. Reject hard-linked files and ambiguous/dangling aliases.
+// IT must still prevent concurrent legacy binaries and local filesystem changes.
+function existingAncestor(candidate) {
+  let current = resolve(candidate);
+  let leaf = true;
+  while (true) {
+    let info;
+    try { info = lstatSync(current); }
+    catch (error) {
+      if (error.code !== 'ENOENT') throw error;
+      const parent = dirname(current);
+      if (parent === current) throw new Error('Cannot establish database file identity');
+      current = parent;
+      leaf = false;
+      continue;
+    }
+    // realpath on a dangling link or inaccessible target must fail closed.
+    const actual = realpathSync(current);
+    const target = statSync(actual);
+    if (leaf ? (!target.isFile() || target.nlink !== 1) : !target.isDirectory())
+      throw new Error('Ambiguous database file identity (non-file or hard link)');
+    return leaf ? dirname(actual) : actual;
+  }
+}
+
+function rejectManagedAncestor(current) {
+  while (true) {
+    try {
+      lstatSync(join(current, '.pdca-host-exclusion.sqlite'));
+      throw new Error('STOP: managed data root requires Active DB Pointer; unmanaged launch refused');
+    } catch (error) { if (error.code !== 'ENOENT') throw error; }
+    const parent = dirname(current);
+    if (parent === current) return;
+    current = parent;
+  }
+}
+
 export function rejectUnmanagedManagedRoot(file, auditFile) {
   for (const candidate of [file, auditFile]) {
-    let current = dirname(resolve(candidate));
-    while (true) {
-      if (existsSync(join(current,'.pdca-host-exclusion.sqlite')))
-        throw new Error('STOP: managed data root requires Active DB Pointer; unmanaged launch refused');
-      const parent=dirname(current);
-      if (parent===current) break;
-      current=parent;
+    try {
+      // Check both lexical and canonical ancestors, not just the alias directory.
+      const canonical = existingAncestor(candidate);
+      rejectManagedAncestor(dirname(resolve(candidate)));
+      rejectManagedAncestor(canonical);
+    } catch (error) {
+      throw new Error('STOP: cannot admit unmanaged database: ' + error.message);
     }
   }
 }

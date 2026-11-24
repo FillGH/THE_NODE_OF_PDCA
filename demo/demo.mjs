@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile, lstat, realpath, readdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { operationsConfig } from '../src/ops.js';
@@ -67,13 +67,26 @@ function trash(store, graph, subject, restore = false, actor = author) {
 }
 
 async function seed() {
-  await mkdir(dirname(data), { recursive: true });
-  try {
-    await mkdir(data);
-  } catch (error) {
-    if (error.code === 'EEXIST') throw new Error('Demo directory already exists. Serve it or choose a new PDCA_DEMO_DIR.');
-    throw error;
+  const existingEmpty = process.argv[3] === '--existing-empty';
+  if (process.argv.length > (existingEmpty ? 4 : 3)) throw new Error('Use seed [--existing-empty]');
+  if (existingEmpty) {
+    // Opt-in only: preserve the IT-created directory and its inherited ACL.
+    // Refuse aliases and any existing content (including hidden/lock files).
+    if (!process.env.PDCA_DEMO_DIR) throw new Error('Explicit PDCA_DEMO_DIR required for --existing-empty');
+    const info = await lstat(data);
+    if (!info.isDirectory() || info.isSymbolicLink() || await realpath(data) !== data)
+      throw new Error('Demo seed requires a canonical existing directory');
+    if ((await readdir(data)).length !== 0) throw new Error('Demo seed requires an empty directory; existing data is never overwritten');
+  } else {
+    await mkdir(dirname(data), { recursive: true });
+    try { await mkdir(data); }
+    catch (error) {
+      if (error.code === 'EEXIST') throw new Error('Demo directory already exists. Serve it or choose a new PDCA_DEMO_DIR.');
+      throw error;
+    }
   }
+  // Exclusive mkdir is also the seed claim: a second seed must fail here.
+  // A partial failed seed is deliberately retained for IT inspection, not auto-erased.
   await mkdir(root);
   let time = today - 9 * day;
   const store = openStore(file, { now: () => time });

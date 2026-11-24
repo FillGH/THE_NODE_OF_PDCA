@@ -63,7 +63,11 @@ export function pathUnderRoot(root, value) {
     throw new Error('Reserved managed exclusion path');
   // lstat also detects dangling symlinks; reject traversal through any junction/symlink.
   for (let p = full; relative(root,p) !== ''; p = dirname(p)) {
-    try { if (lstatSync(p).isSymbolicLink()) throw new Error('Managed database symlink/junction is prohibited'); }
+    try {
+      const info = lstatSync(p);
+      if (info.isSymbolicLink()) throw new Error('Managed database symlink/junction is prohibited');
+      if (info.isFile() && info.nlink !== 1) throw new Error('Managed database hard link is prohibited');
+    }
     catch (e) { if (e.code !== 'ENOENT') throw e; }
     if (dirname(p) === p) throw new Error('Managed path cannot reach canonical root');
   }

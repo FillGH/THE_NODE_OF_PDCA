@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync } from 'node:fs';
+import { mkdtempSync, rmSync, readFileSync, writeFileSync, existsSync, symlinkSync, linkSync } from 'node:fs';
 import { networkInterfaces, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawn, spawnSync } from 'node:child_process';
@@ -9,7 +9,7 @@ import { once } from 'node:events';
 import { webcrypto } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { networkConfig, normalizeEnv, privateIPv4, pathUnderRoot } from '../src/network-config.js';
-import { acquireManagedLease } from '../src/host-exclusion.js';
+import { acquireManagedLease, rejectUnmanagedManagedRoot } from '../src/host-exclusion.js';
 import { adoptActive, rollbackActive, readDeletionAudit } from '../src/active-db.js';
 import { operationsConfig } from '../src/ops.js';
 import { openStore } from '../src/store.js';
@@ -150,4 +150,36 @@ test('DIRECT-09 local IT audit preserved and unmanaged bypass blocked',async t=>
   assert.deepEqual((await readDeletionAudit(f.env,'IT')).events,[]);
   const wrong=spawnSync(process.execPath,['src/ops.js','deletion-audit'],{cwd,env:{...process.env,...f.env,PDCA_OPERATOR_KEY:phil},encoding:'utf8',timeout:15000});
   assert.equal(wrong.status,1);assert.match(wrong.stderr,/IT authorization/);
+});
+
+test('DIRECT-10 unmanaged file symlink and directory junction cannot bypass managed Host',async t=>{
+  const f=await fixture(t), aliases=root(t);
+  const workspace=join(aliases,'workspace-link.sqlite'), audit=join(aliases,'audit-link.sqlite');
+  symlinkSync(f.env.PDCA_DB,workspace,'file');
+  symlinkSync(f.env.PDCA_AUDIT,audit,'file');
+  const junction=join(aliases,'managed-dir');
+  symlinkSync(f.dir,junction,process.platform==='win32'?'junction':'dir');
+  const host=await startHost(f.env);
+  try {
+    const unmanaged={PDCA_PORT:String(await freePort(f.bind)),PDCA_DB:workspace,PDCA_AUDIT:audit};
+    await assert.rejects(startHost(unmanaged),/managed data root/);
+    await assert.rejects(startHost({...unmanaged,PDCA_DB:join(junction,'workspace.sqlite'),PDCA_AUDIT:join(junction,'workspace.sqlite.audit.sqlite')}),/managed data root/);
+    assert.throws(()=>rejectUnmanagedManagedRoot(join(junction,'missing.sqlite'),audit),/managed data root/);
+    // One aliased member is sufficient for denial; do not require both aliases.
+    assert.throws(()=>rejectUnmanagedManagedRoot(join(aliases,'missing.sqlite'),audit),/managed data root/);
+  } finally { await host.stop(); }
+});
+
+test('DIRECT-11 hard links and dangling aliases fail closed',async t=>{
+  const f=await fixture(t), aliases=root(t);
+  const hard=join(aliases,'workspace-hard.sqlite');
+  linkSync(f.env.PDCA_DB,hard);
+  assert.throws(()=>rejectUnmanagedManagedRoot(hard,f.env.PDCA_AUDIT),/hard link/);
+  assert.throws(()=>pathUnderRoot(f.dir,f.env.PDCA_DB),/hard link/);
+  await assert.rejects(startHost(f.env),/hard link/);
+  rmSync(hard);
+  const dangling=join(aliases,'dangling.sqlite');
+  symlinkSync(join(aliases,'missing.sqlite'),dangling,'file');
+  assert.throws(()=>rejectUnmanagedManagedRoot(dangling,f.env.PDCA_AUDIT),/cannot admit unmanaged database/);
+  const host=await startHost(f.env);await host.stop();
 });

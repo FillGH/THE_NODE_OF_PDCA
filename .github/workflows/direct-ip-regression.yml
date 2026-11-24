@@ -59,5 +59,9 @@ jobs:
         run: |
           $stage = Join-Path $env:RUNNER_TEMP 'pdca-direct-test-stage'
           $file = Join-Path $env:RUNNER_TEMP 'pdca-direct-bat-config\host.env'
+          $root = Join-Path $env:RUNNER_TEMP 'pdca-direct-bat-data'
+          $acl = (Get-Acl -LiteralPath $root).Sddl
           node tools/qa/direct-edge.mjs $stage $file
           if ($LASTEXITCODE -ne 0) { throw 'Actual Edge/BAT smoke failed' }
+          if ((Get-Acl -LiteralPath $root).Sddl -ne $acl) { throw 'IT-prepared root ACL changed' }
+          Write-Host 'DIRECT INSTALL E2E PASS: Setup, documented Seed, repeat-seed refusal, ADOPT, Diagnose, Start, Edge; root ACL unchanged'
