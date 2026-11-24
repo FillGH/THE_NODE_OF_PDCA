@@ -92,12 +92,14 @@ jobs:
         with:
           name: Direct-QA-harness
           path: ${{ runner.temp }}/direct-qa
-      - name: Verify archive and run clean target from isolated Node PATH
-        shell: pwsh
+      - name: Verify archive and run clean target from isolated Node PATH (Windows PowerShell 5.1)
+        shell: powershell
         env:
           EXPECTED_ARCHIVE_SHA: ${{ needs.build-candidate.outputs.archive_sha256 }}
         run: |
           $ErrorActionPreference = 'Stop'
+          if ($PSVersionTable.PSEdition -ne 'Desktop' -or $PSVersionTable.PSVersion.Major -ne 5 -or $PSVersionTable.PSVersion.Minor -ne 1) { throw 'Windows PowerShell 5.1 required by guide test' }
+          Write-Host ('GUIDE TARGET SHELL: Windows PowerShell ' + $PSVersionTable.PSVersion)
           $download = Join-Path $env:RUNNER_TEMP 'direct-download'
           $qa = Join-Path $env:RUNNER_TEMP 'direct-qa'
           $zips = @(Get-ChildItem -LiteralPath $download -Filter '*.zip')
@@ -189,6 +191,7 @@ jobs:
             # CI-only confirmation fixture: synthetic private endpoint and local runner-owned directories.
             # Production users must have actual IT permission and ACL confirmation.
             & {
+              $allowAcl = $false
               function Read-Host {
                 param([string]$Prompt)
                 if ($Prompt -eq 'IT approved endpoint, synthetic data, stopped other writers? Type GO') { return 'GO' }
@@ -196,11 +199,16 @@ jobs:
                   if (-not (Test-Path -LiteralPath $guidePlan.cfg -PathType Container) -or -not (Test-Path -LiteralPath $guidePlan.data -PathType Container) -or (Get-ChildItem -LiteralPath $guidePlan.data -Force)) { throw 'CI guide ACL precondition failed' }
                   Get-Acl -LiteralPath $guidePlan.cfg | Out-Null
                   Get-Acl -LiteralPath $guidePlan.data | Out-Null
-                  return 'GO'
+                  if ($allowAcl) { return 'GO' } else { return 'NO' }
                 }
                 throw 'Unexpected guide confirmation prompt'
               }
+              $paused = $false
+              try { & ([scriptblock]::Create($guidePlan.setup)) } catch { if ($_.Exception.Message -match 'ACL not confirmed') { $paused = $true } else { throw } }
+              if (-not $paused -or (Test-Path -LiteralPath $guidePlan.config) -or (Get-ChildItem -LiteralPath $guidePlan.cfg -Force) -or (Get-ChildItem -LiteralPath $guidePlan.data -Force)) { throw 'Interrupted setup did not preserve empty folders' }
+              $allowAcl = $true
               & ([scriptblock]::Create($guidePlan.setup))
+              Write-Host 'HTML GUIDE SAFE RESUME PASS: cancelled before config/seed, empty folders reused, no overwrite'
             }
             if (-not (Test-Path -LiteralPath $guidePlan.config -PathType Leaf)) { throw 'Guide config missing' }
             if (-not (Test-Path -LiteralPath (Join-Path $guidePlan.data 'demo.json'))) { throw 'Guide seed missing' }

@@ -30,9 +30,11 @@ test('Correct quoted paths, external folders and pinned archive hash',()=>{
   assert.match(p.prepare,/app already exists; do not overwrite/);
   assert.match(p.prepare,/-split '\\s\+'/);
 });
-test('Setup requires actual bind, IT confirmation, fresh folders, ACL then Seed; no secret automation',()=>{
+test('Setup permits only empty folders, then requires bind, IT confirmation, ACL and Seed; no secret automation',()=>{
   const p=plan(base);
-  assert.match(p.setup,/config\/data exists; no fresh seed[\s\S]+Read-Host[\s\S]+TcpListener[\s\S]+New-Item[\s\S]+actual ACL[\s\S]+setup\.cmd[\s\S]+seed --existing-empty[\s\S]+finally/);
+  assert.match(p.setup,/config\/data exists and is not an empty directory; no fresh seed[\s\S]+Read-Host[\s\S]+TcpListener[\s\S]+New-Item[\s\S]+actual ACL[\s\S]+config\/data no longer empty or safe[\s\S]+setup\.cmd[\s\S]+seed --existing-empty[\s\S]+finally/);
+  assert.match(p.setup,/ReparsePoint/);
+  assert.doesNotMatch(p.setup,/Remove-Item -LiteralPath/);
   assert.doesNotMatch(p.setup,/PDCA_IT_KEY|PDCA_OPERATOR_KEY|Set-ExecutionPolicy|New-NetFirewallRule|npm\.cmd/);
   assert.match(p.recovery,/recovery-menu\.cmd/);
 });
