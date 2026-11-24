@@ -4,7 +4,7 @@
 
 ระบบจัดการ PDCA แบบ Node และความสัมพันธ์เชื่อมโยง (หลายต่อหลาย) แทนการเก็บข้อมูลหลายประเด็นในเซลล์ Excel เดียว รองรับการไล่เหตุผลจาก Result กลับไปยัง Action, Hypothesis, Fact และ Problem ตลอดจนการทำงานร่วมกันบนข้อมูลชุดเดียวกัน
 
-**สถานะ:** Direct-IP WP-01–09 ผ่านตรวจรับในขอบเขต Engineering/Windows CI; Simplification V0.1 อยู่ระหว่างตรวจสอบ Candidate ใหม่. **Factory LAN Verification, Factory Recovery Drill และ Official Pilot ยังไม่ผ่าน/ยังไม่เริ่มตามลำดับ** — ผล CI ไม่ใช่การอนุมัติใช้งานจริง
+**สถานะ:** Direct-IP WP-01–09 ผ่านตรวจรับในขอบเขต Engineering/Windows CI; Simplification V0.1 ผ่านตรวจรับ; HTML onboarding candidate อยู่ระหว่างตรวจสอบ. **Factory LAN Verification, Factory Recovery Drill และ Official Pilot ยังไม่ผ่าน/ยังไม่เริ่มตามลำดับ** — ผล CI ไม่ใช่การอนุมัติใช้งานจริง
 
 ## ใช้งานอะไรได้บ้าง
 
@@ -20,14 +20,14 @@
 
 | ผู้ใช้งาน / งาน | อ่านที่ |
 | --- | --- |
-| **IT ติดตั้ง Windows Server / รับ ZIP / Backup–Restore** | **[README4IT.md](README4IT.md)** — จุดเริ่มต้นหลัก |
+| **IT ติดตั้ง Windows Server / รับ ZIP / Backup–Restore** | **[README4IT.html](README4IT.html)** — จุดเริ่มต้นหลัก |
 | Factory LAN Verification / UAT Evidence | [design/PILOT_VERIFY.md](design/PILOT_VERIFY.md) |
 | Engineering Baseline / Acceptance / Requirements | [PROJECT.md](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/PROJECT.md) — **Source of Truth** |
 | Developer / AI Working Rules | [AGENTS.md](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/AGENTS.md) |
 | รายละเอียดการสร้าง ZIP และ Recovery Safeguards | [deployment/PREBUILT_WINDOWS.md](deployment/PREBUILT_WINDOWS.md) |
 | Recovery Engine / Host Migration แบบเชิงลึก | [deployment/DIRECT_PRIVATE_IP_CANDIDATE.md](deployment/DIRECT_PRIVATE_IP_CANDIDATE.md) |
 
-**ผู้รับมอบระบบจาก IT:** เปิด **README4IT.md** ไม่ต้องอ่านประวัติ BUILD 1–4 หรือเริ่มจากคำสั่ง npm
+**ผู้รับมอบระบบจาก IT:** เปิด **README4IT.html** เปิดไฟล์ HTML ด้วย Edge โดยตรงหลังดาวน์โหลด ไม่ต้องอ่านประวัติ BUILD 1–4 หรือเริ่มจากคำสั่ง npm
 
 ## Developer Local Test (ไม่ใช่คำสั่งติดตั้งบน Factory Server)
 
@@ -42,7 +42,7 @@ npm.cmd run demo:start
 
 เปิด `http://127.0.0.1:4175` จากเครื่อง Host; Seed ข้อมูลเพียงหนึ่งครั้งต่อ `PDCA_DEMO_DIR` แล้วเรียก `demo:start` เพื่อเปิดชุดเดิม ถ้าเคย Seed แล้วอย่าทำซ้ำบนโฟลเดอร์เดิม
 
-**Factory Server ใช้ Verified Prebuilt ZIP และ Node.js 24 เท่านั้น — ไม่ต้องทำ `npm ci` บน Server** ดูวิธีรับและตรวจ Package ใน [README4IT.md](README4IT.md)
+**Factory Server ใช้ Verified Prebuilt ZIP และ Node.js 24 เท่านั้น — ไม่ต้องทำ `npm ci` บน Server** ดูวิธีรับและตรวจ Package ใน [README4IT.html](README4IT.html)
 
 ## หลักการควบคุมความเปลี่ยนแปลง
 

@@ -29,7 +29,7 @@ for (const required of ['README.md', 'README4IT.md', 'tools/recovery/recovery-me
 }
 if (manifest.profile !== undefined) {
   assert.equal(manifest.profile, 'direct-ip', 'Unknown package profile');
-  for (const required of ['tools/direct/setup.cmd', 'tools/direct/start.cmd', 'tools/direct/diagnose.cmd',
+  for (const required of ['README4IT.html', 'tools/direct/setup.cmd', 'tools/direct/start.cmd', 'tools/direct/diagnose.cmd',
     'tools/direct/host.mjs', 'demo/demo.mjs', 'demo/assets/cutting.png', 'src/server.js', 'web/index.html',
     'deployment/DIRECT_PRIVATE_IP_CANDIDATE.md', 'deployment/IT_NETWORK_ACCEPTANCE_PHASE0.md',
     'design/PILOT_VERIFY.md', 'design/BUILD3_EXPORT_CONTRACT.md', 'design/qa/COLLABORATION_ACCEPTANCE.md']) {

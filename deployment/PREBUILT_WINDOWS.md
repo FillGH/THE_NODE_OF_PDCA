@@ -1,6 +1,6 @@
 # Prebuilt Windows Package — Technical Appendix
 
-**IT เริ่มจาก [README4IT.md](../README4IT.md) ก่อนเสมอ** — ไฟล์นี้มีรายละเอียดทางเทคนิคเพื่อใช้ตรวจสอบความถูกต้องและจัดการ Failure ไม่ใช่ชุดคำสั่งติดตั้งที่ IT ต้องอ่านตั้งแต่ต้น
+**IT เริ่มจาก [README4IT.html](../README4IT.html) ก่อนเสมอ** — ไฟล์นี้มีรายละเอียดทางเทคนิคเพื่อใช้ตรวจสอบความถูกต้องและจัดการ Failure ไม่ใช่ชุดคำสั่งติดตั้งที่ IT ต้องอ่านตั้งแต่ต้น
 
 **สถานะ:** Implementation ผ่าน Windows CI ตาม GitHub Workflow ของ Commit ที่บรรจุใน Artifact เท่านั้น; ยังต้องผ่าน IT Review และ Factory LAN V-01..V-08. Source of Truth = [PROJECT.md](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/PROJECT.md).
 

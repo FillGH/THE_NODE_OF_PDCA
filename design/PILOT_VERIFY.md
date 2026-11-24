@@ -1,14 +1,14 @@
 # THE NODE OF PDCA · VERIFY และ LAN Test
 
-> **เอกสารนี้เป็น Test Plan/Evidence Matrix ไม่ใช่คู่มือติดตั้ง** สำหรับ Direct-IP Prebuilt ZIP ให้เริ่มที่ [README4IT.md](../README4IT.md); หลัง ADOPT ให้ใช้ `tools\direct\start.cmd` พร้อม external host.env เท่านั้นตามคู่มือ IT. ไม่ใช้ Developer/Demo Launcher บน Managed Host.
+> **เอกสารนี้เป็น Test Plan/Evidence Matrix ไม่ใช่คู่มือติดตั้ง** สำหรับ Direct-IP Prebuilt ZIP ให้เริ่มที่ [README4IT.html](../README4IT.html); หลัง ADOPT ให้ใช้ `tools\direct\start.cmd` พร้อม external host.env เท่านั้นตามคู่มือ IT. ไม่ใช้ Developer/Demo Launcher บน Managed Host.
 
-Baseline ประวัติ BUILD 4: 10 พฤศจิกายน 2026 · ปัจจุบัน WP-09 Handover Candidate รอตรวจรับ; ไม่มีการส่งมอบหรือเปิด LAN จริงจากเอกสารนี้
+Baseline ประวัติ BUILD 4: 10 พฤศจิกายน 2026 · ปัจจุบัน Gate III เตรียม Factory synthetic test; ต้องมี IT approval; ไม่มีการส่งมอบหรือเปิด LAN จริงจากเอกสารนี้
 
 เจ้าของโครงการรับ BUILD 4 แล้ว; การเริ่ม Factory LAN Test ต้องมี Owner/IT approval แยกและใช้ข้อมูลสมมติ ใช้ชุดนี้เก็บหลักฐานบน Laptop บริษัทและเครื่องลูกข่ายที่ IT อนุญาต ก่อนพิจารณา Official Pilot และก่อนนำข้อมูลจริงเข้าระบบ [ข้อกำหนดและเกณฑ์ตัดสิน](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/PROJECT.md)
 
 ## 1. ชุด Demo ทดสอบ — Verified Prebuilt ZIP เท่านั้น
 
-สำหรับ Factory synthetic verification ให้ IT ใช้ Candidate ZIP ที่ผ่านตรวจรับและได้รับอนุมัติแยกตาม [README4IT.md](../README4IT.md) เท่านั้น: ตรวจ SHA-256/Manifest, Setup, Seed ใน data root ว่าง, ADOPT, Status, Diagnose และ Start CMD. ไม่ต้อง clone, npm หรือ Registry บน Target. ห้าม seed ซ้ำหรือใช้ Demo Launcher เปิด Managed Host. ขั้นตอน Developer Source Checkout เดิมเก็บไว้ใน Git history และ README ส่วน Developer Local Test เท่านั้น ไม่ใช่ทางเลือกสำหรับ Factory IT. เปิด URL Direct HTTP ที่ Host แสดงจาก Edge ที่ได้รับอนุญาต และบันทึก Source/ZIP SHA ตาม Manifest และ Approval Record.
+สำหรับ Factory synthetic verification ให้ IT ใช้ Candidate ZIP ที่ผ่านตรวจรับและได้รับอนุมัติแยกตาม [README4IT.html](../README4IT.html) เท่านั้น: ตรวจ SHA-256/Manifest, Setup, Seed ใน data root ว่าง, ADOPT, Status, Diagnose และ Start CMD. ไม่ต้อง clone, npm หรือ Registry บน Target. ห้าม seed ซ้ำหรือใช้ Demo Launcher เปิด Managed Host. ขั้นตอน Developer Source Checkout เดิมเก็บไว้ใน Git history และ README ส่วน Developer Local Test เท่านั้น ไม่ใช่ทางเลือกสำหรับ Factory IT. เปิด URL Direct HTTP ที่ Host แสดงจาก Edge ที่ได้รับอนุญาต และบันทึก Source/ZIP SHA ตาม Manifest และ Approval Record.
 
 | ผังตั้งต้น | สิ่งที่ใช้ตรวจ |
 | --- | --- |
@@ -22,7 +22,7 @@ Baseline ประวัติ BUILD 4: 10 พฤศจิกายน 2026 · �
 
 ## 2. ต่อ LAN ภายใต้การควบคุมของ IT — Direct Private-IP (ADR-001 rev 2)
 
-ใช้ [README4IT](../README4IT.md) และ [Direct operator guide](../deployment/DIRECT_PRIVATE_IP_CANDIDATE.md) เป็นขั้นตอนติดตั้งและ Recovery เท่านั้น. ไม่ใช้ proxy, DNS, certificate หรือ npm บน Target. หลัง Owner/IT อนุมัติ synthetic test ให้ IT ยืนยัน assigned IP/port, local NTFS/ACL, account/backup owners, HTTP risk and allowed data scope ตาม [IT-N01–N14](../deployment/IT_NETWORK_ACCEPTANCE_PHASE0.md). Host และ approved peer PC เปิด URL Direct เดียวกัน; ทดสอบ denied clients/guest/VPN/Internet/revocation กับหลักฐาน enforcement. ห้ามเปิด LAN หรือใช้ข้อมูลจริงจากผล CI เพียงอย่างเดียว. Task Scheduler ใช้ direct Start CMD + absolute external host.env; หยุด task/manual writer เดิมก่อน maintenance; ตรวจ reboot และ startup backup. HTTP ไม่เข้ารหัส; Display Name ไม่ใช่ authentication.
+ใช้ [README4IT](../README4IT.html) และ [Direct operator guide](../deployment/DIRECT_PRIVATE_IP_CANDIDATE.md) เป็นขั้นตอนติดตั้งและ Recovery เท่านั้น. ไม่ใช้ proxy, DNS, certificate หรือ npm บน Target. หลัง Owner/IT อนุมัติ synthetic test ให้ IT ยืนยัน assigned IP/port, local NTFS/ACL, account/backup owners, HTTP risk and allowed data scope ตาม [IT-N01–N14](../deployment/IT_NETWORK_ACCEPTANCE_PHASE0.md). Host และ approved peer PC เปิด URL Direct เดียวกัน; ทดสอบ denied clients/guest/VPN/Internet/revocation กับหลักฐาน enforcement. ห้ามเปิด LAN หรือใช้ข้อมูลจริงจากผล CI เพียงอย่างเดียว. Task Scheduler ใช้ direct Start CMD + absolute external host.env; หยุด task/manual writer เดิมก่อน maintenance; ตรวจ reboot และ startup backup. HTTP ไม่เข้ารหัส; Display Name ไม่ใช่ authentication.
 
 ## 3. ตารางตรวจรับ VERIFY
 

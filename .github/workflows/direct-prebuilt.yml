@@ -6,6 +6,7 @@ on:
       - '.github/workflows/direct-prebuilt.yml'
       - 'tools/prebuilt/package.mjs'
       - 'tools/prebuilt/verify.mjs'
+      - 'README4IT.html'
   workflow_dispatch:
 permissions:
   contents: read
@@ -57,7 +58,8 @@ jobs:
           Set-Content -LiteralPath ($zip+'.sha256') -Value ($sha+'  '+(Split-Path $zip -Leaf)) -NoNewline
           "archive_sha256=$sha" >> $env:GITHUB_OUTPUT
           Write-Host ("Direct ARCHIVE BUILT: source="+$env:ACCEPTED_SOURCE+" sha256="+$sha+" bytes="+(Get-Item $zip).Length+" files="+$manifest.files.Count)
-          Copy-Item tools/qa/direct-edge.mjs,tools/qa/direct-endpoint-preflight.mjs (Join-Path $qa 'tools/qa')
+          Copy-Item (Join-Path $stage 'README4IT.html') (Join-Path $dist 'README4IT.html')
+          Copy-Item tools/qa/direct-edge.mjs,tools/qa/direct-endpoint-preflight.mjs,tools/qa/it-guide-commands.mjs (Join-Path $qa 'tools/qa')
           Copy-Item src/network-config.js (Join-Path $qa 'src')
           Copy-Item test/direct-lan.test.js,test/recovery-operator.test.js (Join-Path $qa 'test')
           Copy-Item package.json (Join-Path $qa 'package.json')
@@ -109,6 +111,8 @@ jobs:
           Expand-Archive -LiteralPath $zip -DestinationPath $extract
           $manifest = Get-Content (Join-Path $extract 'DEPLOYMENT_MANIFEST.json') -Raw | ConvertFrom-Json
           if ($manifest.sourceCommit -ne $env:ACCEPTED_SOURCE -or $manifest.profile -ne 'direct-ip' -or $manifest.build.nodeVersion -ne 'v24.11.0') { throw 'Unexpected manifest provenance' }
+          $guide = Join-Path $download 'README4IT.html'
+          if ((Get-FileHash -LiteralPath $guide).Hash -ne (Get-FileHash -LiteralPath (Join-Path $extract 'README4IT.html')).Hash) { throw 'External guide differs from verified package' }
           $nodeOnly = Join-Path $env:RUNNER_TEMP 'direct-node-only'
           New-Item -ItemType Directory -Path $nodeOnly | Out-Null
           Copy-Item (Get-Command node.exe -ErrorAction Stop).Source (Join-Path $nodeOnly 'node.exe')
@@ -168,6 +172,45 @@ jobs:
             if ($LASTEXITCODE -ne 0) { throw 'Extracted package changed during runtime' }
             if ((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $actual) { throw 'Archive changed' }
             if (Test-Path $env:npm_config_cache) { throw 'Unexpected npm cache created' }
+            # Exercise the actual generated guide commands on a separate synthetic dataset.
+            # No firewall/policy changes, no automatic recovery credential use.
+            $guideBase = Join-Path $env:RUNNER_TEMP 'PDCA Guide Test (Offline)'
+            New-Item -ItemType Directory -Path $guideBase | Out-Null
+            Copy-Item -LiteralPath $zip,($zip+'.sha256'),$guide -Destination $guideBase
+            $selectedGuide = node (Join-Path $qa 'tools/qa/direct-endpoint-preflight.mjs')
+            if ($LASTEXITCODE -ne 0) { throw 'Guide endpoint preflight failed' }
+            $guideEndpoint = $selectedGuide | ConvertFrom-Json
+            $guidePlanJson = node (Join-Path $qa 'tools/qa/it-guide-commands.mjs') $guide $guideBase $zips[0].Name $actual $guideEndpoint.ip ([string]$guideEndpoint.port)
+            if ($LASTEXITCODE -ne 0) { throw 'Guide command generation failed' }
+            $guidePlan = $guidePlanJson | ConvertFrom-Json
+            if (-not $guidePlan.prepare -or -not $guidePlan.setup) { throw 'Guide omitted required commands' }
+            & ([scriptblock]::Create($guidePlan.prepare))
+            if (-not (Test-Path -LiteralPath (Join-Path $guidePlan.app 'DEPLOYMENT_MANIFEST.json'))) { throw 'Guide extraction failed' }
+            # CI-only confirmation fixture: synthetic private endpoint and local runner-owned directories.
+            # Production users must have actual IT permission and ACL confirmation.
+            & {
+              function Read-Host {
+                param([string]$Prompt)
+                if ($Prompt -eq 'IT approved endpoint, synthetic data, stopped other writers? Type GO') { return 'GO' }
+                if ($Prompt -eq 'IT verified actual ACL and empty data directory? Type GO') {
+                  if (-not (Test-Path -LiteralPath $guidePlan.cfg -PathType Container) -or -not (Test-Path -LiteralPath $guidePlan.data -PathType Container) -or (Get-ChildItem -LiteralPath $guidePlan.data -Force)) { throw 'CI guide ACL precondition failed' }
+                  Get-Acl -LiteralPath $guidePlan.cfg | Out-Null
+                  Get-Acl -LiteralPath $guidePlan.data | Out-Null
+                  return 'GO'
+                }
+                throw 'Unexpected guide confirmation prompt'
+              }
+              & ([scriptblock]::Create($guidePlan.setup))
+            }
+            if (-not (Test-Path -LiteralPath $guidePlan.config -PathType Leaf)) { throw 'Guide config missing' }
+            if (-not (Test-Path -LiteralPath (Join-Path $guidePlan.data 'demo.json'))) { throw 'Guide seed missing' }
+            if (Test-Path Env:PDCA_DEMO_DIR) { throw 'Guide leaked ambient PDCA variable' }
+            $repeatBlocked = $false
+            try { & ([scriptblock]::Create($guidePlan.setup)) } catch { if ($_.Exception.Message -match 'config/data exists') { $repeatBlocked = $true } else { throw } }
+            if (-not $repeatBlocked) { throw 'Guide repeat setup was not blocked' }
+            node (Join-Path $guidePlan.app 'tools/prebuilt/verify.mjs') $guidePlan.app
+            if ($LASTEXITCODE -ne 0) { throw 'Guide package changed' }
+            Write-Host 'HTML GUIDE COMMANDS PASS: exact external/inner guide, spaced path, ZIP and sidecar verification, synthetic setup/seed, repeat refused, manifest intact'
             Write-Host 'Direct CLEAN TARGET PASS: exact archive and manifest, isolated Node runtime, extracted Direct/Recovery regression, Setup/Seed/ADOPT/Diagnose/Start/Edge, restart, ACL and unchanged package; no npm command in target'
           } finally {
             Remove-NetFirewallRule -Name $ruleName -ErrorAction Stop
