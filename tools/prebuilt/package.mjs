@@ -79,7 +79,7 @@ const manifest = {
   ...(profile === '--direct' ? { profile: 'direct-ip' } : {}),
   packagedAtUtc: new Date().toISOString(),
   build: { platform: process.platform, arch: process.arch, nodeVersion: process.version },
-  runtime: { nodeMajor: 24, platform: 'win32', arch: process.arch },
+  runtime: { nodeMajor: 24, ...(profile === '--direct' ? { nodeMin: '24.11.0' } : {}), platform: 'win32', arch: process.arch },
   packageLockSha256: await sha256(join(stage, 'package-lock.json')),
   directDependencies: direct,
   excludes: ['runtime databases', 'audit logs', 'backups', 'credentials', 'host.env'],

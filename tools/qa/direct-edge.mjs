@@ -340,16 +340,17 @@ try {
   console.log('WP07 EDGE EXTENDED PASS: node and edge UUID/edit, duplicate UI guard, document/image, History, PDF/XLSX/JSON downloads, remote privilege denial, Trash restore, session end, managed restart and persistence');
 
   // Onboarding-only local file UI: real browser, no web server for the guide.
-  const guide=join(stage,'README4IT.html');
-  if(existsSync(guide)){
+  const guide=process.argv[4]?resolve(process.argv[4]):null;
+  if(guide&&existsSync(guide)){
     await cdp('Page.navigate',{url:pathToFileURL(guide).href});
     await until('Offline HTML guide initialized',()=>evaluate("location.protocol==='file:' && document.readyState==='complete' && document.body.dataset.guideReady==='true'"));
-    assert.equal(await evaluate("document.querySelector('#copyPrepare').disabled"),true);
-    const fields={base:join(stage,'..','PDCA Guide Test (Offline)'),zip:'PDCA-Direct-Windows-CANDIDATE-0123456789ab.zip',hash:'a'.repeat(64),ip:'192.168.1.50',port:'4175'};
+    assert.equal(await evaluate("document.querySelector('#copyPrepare').disabled && !document.querySelector('#hash')"),true);
+    const fields={base:join(stage,'..','PDCA Guide Test (Offline)'),ip:'192.168.1.50',port:'4175'};
     await evaluate("Object.entries("+JSON.stringify(fields)+").forEach(([id,value])=>{const el=document.getElementById(id);el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));});document.querySelector('#approved').click();true");
     const guideState=await evaluate("({prepare:document.querySelector('#copyPrepare').disabled,setup:document.querySelector('#copySetup').disabled,approved:document.querySelector('#approved').checked,error:document.querySelector('#validation').textContent,base:document.querySelector('#base').value})");
     assert.equal(guideState.prepare||guideState.setup,false,'Guide controls not ready: '+JSON.stringify(guideState));
     assert.equal(await evaluate("document.querySelector('#setup').value.includes('seed --existing-empty')"),true);
+    assert.equal(await evaluate("document.querySelector('#zip').value===DELIVERY.zip && document.querySelector('#prepare').value.includes(DELIVERY.sha256)"),true);
     await evaluate("document.querySelector('#ip').value='8.8.8.8';document.querySelector('#ip').dispatchEvent(new Event('input',{bubbles:true}));true");
     assert.equal(await evaluate("document.querySelector('#copySetup').disabled"),true);
     await evaluate("document.querySelector('#dailyTab').click();true");

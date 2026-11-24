@@ -48,7 +48,14 @@ assert.equal(manifest.runtime.nodeMajor, 24);
 assert.equal(process.platform, manifest.runtime.platform, 'Package requires a Windows host');
 assert.equal(process.arch, manifest.runtime.arch, 'Package architecture mismatch');
 assert.equal(Number(process.versions.node.split('.')[0]), manifest.runtime.nodeMajor, 'Node major mismatch');
-assert.equal(process.version, manifest.build.nodeVersion, 'Node patch mismatch: rerun target environment validation and approve deviation before deployment');
+if (manifest.profile === 'direct-ip') {
+  assert.equal(manifest.runtime.nodeMin, '24.11.0', 'Unsupported Direct-IP runtime policy');
+  const version = /^24\.(\d+)\.(\d+)$/.exec(process.versions.node);
+  assert.ok(version && Number(version[1]) >= 11 && /^v24\.\d+\.\d+$/.test(process.version), 'Stable Node 24.x >=24.11.0 required');
+  console.log('Direct runtime: ' + process.version + ' (built with ' + manifest.build.nodeVersion + '; IT-approved patch and target verification required)');
+} else {
+  assert.equal(process.version, manifest.build.nodeVersion, 'Legacy Node version mismatch');
+}
 assert.equal(await sha256(join(root, 'package-lock.json')), manifest.packageLockSha256);
 const expected = manifest.files.map(file => file.path);
 const actual = (await walk(root)).filter(path => path !== 'DEPLOYMENT_MANIFEST.json').sort();

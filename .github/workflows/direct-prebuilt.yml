@@ -58,7 +58,10 @@ jobs:
           Set-Content -LiteralPath ($zip+'.sha256') -Value ($sha+'  '+(Split-Path $zip -Leaf)) -NoNewline
           "archive_sha256=$sha" >> $env:GITHUB_OUTPUT
           Write-Host ("Direct ARCHIVE BUILT: source="+$env:ACCEPTED_SOURCE+" sha256="+$sha+" bytes="+(Get-Item $zip).Length+" files="+$manifest.files.Count)
-          Copy-Item (Join-Path $stage 'README4IT.html') (Join-Path $dist 'README4IT.html')
+          $template = [IO.File]::ReadAllText((Join-Path $stage 'README4IT.html'))
+          if ([regex]::Matches($template,'const DELIVERY = null;').Count -ne 1) { throw 'Missing unique guide metadata marker' }
+          $delivery = @{source=$env:ACCEPTED_SOURCE;zip=(Split-Path $zip -Leaf);sha256=$sha} | ConvertTo-Json -Compress
+          [IO.File]::WriteAllText((Join-Path $dist 'README4IT.html'),$template.Replace('const DELIVERY = null;',('const DELIVERY = '+$delivery+';')),[Text.UTF8Encoding]::new($false))
           Copy-Item tools/qa/direct-edge.mjs,tools/qa/direct-endpoint-preflight.mjs,tools/qa/it-guide-commands.mjs (Join-Path $qa 'tools/qa')
           Copy-Item src/network-config.js (Join-Path $qa 'src')
           Copy-Item test/direct-lan.test.js,test/recovery-operator.test.js (Join-Path $qa 'test')
@@ -76,6 +79,11 @@ jobs:
           retention-days: 7
           if-no-files-found: error
   clean-target:
+    name: clean-target (Node ${{ matrix.node }})
+    strategy:
+      fail-fast: false
+      matrix:
+        node: ['24.11.0', '24.14.1']
     needs: build-candidate
     runs-on: windows-2022
     timeout-minutes: 30
@@ -83,7 +91,7 @@ jobs:
       - name: Provision prerequisite Node only (no checkout)
         uses: actions/setup-node@v4
         with:
-          node-version: '24.11.0'
+          node-version: ${{ matrix.node }}
       - uses: actions/download-artifact@v4
         with:
           name: Direct-Candidate-NOT-RELEASE
@@ -96,6 +104,7 @@ jobs:
         shell: powershell
         env:
           EXPECTED_ARCHIVE_SHA: ${{ needs.build-candidate.outputs.archive_sha256 }}
+          TARGET_NODE: ${{ matrix.node }}
         run: |
           $ErrorActionPreference = 'Stop'
           if ($PSVersionTable.PSEdition -ne 'Desktop' -or $PSVersionTable.PSVersion.Major -ne 5 -or $PSVersionTable.PSVersion.Minor -ne 1) { throw 'Windows PowerShell 5.1 required by guide test' }
@@ -114,7 +123,12 @@ jobs:
           $manifest = Get-Content (Join-Path $extract 'DEPLOYMENT_MANIFEST.json') -Raw | ConvertFrom-Json
           if ($manifest.sourceCommit -ne $env:ACCEPTED_SOURCE -or $manifest.profile -ne 'direct-ip' -or $manifest.build.nodeVersion -ne 'v24.11.0') { throw 'Unexpected manifest provenance' }
           $guide = Join-Path $download 'README4IT.html'
-          if ((Get-FileHash -LiteralPath $guide).Hash -ne (Get-FileHash -LiteralPath (Join-Path $extract 'README4IT.html')).Hash) { throw 'External guide differs from verified package' }
+          $template = [IO.File]::ReadAllText((Join-Path $extract 'README4IT.html'))
+          $outerGuide = [IO.File]::ReadAllText($guide)
+          $match = [regex]::Match($outerGuide,'const DELIVERY = (\{[^\r\n]+\});')
+          if (-not $match.Success -or $outerGuide.Replace($match.Value,'const DELIVERY = null;') -cne $template) { throw 'External guide differs beyond delivery metadata' }
+          $delivery = $match.Groups[1].Value | ConvertFrom-Json
+          if ($delivery.source -cne $env:ACCEPTED_SOURCE -or $delivery.zip -cne $zips[0].Name -or $delivery.sha256 -cne $actual) { throw 'External guide delivery metadata mismatch' }
           $nodeOnly = Join-Path $env:RUNNER_TEMP 'direct-node-only'
           New-Item -ItemType Directory -Path $nodeOnly | Out-Null
           Copy-Item (Get-Command node.exe -ErrorAction Stop).Source (Join-Path $nodeOnly 'node.exe')
@@ -126,7 +140,8 @@ jobs:
           Set-Location -LiteralPath $extract
           if (Get-Command npm,npm.cmd,npx,npx.cmd,corepack,corepack.cmd -ErrorAction SilentlyContinue) { throw 'Package manager available on isolated PATH' }
           if ((Get-Command node.exe).Source -ne (Join-Path $nodeOnly 'node.exe')) { throw 'Unexpected Node executable' }
-          if ((node --version).Trim() -ne 'v24.11.0') { throw 'Wrong isolated runtime' }
+          if ((node --version).Trim() -ne ('v'+$env:TARGET_NODE)) { throw 'Wrong isolated runtime' }
+          Write-Host ('DIRECT TARGET NODE: '+(node --version).Trim())
           Write-Host ("Direct ARCHIVE VERIFIED: sha256="+$actual+" source="+$manifest.sourceCommit+" files="+$manifest.files.Count)
           Write-Host 'Direct TARGET ISOLATION: no checkout; node.exe only; no npm/npx/corepack on PATH; offline npm config and loopback dead registry'
           # CI-only egress control on isolated Node executable, never on Factory.
@@ -167,7 +182,7 @@ jobs:
             if ($LASTEXITCODE -ne 0 -or (Get-FileHash -LiteralPath $file).Hash -ne $hash) { throw 'Repeat Setup altered config' }
             & (Join-Path $extract 'tools/direct/diagnose.cmd') $file
             if ($LASTEXITCODE -ne 1 -or (Get-ChildItem -LiteralPath $root -Force)) { throw 'Pre-ADOPT guard failed' }
-            node (Join-Path $qa 'tools/qa/direct-edge.mjs') $extract $file
+            node (Join-Path $qa 'tools/qa/direct-edge.mjs') $extract $file $guide
             if ($LASTEXITCODE -ne 0) { throw 'Actual extracted Edge/installation failed' }
             if ((Get-Acl -LiteralPath $root).Sddl -ne $acl) { throw 'Root ACL changed' }
             node tools/prebuilt/verify.mjs $extract
@@ -182,10 +197,18 @@ jobs:
             $selectedGuide = node (Join-Path $qa 'tools/qa/direct-endpoint-preflight.mjs')
             if ($LASTEXITCODE -ne 0) { throw 'Guide endpoint preflight failed' }
             $guideEndpoint = $selectedGuide | ConvertFrom-Json
-            $guidePlanJson = node (Join-Path $qa 'tools/qa/it-guide-commands.mjs') $guide $guideBase $zips[0].Name $actual $guideEndpoint.ip ([string]$guideEndpoint.port)
+            $guidePlanJson = node (Join-Path $qa 'tools/qa/it-guide-commands.mjs') $guide $guideBase $zips[0].Name $guideEndpoint.ip ([string]$guideEndpoint.port)
             if ($LASTEXITCODE -ne 0) { throw 'Guide command generation failed' }
             $guidePlan = $guidePlanJson | ConvertFrom-Json
             if (-not $guidePlan.prepare -or -not $guidePlan.setup) { throw 'Guide omitted required commands' }
+            # Negative: correct ZIP but replaced sidecar must stop before extraction.
+            $sidecarPath = Join-Path $guideBase ($zips[0].Name+'.sha256')
+            $correctSidecar = [IO.File]::ReadAllText($sidecarPath)
+            [IO.File]::WriteAllText($sidecarPath,(('0'*64)+'  '+$zips[0].Name))
+            $rejected = $false
+            try { & ([scriptblock]::Create($guidePlan.prepare)) } catch { if ($_.Exception.Message -match 'ZIP checksum mismatch') { $rejected = $true } else { throw } }
+            if (-not $rejected -or (Test-Path -LiteralPath $guidePlan.app)) { throw 'Tampered sidecar was not rejected' }
+            [IO.File]::WriteAllText($sidecarPath,$correctSidecar)
             & ([scriptblock]::Create($guidePlan.prepare))
             if (-not (Test-Path -LiteralPath (Join-Path $guidePlan.app 'DEPLOYMENT_MANIFEST.json'))) { throw 'Guide extraction failed' }
             # CI-only confirmation fixture: synthetic private endpoint and local runner-owned directories.
@@ -218,7 +241,7 @@ jobs:
             if (-not $repeatBlocked) { throw 'Guide repeat setup was not blocked' }
             node (Join-Path $guidePlan.app 'tools/prebuilt/verify.mjs') $guidePlan.app
             if ($LASTEXITCODE -ne 0) { throw 'Guide package changed' }
-            Write-Host 'HTML GUIDE COMMANDS PASS: exact external/inner guide, spaced path, ZIP and sidecar verification, synthetic setup/seed, repeat refused, manifest intact'
+            Write-Host 'HTML GUIDE COMMANDS PASS: pinned external guide and inner template, spaced path, automatic ZIP/sidecar verification and tamper refusal, synthetic setup/seed, repeat refused, manifest intact'
             Write-Host 'Direct CLEAN TARGET PASS: exact archive and manifest, isolated Node runtime, extracted Direct/Recovery regression, Setup/Seed/ADOPT/Diagnose/Start/Edge, restart, ACL and unchanged package; no npm command in target'
           } finally {
             Remove-NetFirewallRule -Name $ruleName -ErrorAction Stop

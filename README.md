@@ -42,7 +42,7 @@ npm.cmd run demo:start
 
 เปิด `http://127.0.0.1:4175` จากเครื่อง Host; Seed ข้อมูลเพียงหนึ่งครั้งต่อ `PDCA_DEMO_DIR` แล้วเรียก `demo:start` เพื่อเปิดชุดเดิม ถ้าเคย Seed แล้วอย่าทำซ้ำบนโฟลเดอร์เดิม
 
-**Factory Server ใช้ Verified Prebuilt ZIP และ Node.js 24 เท่านั้น — ไม่ต้องทำ `npm ci` บน Server** ดูวิธีรับและตรวจ Package ใน [README4IT.html](README4IT.html)
+**Factory Server ใช้ Verified Prebuilt ZIP และ Node.js 24.x ตั้งแต่ 24.11.0 ที่ IT อนุมัติเท่านั้น — ไม่ต้องทำ `npm ci` บน Server** ดูวิธีรับและตรวจ Package ใน [README4IT.html](README4IT.html)
 
 ## หลักการควบคุมความเปลี่ยนแปลง
 

@@ -5,10 +5,12 @@ import vm from 'node:vm';
 import { URL } from 'node:url';
 const html=readFileSync(new URL('../README4IT.html',import.meta.url),'utf8');
 const script=html.match(/<script>([\s\S]*?)<\/script>/)[1];
+const delivery={zip:'PDCA-Direct-Windows-CANDIDATE-03c804cb71cd.zip',sha256:'a'.repeat(64),source:'03c804cb71cd'+'b'.repeat(28)};
 const ctx=vm.createContext({URL});
-vm.runInContext(script,ctx);
+vm.runInContext(script.replace('const DELIVERY = null;', 'const DELIVERY = '+JSON.stringify(delivery)+';'),ctx);
+const inner=vm.createContext({URL});vm.runInContext(script,inner);
 const plan=f=>ctx.makePlan(f);
-const base={base:'D:\\Folder With Spaces (Offline)\\PDCA',zip:'PDCA-Direct-Windows-CANDIDATE-03c804cb71cd.zip',hash:'a'.repeat(64),ip:'192.168.1.50',port:'4175'};
+const base={base:'D:\\Folder With Spaces (Offline)\\PDCA',zip:'PDCA-Direct-Windows-CANDIDATE-03c804cb71cd.zip',ip:'192.168.1.50',port:'4175'};
 test('Guide is offline and contains no external script, storage, or secret form',()=>{
   assert.match(html,/connect-src 'none'/);
   assert.doesNotMatch(html,/<script[^>]+src=|<link[^>]+href=|localStorage|sessionStorage|fetch\(/i);
@@ -25,7 +27,7 @@ test('Correct quoted paths, external folders and pinned archive hash',()=>{
   assert.equal(p.config,base.base+'\\config-03c804cb71cd\\host.env');
   assert.equal(p.data,base.base+'\\data-03c804cb71cd');
   assert.ok(p.prepare.includes("'"+p.app+"'"));
-  assert.ok(p.prepare.includes("'"+base.hash+"'"));
+  assert.ok(p.prepare.includes("'"+delivery.sha256+"'"));
   assert.match(p.prepare,/Get-FileHash[\s\S]+checksum mismatch[\s\S]+Expand-Archive[\s\S]+verify\.mjs/);
   assert.match(p.prepare,/app already exists; do not overwrite/);
   assert.match(p.prepare,/-split '\\s\+'/);
@@ -39,7 +41,7 @@ test('Setup permits only empty folders, then requires bind, IT confirmation, ACL
   assert.match(p.recovery,/recovery-menu\.cmd/);
 });
 test('Daily Start uses existing config, no seed/adopt, Diagnose fails closed',()=>{
-  const p=plan({...base,hash:'',ip:'',port:''});
+  const p=inner.makePlan({...base,ip:'',port:''});
   assert.equal(p.prepare,null);assert.equal(p.setup,null);
   assert.match(p.start,/diagnose\.cmd[\s\S]+Diagnose failed[\s\S]+start\.cmd/);
   assert.doesNotMatch(p.start,/seed|ADOPT|New-Item|setup\.cmd/);
@@ -49,6 +51,11 @@ test('Reject unsafe paths, ZIP names and invalid endpoint/hash before generating
   assert.throws(()=>plan({...base,zip:'..\\bad.zip'}));
   for(const ip of ['127.0.0.1','0.0.0.0','8.8.8.8','192.168.1.999','172.32.0.1','192.168.1.01'])assert.equal(plan({...base,ip}).setup,null);
   for(const port of ['0','80','65536','4175;whoami','-1'])assert.equal(plan({...base,port}).setup,null);
-  assert.equal(plan({...base,hash:'invalid'}).prepare,null);
+  const mismatch=plan({...base,zip:'PDCA-Direct-Windows-CANDIDATE-0123456789ab.zip'});
+  assert.equal(mismatch.prepare,null);assert.equal(mismatch.setup,null);
+  assert.equal(inner.makePlan(base).prepare,null);
+  assert.doesNotMatch(html,/<input[^>]+id="hash"/i);
+  assert.ok(plan(base).prepare.includes(delivery.source));
+  assert.match(plan(base).prepare,/stable Node 24\.x >=24\.11\.0 required/);
   assert.ok(plan({...base,base:'D:\\ทดสอบ PDCA'}).setup);
 });

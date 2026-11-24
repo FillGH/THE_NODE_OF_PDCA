@@ -17,11 +17,11 @@
 </nav>
 <section class="card">
 <h2>1. ระบุตำแหน่งไฟล์</h2>
-<p>วาง HTML, Inner ZIP และไฟล์ .sha256 ไว้ใน Folder เดียวกัน (ถ้าดาวน์โหลด Actions Artifact ให้แตก ZIP ชั้นนอกก่อน) เปิด HTML ด้วย Edge โดยไม่ต้องเปิด Server</p>
+<p>ใช้ HTML ภายนอก ZIP จากชุด Candidate ที่ Owner อนุมัติ วางพร้อม Inner ZIP และไฟล์ .sha256 ใน Folder เดียวกัน (ถ้าดาวน์โหลด Actions Artifact ให้แตก ZIP ชั้นนอกก่อน) เปิด HTML ด้วย Edge โดยไม่ต้องเปิด Server และไม่ต้องกรอก SHA-256</p>
 <label for="base">Folder ที่วางไฟล์</label><input id="base" placeholder="D:\PDCA Test" autocomplete="off" spellcheck="false">
 <div class="grid">
-<div class="full"><label for="zip">ชื่อ Candidate ZIP</label><input id="zip" placeholder="PDCA-Direct-Windows-CANDIDATE-xxxxxxxxxxxx.zip" autocomplete="off" spellcheck="false"><small>เลือกไฟล์ด้านล่างเพื่อเติมชื่ออัตโนมัติ หรือกรอกชื่อเดิมสำหรับ Daily Start</small><input id="pick" type="file" accept=".zip" aria-label="เลือก Inner ZIP"></div>
-<div id="hashBox" class="full"><label for="hash">SHA-256 ที่ได้รับอนุมัติ (64 ตัวอักษร)</label><input id="hash" placeholder="คัดลอกจาก Acceptance Record" autocomplete="off" spellcheck="false"><small>คัดลอกแล้ววางจาก Owner Acceptance Record ได้เลย ไม่ต้องพิมพ์ทีละตัว ห้ามใช้ Hash ของ ZIP ชั้นนอกหรือเชื่อ sidecar อย่างเดียว</small></div>
+<div class="full"><label for="zip">ชื่อ Candidate ZIP</label><input id="zip" placeholder="PDCA-Direct-Windows-CANDIDATE-xxxxxxxxxxxx.zip" autocomplete="off" spellcheck="false"><small>ชื่อ ZIP จากชุดที่ดาวน์โหลดจะถูกเติมให้อัตโนมัติ</small><input id="pick" type="file" accept=".zip" aria-label="เลือก Inner ZIP"></div>
+<div id="deliveryBox" class="full"><small id="deliveryNote">ตรวจ ZIP และ checksum อัตโนมัติจากชุดที่ได้รับอนุมัติ ไม่ต้องกรอก SHA-256</small></div>
 <div id="ipBox"><label for="ip">IPv4 ของ Laptop ที่ IT อนุมัติ</label><input id="ip" placeholder="กรอก IP จริงจาก IT" autocomplete="off" spellcheck="false"><small>ดูด้วย <code>ipconfig</code> แต่ให้ IT เลือก NIC ที่ถูกต้อง</small></div>
 <div id="portBox"><label for="port">Port ที่ IT อนุมัติ</label><input id="port" type="text" inputmode="numeric" placeholder="เช่น 4175" autocomplete="off"><small>ตัวอย่างเท่านั้น ไม่ใช่การอนุมัติ</small></div>
 </div>
@@ -34,7 +34,7 @@
 <h2>2. ติดตั้งครั้งแรก</h2>
 <p>เปิด <strong>Windows PowerShell</strong> ปกติ (ไม่ต้อง Run as Administrator เว้นแต่ IT กำหนด) แล้วคัดลอกคำสั่งทีละขั้น กด Enter และตรวจผลก่อนขั้นถัดไป</p>
 <div class="steps">
-<div class="step"><h3><span class="num">1</span>ตรวจ ZIP และแตกไฟล์</h3><p>ต้องมี Node.js <strong>24.11.0</strong> ที่ IT อนุมัติแล้ว คำสั่งตรวจ Node, SHA-256, sidecar, Manifest และไม่เขียนทับ Folder เดิม</p><div class="actions"><button id="copyPrepare" type="button" disabled>คัดลอกคำสั่ง 1</button><small>รอข้อความ PACKAGE READY</small></div><details><summary>ดูคำสั่ง</summary><textarea readonly class="cmd" id="prepare" aria-label="คำสั่งตรวจและแตก ZIP"></textarea></details></div>
+<div class="step"><h3><span class="num">1</span>ตรวจ ZIP และแตกไฟล์</h3><p>ใช้ Node.js <strong>24.x ตั้งแต่ 24.11.0</strong> (Windows x64 รุ่นที่ IT อนุมัติ) ไม่ต้อง Downgrade คำสั่งตรวจ Node, SHA-256, sidecar, Manifest และไม่เขียนทับ Folder เดิม</p><div class="actions"><button id="copyPrepare" type="button" disabled>คัดลอกคำสั่ง 1</button><small>รอข้อความ PACKAGE READY</small></div><details><summary>ดูคำสั่ง</summary><textarea readonly class="cmd" id="prepare" aria-label="คำสั่งตรวจและแตก ZIP"></textarea></details></div>
 <div class="step"><h3><span class="num">2</span>เตรียม Config และข้อมูลสมมติ</h3><p>คำสั่งสร้าง Folder แยก ตรวจว่า IP/Port bind ได้ และหยุดถาม 2 ครั้ง ให้พิมพ์ GO เมื่อ IT ยืนยัน Endpoint/ข้อมูลสมมติ และตรวจสิทธิ์ NTFS จริงแล้ว จากนั้นใช้ Setup และ Seed เดิม ไม่เขียนทับข้อมูล</p><div class="actions"><button id="copySetup" type="button" disabled>คัดลอกคำสั่ง 2</button><small>รอข้อความ SYNTHETIC SEED READY</small></div><details><summary>ดูคำสั่ง</summary><textarea readonly class="cmd" id="setup" aria-label="คำสั่ง Setup และ Seed"></textarea></details><p class="notice">หากหยุดก่อนสร้าง host.env และทั้ง Folder Config/Data ยังว่างจริง สามารถกดคำสั่ง 2 ซ้ำได้หลัง IT ตรวจสิทธิ์ หากมีไฟล์ใดแล้วให้ STOP ห้ามลบ Folder / Seed ซ้ำ / แก้ Pointer เอง หากเห็น SYNTHETIC SEED READY แล้ว ให้ไปขั้น 3 เท่านั้น</p></div>
 <div class="step"><h3><span class="num">3</span>ยืนยันฐานข้อมูลครั้งแรก (ADOPT)</h3><p>ให้ผู้ดูแล IT เปิด <code id="keyFile">config\host.env</code> ด้วย Notepad เฉพาะในเครื่องนี้ เพื่ออ่านค่า PDCA_IT_KEY (ไม่รวมเครื่องหมายคำพูด) ปิดไฟล์โดยไม่บันทึก ห้ามส่ง Key หรือภาพหน้าจอที่มี Key</p><div class="actions"><button id="copyRecovery" type="button" disabled>คัดลอกคำสั่ง 3</button></div><details><summary>ดูคำสั่ง</summary><textarea readonly class="cmd" id="recovery" aria-label="คำสั่ง Recovery Menu"></textarea></details>
 <ol><li>กรอก IT Key ในช่องที่ไม่แสดงตัวอักษร</li><li>เลือก <strong>3</strong> แล้วพิมพ์ <strong>ADOPT</strong></li><li>เลือก <strong>1</strong> ตรวจ Status ต้องสำเร็จ ไม่มี Warning/Blocked/Busy และคู่ฐานถูกต้อง</li><li>เลือก <strong>0</strong> ออกจากเมนู แล้วไปเปิดโปรแกรมด้านล่าง</li></ol></div>
@@ -49,7 +49,7 @@
 <div id="copyStatus" class="status" aria-live="polite" role="status"></div>
 </section>
 <section class="card"><h2>ถ้าเปิดไม่ได้</h2>
-<details><summary>Node ไม่พบ / Version ไม่ตรง</summary><p>ให้ IT จัด Node.js 24.11.0 ที่อนุญาต ไม่ติดตั้ง npm package หรือดาวน์โหลด Registry บน Target</p></details>
+<details><summary>Node ไม่พบ / Version ไม่ตรง</summary><p>ให้ IT จัด Node.js 24.x ตั้งแต่ 24.11.0 ขึ้นไปที่อนุญาตและมี Security Patch เหมาะสม หากอัปเดต Runtime ให้ทดสอบเปิด/บันทึก/Backup/Recovery ก่อนใช้จริง ไม่ติดตั้ง npm package หรือดาวน์โหลด Registry บน Target</p></details>
 <details><summary>Hash / Manifest ไม่ตรง หรือมี Folder เดิม</summary><p>STOP ใช้ Inner ZIP และ Hash ที่อนุมัติ ห้ามแก้ไฟล์ใน app หรือแตกทับเดิม หากมี Config/Data เดิมใช้ Daily Start หรือ Migration ที่ได้รับการตรวจ</p></details>
 <details><summary>IP/Port ไม่ผ่าน / เครื่องอื่นเข้าไม่ได้</summary><p>ให้ IT ตรวจ assigned private IP, port bind, Firewall/ACL/NAC, guest/VPN/Internet และ access revocation ห้ามเปลี่ยนเป็น 0.0.0.0, ปิด Firewall หรือข้าม IT policy</p></details>
 <details><summary>หยุดกลางทาง ต้องเริ่มตรงไหน?</summary><p>ถ้า PACKAGE READY แล้ว ไม่ต้องแตก ZIP ซ้ำ ไปขั้น 2 ได้เลย ถ้าหยุดก่อนสร้าง Config/DB และ Folder ยังว่างจริง ให้รันขั้น 2 ซ้ำได้ หาก Seed สำเร็จแล้วและยังไม่ ADOPT ให้ทำขั้น 3 หลัง IT ยืนยันข้อมูลสมมติเดิม ถ้าไม่ทราบสถานะหรือมีไฟล์บางส่วน ให้ IT ตรวจ ห้ามลบหรือ Seed ทับ</p></details><details><summary>ADOPT / Status / Recovery ไม่ผ่าน</summary><p>หยุด Host ทั้งหมด เก็บข้อมูลและหลักฐานเดิม ให้ IT ตรวจคู่ Workspace/Audit และ Active Pointer ห้าม Seed ซ้ำ แก้ DB/Pointer หรือลบ Host Exclusion Lock</p></details>
@@ -64,6 +64,7 @@
 <noscript>เปิด JavaScript เพื่อสร้างคำสั่ง หรือให้ IT ใช้ Direct operator guide จาก Package ที่ตรวจรับแล้ว</noscript>
 <script>
 "use strict";
+const DELIVERY = null;
 const ZIP_RE=/^PDCA-Direct-Windows-CANDIDATE-([a-f0-9]{12})\.zip$/i;
 function localDefaults(href){
   try{
@@ -90,44 +91,47 @@ function makePlan(fields){
   if(!validBase(base))throw Error("Folder ต้องเป็น local drive เช่น D:\\PDCA Test; ห้ามใช้ UNC, path alias, อักขระพิเศษ หรือ path ยาวเกิน 180 ตัว");
   if(!match)throw Error("เลือก Inner ZIP ชื่อ PDCA-Direct-Windows-CANDIDATE-<12 SHA>.zip");
   const id=match[1].toLowerCase(), app=base+"\\app-"+id, cfg=base+"\\config-"+id, data=base+"\\data-"+id, config=cfg+"\\host.env";
-  const hash=fields.hash.trim().toLowerCase(), ip=fields.ip.trim(), port=fields.port.trim();
-  const hashOK=/^[a-f0-9]{64}$/.test(hash), endpointOK=privateIp(ip)&&/^[1-9]\d{3,4}$/.test(port)&&Number(port)>=1024&&Number(port)<=65535;
+  const ip=fields.ip.trim(), port=fields.port.trim();
+  const pinned=DELIVERY&&DELIVERY.zip===zipName&&/^[a-f0-9]{64}$/.test(DELIVERY.sha256)&&/^[a-f0-9]{40}$/.test(DELIVERY.source)&&DELIVERY.source.startsWith(id);
+  const hash=pinned?DELIVERY.sha256:"";
+  const hashOK=!!pinned, endpointOK=privateIp(ip)&&/^[1-9]\d{3,4}$/.test(port)&&Number(port)>=1024&&Number(port)<=65535;
   const lines=(...xs)=>xs.join("\r\n");
-  const pre=lines("& {","$ErrorActionPreference = 'Stop'","$app = "+psQuote(app),"$config = "+psQuote(config),"$data = "+psQuote(data),"if (Get-ChildItem Env: | Where-Object Name -like 'PDCA_*') { throw 'STOP: open a clean PowerShell' }","if ((& node.exe --version) -ne 'v24.11.0' -or $LASTEXITCODE -ne 0) { throw 'STOP: Node 24.11.0 required' }");
-  const checkApp=lines("if (-not (Test-Path -LiteralPath $app -PathType Container)) { throw 'STOP: app missing' }","$manifest = Get-Content -LiteralPath (Join-Path $app 'DEPLOYMENT_MANIFEST.json') -Raw | ConvertFrom-Json","if ($manifest.profile -ne 'direct-ip' -or -not $manifest.sourceCommit.StartsWith("+psQuote(id)+")) { throw 'STOP: wrong candidate' }","& node.exe (Join-Path $app 'tools/prebuilt/verify.mjs') $app","if ($LASTEXITCODE -ne 0) { throw 'STOP: package verification failed' }");
+  const pre=lines("& {","$ErrorActionPreference = 'Stop'","$app = "+psQuote(app),"$config = "+psQuote(config),"$data = "+psQuote(data),"if (Get-ChildItem Env: | Where-Object Name -like 'PDCA_*') { throw 'STOP: open a clean PowerShell' }","$nodeVersion = (& node.exe --version).Trim()","if ($LASTEXITCODE -ne 0 -or $nodeVersion -notmatch '^v24\\.\\d+\\.\\d+$' -or [version]($nodeVersion.Substring(1)) -lt [version]'24.11.0') { throw 'STOP: stable Node 24.x >=24.11.0 required' }");
+  const checkApp=lines("if (-not (Test-Path -LiteralPath $app -PathType Container)) { throw 'STOP: app missing' }","$manifest = Get-Content -LiteralPath (Join-Path $app 'DEPLOYMENT_MANIFEST.json') -Raw | ConvertFrom-Json","if ($manifest.profile -ne 'direct-ip' -or "+(pinned?"$manifest.sourceCommit -ne "+psQuote(DELIVERY.source):"-not $manifest.sourceCommit.StartsWith("+psQuote(id)+")")+") { throw 'STOP: wrong candidate' }","& node.exe (Join-Path $app 'tools/prebuilt/verify.mjs') $app","if ($LASTEXITCODE -ne 0) { throw 'STOP: package verification failed' }");
   const prepare=hashOK?lines(pre,"$zip = "+psQuote(base+"\\"+zipName),"$expected = "+psQuote(hash),"if (Test-Path -LiteralPath $app) { throw 'STOP: app already exists; do not overwrite' }","$actual = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()","$sidecar = ((Get-Content -LiteralPath ($zip + '.sha256') -Raw).Trim() -split '\\s+')","if ($actual -ne $expected -or $sidecar.Count -ne 2 -or $sidecar[0] -ne $actual -or $sidecar[1] -ne (Split-Path -Leaf $zip)) { throw 'STOP: ZIP checksum mismatch' }","Expand-Archive -LiteralPath $zip -DestinationPath $app",checkApp,"Write-Host 'PACKAGE READY' -ForegroundColor Green","}"):null;
-  const setup=endpointOK?lines(pre,checkApp,"$cfg = "+psQuote(cfg),"$ip = "+psQuote(ip),"$port = "+port,"foreach ($dir in @($cfg,$data)) { if (Test-Path -LiteralPath $dir) { $item = Get-Item -LiteralPath $dir -Force; if (-not $item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -or (Get-ChildItem -LiteralPath $dir -Force)) { throw 'STOP: config/data exists and is not an empty directory; no fresh seed' } } }","if ((Read-Host 'IT approved endpoint, synthetic data, stopped other writers? Type GO') -cne 'GO') { throw 'STOP: approval not confirmed' }","$listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Parse($ip),$port)","try { $listener.Server.ExclusiveAddressUse = $true; $listener.Start() } finally { $listener.Stop() }","foreach ($dir in @($cfg,$data)) { if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null } }","Write-Host ('IT must check local NTFS and restrict ACL: ' + $cfg + ' / ' + $data)","if ((Read-Host 'IT verified actual ACL and empty data directory? Type GO') -cne 'GO') { throw 'STOP: ACL not confirmed' }","foreach ($dir in @($cfg,$data)) { $item = Get-Item -LiteralPath $dir -Force; if (-not $item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -or (Get-ChildItem -LiteralPath $dir -Force)) { throw 'STOP: config/data no longer empty or safe; no fresh seed' } }","& (Join-Path $app 'tools/direct/setup.cmd') $config $ip ([string]$port) $data","if ($LASTEXITCODE -ne 0) { throw 'STOP: Setup failed; preserve files' }","try { $env:PDCA_DEMO_DIR = $data; & node.exe (Join-Path $app 'demo/demo.mjs') seed --existing-empty; if ($LASTEXITCODE -ne 0) { throw 'STOP: Seed failed; do not retry' } } finally { Remove-Item Env:PDCA_DEMO_DIR -ErrorAction SilentlyContinue }","Write-Host 'SYNTHETIC SEED READY' -ForegroundColor Green","}"):null;
+  const setup=endpointOK&&pinned?lines(pre,checkApp,"$cfg = "+psQuote(cfg),"$ip = "+psQuote(ip),"$port = "+port,"foreach ($dir in @($cfg,$data)) { if (Test-Path -LiteralPath $dir) { $item = Get-Item -LiteralPath $dir -Force; if (-not $item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -or (Get-ChildItem -LiteralPath $dir -Force)) { throw 'STOP: config/data exists and is not an empty directory; no fresh seed' } } }","if ((Read-Host 'IT approved endpoint, synthetic data, stopped other writers? Type GO') -cne 'GO') { throw 'STOP: approval not confirmed' }","$listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Parse($ip),$port)","try { $listener.Server.ExclusiveAddressUse = $true; $listener.Start() } finally { $listener.Stop() }","foreach ($dir in @($cfg,$data)) { if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null } }","Write-Host ('IT must check local NTFS and restrict ACL: ' + $cfg + ' / ' + $data)","if ((Read-Host 'IT verified actual ACL and empty data directory? Type GO') -cne 'GO') { throw 'STOP: ACL not confirmed' }","foreach ($dir in @($cfg,$data)) { $item = Get-Item -LiteralPath $dir -Force; if (-not $item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -or (Get-ChildItem -LiteralPath $dir -Force)) { throw 'STOP: config/data no longer empty or safe; no fresh seed' } }","& (Join-Path $app 'tools/direct/setup.cmd') $config $ip ([string]$port) $data","if ($LASTEXITCODE -ne 0) { throw 'STOP: Setup failed; preserve files' }","try { $env:PDCA_DEMO_DIR = $data; & node.exe (Join-Path $app 'demo/demo.mjs') seed --existing-empty; if ($LASTEXITCODE -ne 0) { throw 'STOP: Seed failed; do not retry' } } finally { Remove-Item Env:PDCA_DEMO_DIR -ErrorAction SilentlyContinue }","Write-Host 'SYNTHETIC SEED READY' -ForegroundColor Green","}"):null;
   const recovery=lines(pre,"if (-not (Test-Path -LiteralPath $config -PathType Leaf)) { throw 'STOP: config missing' }","& (Join-Path $app 'tools/recovery/recovery-menu.cmd') $config","if ($LASTEXITCODE -ne 0) { throw 'STOP: Recovery Menu failed' }","}");
   const start=lines(pre,"if (-not (Test-Path -LiteralPath $config -PathType Leaf)) { throw 'STOP: config missing' }","& (Join-Path $app 'tools/direct/diagnose.cmd') $config","if ($LASTEXITCODE -ne 0) { throw 'STOP: Diagnose failed' }","& (Join-Path $app 'tools/direct/start.cmd') $config","if ($LASTEXITCODE -ne 0) { throw 'STOP: Start failed' }","}");
   return {base,app,cfg,data,config,hashOK,endpointOK,prepare,setup,recovery,start};
 }
 if(typeof document!=="undefined"){
   const $=id=>document.getElementById(id);
-  const d=localDefaults(location.href); $("base").value=d.base||""; $("zip").value=d.zip||"";
+  const d=localDefaults(location.href); $("base").value=d.base||""; $("zip").value=d.zip||(DELIVERY&&DELIVERY.zip)||"";
   let daily=!!d.daily, plan=null;
   function localLink(path){return "file:///"+path.split("\\").map((p,i)=>i===0?p:encodeURIComponent(p)).join("/");}
   function refresh(){
-    $("first").hidden=daily; $("hashBox").hidden=daily; $("ipBox").hidden=daily; $("portBox").hidden=daily;
+    $("first").hidden=daily; $("deliveryBox").hidden=daily; $("ipBox").hidden=daily; $("portBox").hidden=daily;
     $("firstTab").setAttribute("aria-selected",String(!daily)); $("dailyTab").setAttribute("aria-selected",String(daily));
     $("startCard").querySelector("h2").textContent=daily?"2. เปิดโปรแกรม":"3. เปิดโปรแกรม";
     plan=null; let error="";
-    try{plan=makePlan({base:$("base").value,zip:$("zip").value,hash:$("hash").value,ip:$("ip").value,port:$("port").value});
-      if(!daily&&!plan.hashOK)error="กรอก SHA-256 ที่ได้รับอนุมัติเพื่อใช้คำสั่ง 1";
+    try{plan=makePlan({base:$("base").value,zip:$("zip").value,ip:$("ip").value,port:$("port").value});
+      if(!daily&&!plan.hashOK)error="ใช้ README4IT.html ภายนอก ZIP จาก Candidate ที่อนุมัติ (ชื่อ ZIP ต้องตรงกับคู่มือ)";
       else if(!daily&&!plan.endpointOK)error="กรอก private IPv4 และ Port 1024–65535 ที่ IT อนุมัติเพื่อใช้คำสั่ง 2";
     }catch(e){error=e.message;}
     $("validation").textContent=error;
+    $("deliveryNote").textContent=DELIVERY?"ตรวจ checksum อัตโนมัติ · Candidate "+DELIVERY.source.slice(0,12)+" · ใช้ไฟล์จากแหล่งที่อนุมัติเท่านั้น":"คู่มือภายใน ZIP สำหรับเปิดโปรแกรมครั้งต่อไป — ติดตั้งครั้งแรกให้เปิด HTML ที่อยู่ข้าง ZIP";
     $("paths").textContent=plan?"App: "+plan.app+" | Data: "+plan.data:"เมื่อกรอกชื่อ ZIP จะเห็น Folder ที่โปรแกรมใช้";
     $("keyFile").textContent=plan?plan.config:"config\\host.env";
     for(const [id,key] of [["Prepare","prepare"],["Setup","setup"],["Recovery","recovery"],["Start","start"]]){
       $(key).value=plan&&plan[key]||"";
-      $("copy"+id).disabled=!(plan&&plan[key]&&$("approved").checked);
+      $("copy"+id).disabled=!(plan&&plan[key]&&$("approved").checked&&(daily||plan.hashOK));
     }
     for(const [id,p] of [["operatorLink","deployment\\DIRECT_PRIVATE_IP_CANDIDATE.md"],["networkLink","deployment\\IT_NETWORK_ACCEPTANCE_PHASE0.md"],["verifyLink","design\\PILOT_VERIFY.md"],["technicalLink","deployment\\PREBUILT_WINDOWS.md"]]){
       if(plan)$(id).href=localLink(plan.app+"\\"+p);else $(id).removeAttribute("href");
     }
   }
   async function copy(key){
-    const area=$(key),value=area.value;if(!value||!$("approved").checked)return;
+    const area=$(key),value=area.value;if(!value||!$("approved").checked||(!daily&&!plan?.hashOK))return;
     const btn=$("copy"+key[0].toUpperCase()+key.slice(1)),label=btn.textContent;
     const feedback=message=>{$("copyStatus").textContent=message;btn.textContent=message.startsWith("คัดลอกแล้ว")?"คัดลอกแล้ว ✓":"เลือกข้อความแล้ว";setTimeout(()=>{btn.textContent=label;},1800);};
     try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(value);feedback("คัดลอกแล้ว — วางใน PowerShell");return;}}catch{}
@@ -135,7 +139,7 @@ if(typeof document!=="undefined"){
     try{if(document.execCommand("copy")){feedback("คัดลอกแล้ว — วางใน PowerShell");return;}}catch{}
     feedback("Browser ไม่อนุญาต Clipboard: เลือกคำสั่งที่แสดงแล้วกด Ctrl+C");
   }
-  for(const id of ["base","zip","hash","ip","port","approved"])$(id).addEventListener("input",refresh);
+  for(const id of ["base","zip","ip","port","approved"])$(id).addEventListener("input",refresh);
   $("approved").addEventListener("change",refresh);
   $("pick").addEventListener("change",()=>{if($("pick").files.length){$("zip").value=$("pick").files[0].name;refresh();}});
   $("firstTab").addEventListener("click",()=>{daily=false;refresh();});$("dailyTab").addEventListener("click",()=>{daily=true;refresh();});
