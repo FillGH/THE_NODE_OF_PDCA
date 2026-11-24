@@ -81,8 +81,13 @@ async function setup(){
   }finally{rl.close();}
   for(const path of [cfg,data])directory(path,true);
   if(!existsSync(app)){
-    const zip=join(root,DELIVERY.zip);
-    if(!existsSync(zip))fail('Program ZIP missing. Extract the outer delivery ZIP first.');
+    let zip=join(root,DELIVERY.zip);
+    if(!existsSync(zip)){
+      const alternatives=readdirSync(root,{withFileTypes:true}).filter(e=>e.isFile()&&/\.zip$/i.test(e.name));
+      if(alternatives.length!==1)fail('Program ZIP missing or ambiguous. Keep one approved program ZIP in this folder.');
+      zip=join(root,alternatives[0].name);
+    }
+    if(!lstatSync(zip).isFile()||lstatSync(zip).isSymbolicLink())fail('Program ZIP must be a local regular file.');
     const r=spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',"$ErrorActionPreference='Stop'; Expand-Archive -LiteralPath $env:PDCA_INSTALL_ZIP -DestinationPath $env:PDCA_INSTALL_APP"],{stdio:'inherit',env:{...process.env,PDCA_INSTALL_ZIP:zip,PDCA_INSTALL_APP:app}});
     if(r.error||r.status!==0)fail('Extraction failed. Do not overwrite partial installation.');
   }

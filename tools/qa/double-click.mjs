@@ -31,7 +31,7 @@ async function stop(){
 async function projects(){
   const login=await fetch(url+'/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({displayName:'Double-click QA'})});
   assert.equal(login.status,201);const actor=await login.json();
-  const res=await fetch(url+'/api/pdcas',{headers:{Authorization:'Bearer '+actor.token}});
+  const res=await fetch(url+'/api/pdca',{headers:{Authorization:'Bearer '+actor.token}});
   assert.equal(res.status,200);return JSON.parse(await res.text());
 }
 try{
