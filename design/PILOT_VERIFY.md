@@ -8,7 +8,7 @@ Baseline ประวัติ BUILD 4: 10 พฤศจิกายน 2026 · �
 
 ## 1. ชุด Demo ทดสอบ — Verified Prebuilt ZIP เท่านั้น
 
-สำหรับ Factory synthetic verification ให้ IT ใช้ Candidate ZIP ที่ผ่านตรวจรับและได้รับอนุมัติแยกตาม [README4IT.html](../README4IT.html) เท่านั้น: ตรวจ SHA-256/Manifest, Setup, Seed ใน data root ว่าง, ADOPT, Status, Diagnose และ Start CMD. ไม่ต้อง clone, npm หรือ Registry บน Target. ห้าม seed ซ้ำหรือใช้ Demo Launcher เปิด Managed Host. ขั้นตอน Developer Source Checkout เดิมเก็บไว้ใน Git history และ README ส่วน Developer Local Test เท่านั้น ไม่ใช่ทางเลือกสำหรับ Factory IT. เปิด URL Direct HTTP ที่ Host แสดงจาก Edge ที่ได้รับอนุญาต และบันทึก Source/ZIP SHA ตาม Manifest และ Approval Record.
+สำหรับ Factory synthetic verification ให้ IT ใช้ Candidate ZIP ที่ผ่านตรวจรับและได้รับอนุมัติแยกตาม README4IT.html ฉบับภายนอกจาก Artifact ที่อนุมัติ (คู่มือภายในใช้สำหรับ Daily Start) เท่านั้น: ตรวจ SHA-256/Manifest, Setup, Seed ใน data root ว่าง, ADOPT, Status, Diagnose และ Start CMD. ไม่ต้อง clone, npm หรือ Registry บน Target. ห้าม seed ซ้ำหรือใช้ Demo Launcher เปิด Managed Host. ขั้นตอน Developer Source Checkout เดิมเก็บไว้ใน Git history และ README ส่วน Developer Local Test เท่านั้น ไม่ใช่ทางเลือกสำหรับ Factory IT. เปิด URL Direct HTTP ที่ Host แสดงจาก Edge ที่ได้รับอนุญาต และบันทึก Source/ZIP SHA ตาม Manifest และ Approval Record.
 
 | ผังตั้งต้น | สิ่งที่ใช้ตรวจ |
 | --- | --- |
@@ -67,7 +67,7 @@ Baseline ประวัติ BUILD 4: 10 พฤศจิกายน 2026 · �
 - ทดสอบ Restore → Prepare → ACTIVATE จากนั้นจัดเก็บ/ลบ Staging ตามนโยบาย แล้ว Restart/Backup ต้องใช้งานได้ด้วย Workspace ที่ Promote ไป `active-db/` อย่างถูกต้อง
 - ทดสอบ ROLLBACK หลังเปลี่ยน `scope_versions`, `save_receipts` หรือ `last_save_id` ต้องไม่สูญข้อมูลเงียบ; ตรวจค่า Full Inventory และหลักฐานเหตุการณ์
 - จำลองการขัดข้องระหว่าง Reseal Witness กับ Pointer Replacement; ต้อง Fail Closed และต้องมี IT-controlled Recovery Plan ไม่แก้ Pointer JSON ด้วยมือ
-- บันทึก Node.js Build/Run Version ตาม Manifest; รุ่นที่ CI ทดสอบคือ 24.11.0. หากใช้ Node Patch อื่น ให้แยกผล Revalidation/IT Approval ชัดเจน
+- บันทึก Node.js Build/Run Version ตาม Manifest; Direct-IP รองรับ stable Windows x64 Node 24.x ตั้งแต่ 24.11.0; CI ของ Candidate ใหม่ทดสอบ 24.11.0 และ 24.14.1. ใช้ Patch ที่ IT อนุมัติและบันทึกผล Revalidation หลังเปลี่ยน Runtime
 
 
 ### V-07 — C-01/C-02/C-03 Compatibility and Fault Injection
