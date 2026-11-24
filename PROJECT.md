@@ -1106,3 +1106,25 @@ This approval record is written **after** the frozen candidate commit. Later Pro
 - Gate IV actual Dedicated Server migration / relevant pilot readiness: HOLD / NOT TESTED; migration and rollback rehearsal, one writable authority and applicable IT/Owner acceptance required.
 - Merge, Final Release, Factory Deploy, real data and Official Pilot remain HOLD; actual IT distribution not authorized by this closure. PR #3 remains Draft/Open/Unmerged.
 - No runtime, database schema, security, recovery, dependency or test logic change authorized. Further actions require separate Owner approval.
+
+
+### Lean Engineering & Simplification V0.1 — Owner authorization (24 November 2026)
+
+Owner approved S01/S02/S03/S04/S06/S07/S11/S12/S13/S14 in two bounded increments: (1) rules, IT documentation and candidate preservation; (2) CI and Direct-IP delivery contents. No intermediate approval within scope; final engineering evidence and Owner acceptance required. No changes to src/web, schema, launchers, recovery logic, dependencies, security, product behavior or Factory/Pilot criteria; WP-01–09 remain CLOSED. Gate III/IV, Merge, Final Release, Factory Deploy, real data, official Pilot and actual IT distribution remain HOLD. Stop on scope expansion, unproven runtime equivalence, failed required checks, or IT policy conflict; revert only affected commits without rewriting history.
+
+**Current change-control policy (supersedes earlier per-WP re-verification/approval instructions for subsequent changes, not historical evidence):**
+
+| Change class | Minimum sufficient verification |
+| --- | --- |
+| C0 record only | Diff and requirement/record review; no rebuild or runtime CI. |
+| C1 docs only | Accuracy/link review; operational procedure changes require affected installation/recovery walkthrough. No full/parallel/F-07 by default. If a ZIP changes, check new SHA/manifest and unchanged executable/dependency inventory, independent package verification and affected smoke. |
+| C2 packaging/CI | Diff, trigger/failure-path check, new archive SHA/manifest and independent Windows clean target if package changes; full source regression once for material packaging/test orchestration changes; targeted extracted tests. |
+| C3 runtime | Separate Owner authorization for this project increment; targeted and full regression as risk requires; new package verification when distributed. Parallel and F-07 only when concurrency, contention, fresh-install stability or related harness changes justify them. |
+
+Classify mixed changes by highest impact; unknown impact is not grounds to skip checks. Verify exact source SHA, runtime/dependency file hashes (including packaged node_modules), Node/Windows compatibility and evidence mapping before reusing prior results. New ZIP is a new candidate, never a replacement for frozen artifact identity; new package acceptance is not runtime re-acceptance by default. Do not rebuild for record-only commits. PROJECT.md is the authoritative Owner/status record; CI and PR evidence are referenced, not recopied. Preserve historical records.
+
+D-046/D-106 remain authoritative: Host-only automatic backup on startup/every 2h, 30-day retention, RPO <=4h / RTO <=1 working day with surviving valid backups/infrastructure; total Host-storage loss may be unrecoverable. Off-host database backup is not required by project scope; IT policy may require it, in which case resolve before deployment. Preserve all existing integrity, recovery and admission controls.
+
+S14: original artifact 14898140722 downloaded in engineering session; inner ZIP SHA-256 dd2f9ee800b002c33d3726d7e855de2458868e2209f6527503c9dec74dc6e045, source a109423103732a905edee228e7caa5fdb3e1fbf6, and all 6,910 manifest entries independently checked against bytes. ZIP and sidecar supplied to Owner for authorized storage; durable IT storage/copy verification NOT TESTED. Original artifact expiry 2026-12-08 07:05:47 UTC. No publication or IT distribution authorized.
+
+Simplification implementation is pending engineering verification and final Owner acceptance. Preserve prior verified ZIP and Git baselines; no new runtime baseline asserted.

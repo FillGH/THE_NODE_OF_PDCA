@@ -4,7 +4,7 @@
 
 ระบบจัดการ PDCA แบบ Node และความสัมพันธ์เชื่อมโยง (หลายต่อหลาย) แทนการเก็บข้อมูลหลายประเด็นในเซลล์ Excel เดียว รองรับการไล่เหตุผลจาก Result กลับไปยัง Action, Hypothesis, Fact และ Problem ตลอดจนการทำงานร่วมกันบนข้อมูลชุดเดียวกัน
 
-**สถานะ:** BUILD 4 ผ่านการรับรองด้านฟังก์ชันโดย Project Owner แล้ว; WP-08 Windows CI Candidate ผ่านตรวจรับแล้ว; WP-09 IT Handover candidate อยู่ใน Draft PR รอตรวจรับ. **Factory LAN Verification, Factory Recovery Drill และ Official Pilot ยังไม่ผ่าน/ยังไม่เริ่มตามลำดับ** — ผล CI ไม่ใช่การอนุมัติใช้งานจริง
+**สถานะ:** Direct-IP WP-01–09 ผ่านตรวจรับในขอบเขต Engineering/Windows CI; Simplification V0.1 อยู่ระหว่างตรวจสอบ Candidate ใหม่. **Factory LAN Verification, Factory Recovery Drill และ Official Pilot ยังไม่ผ่าน/ยังไม่เริ่มตามลำดับ** — ผล CI ไม่ใช่การอนุมัติใช้งานจริง
 
 ## ใช้งานอะไรได้บ้าง
 
@@ -22,8 +22,8 @@
 | --- | --- |
 | **IT ติดตั้ง Windows Server / รับ ZIP / Backup–Restore** | **[README4IT.md](README4IT.md)** — จุดเริ่มต้นหลัก |
 | Factory LAN Verification / UAT Evidence | [design/PILOT_VERIFY.md](design/PILOT_VERIFY.md) |
-| Engineering Baseline / Acceptance / Requirements | [PROJECT.md](PROJECT.md) — **Source of Truth** |
-| Developer / AI Working Rules | [AGENTS.md](AGENTS.md) |
+| Engineering Baseline / Acceptance / Requirements | [PROJECT.md](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/PROJECT.md) — **Source of Truth** |
+| Developer / AI Working Rules | [AGENTS.md](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/AGENTS.md) |
 | รายละเอียดการสร้าง ZIP และ Recovery Safeguards | [deployment/PREBUILT_WINDOWS.md](deployment/PREBUILT_WINDOWS.md) |
 | Recovery Engine / Host Migration แบบเชิงลึก | [deployment/DIRECT_PRIVATE_IP_CANDIDATE.md](deployment/DIRECT_PRIVATE_IP_CANDIDATE.md) |
 

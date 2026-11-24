@@ -2,12 +2,12 @@
 
 **IT เริ่มจาก [README4IT.md](../README4IT.md) ก่อนเสมอ** — ไฟล์นี้มีรายละเอียดทางเทคนิคเพื่อใช้ตรวจสอบความถูกต้องและจัดการ Failure ไม่ใช่ชุดคำสั่งติดตั้งที่ IT ต้องอ่านตั้งแต่ต้น
 
-**สถานะ:** Implementation ผ่าน Windows CI ตาม GitHub Workflow ของ Commit ที่บรรจุใน Artifact เท่านั้น; ยังต้องผ่าน IT Review และ Factory LAN V-01..V-08. Source of Truth = [PROJECT.md](../PROJECT.md).
+**สถานะ:** Implementation ผ่าน Windows CI ตาม GitHub Workflow ของ Commit ที่บรรจุใน Artifact เท่านั้น; ยังต้องผ่าน IT Review และ Factory LAN V-01..V-08. Source of Truth = [PROJECT.md](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/PROJECT.md).
 
 ## 1. Packaging Provenance & Dependency Boundary
 
-- WP-08 exact source 7666598 was verified in CI; WP-09 re-packages changed documentation from its own exact commit and repeats independent target checks. Use the approved run, inner ZIP SHA-256 sidecar and manifest source commit, not an older hash. GitHub Artifact wrapper digest differs from inner ZIP hash.
-- Windows CI Node.js 24.11.0 runs locked npm ci and tests; independent Windows target has no source checkout, uses extracted node_modules, isolated Node runtime, verifies manifest and runs Direct/Recovery/LAN regression and actual Edge. No npm/Registry dependency on target. Not a physical airgap.
+- WP-08/WP-09 are historical accepted candidates. For new changes, use PROJECT.md risk-based C0–C3 policy: record-only changes do not rebuild; a changed ZIP needs new identity, SHA-256, manifest, runtime/dependency equivalence and impact-based independent verification. Use the approved run, inner ZIP SHA-256 sidecar and manifest source commit, not an older hash. GitHub Artifact wrapper digest differs from inner ZIP hash.
+- Windows CI Node.js 24.11.0 runs locked npm ci and tests; independent Windows target has no source checkout, uses extracted node_modules, isolated Node runtime, verifies manifest and runs applicable Direct/Recovery regression and actual Edge. Historical LAN contracts remain source-level tests for lean Direct-IP packaging. No npm/Registry dependency on target. Not a physical airgap.
 - Allowlist packages app, dependencies, tools and docs only. Runtime data/config/keys external. SHA-256 is integrity, not source authentication; compare approved GitHub source/run/record.
 - Candidate artifact is NOT RELEASE until separate authorization. Historic proxy workflow artifacts do not authorize Direct deployment.
 
@@ -48,7 +48,7 @@ Source Rollback และ Database Rollback เป็นคนละขั้น
 - **Factory Acceptance:** [design/PILOT_VERIFY.md](../design/PILOT_VERIFY.md) V-01..V-08, รันบน Windows Factory Host + Authorized/Unauthorized Clients จริง และวัด RPO/RTO ของ Restore Drill จริง
 - **NO-GO:** Source/Hash ไม่ตรง, Missing Audit/Pointer, ผู้ไม่รับอนุญาตเข้าถึง Direct endpoint, Incorrect Active DB, Silent Data Loss, Permission/Restore Failure หรือไม่มีหลักฐาน Recovery
 
-Operational Runbook สำหรับ Detail/Host Migration: [design/BUILD4_HOST_RUNBOOK.md](../design/BUILD4_HOST_RUNBOOK.md). Historical IT Requirements: [design/IT_HANDOFF.md](../design/IT_HANDOFF.md).
+Operational Runbook: [Direct operator guide](DIRECT_PRIVATE_IP_CANDIDATE.md). Historical references (repository only): [BUILD4_HOST_RUNBOOK.md](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/design/BUILD4_HOST_RUNBOOK.md), [IT_HANDOFF.md](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/design/IT_HANDOFF.md).
 
 ## F-01/F-05/F-06 — Data Integrity and Crash Recovery
 

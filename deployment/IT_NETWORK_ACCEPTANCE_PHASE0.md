@@ -1,6 +1,6 @@
 # IT Network Acceptance Matrix — Direct Private-IP LAN (revision 2)
 
-**Status: WP-09 handover candidate / FACTORY NOT TESTED.** See [ADR-001 revision 2](../design/architecture/ADR-001-private-ip-lan-transport.md) and [implementation plan](DIRECT_PRIVATE_IP_IMPLEMENTATION_PLAN.md). Owner reports IT permits the Float Monitor-style approach; actual PDCA controls and authorized data scope remain to be evidenced. No fake approval flags. Prior TLS/proxy criteria are retired for the selected direction, not treated as PASS. Existing D-065/D-066, G-07/G-11 and V-01–V-08 apply.
+**Status: WP-09 handover candidate / FACTORY NOT TESTED.** See [ADR-001 revision 2](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/design/architecture/ADR-001-private-ip-lan-transport.md) and [implementation plan](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/deployment/DIRECT_PRIVATE_IP_IMPLEMENTATION_PLAN.md). Owner reports IT permits the Float Monitor-style approach; actual PDCA controls and authorized data scope remain to be evidenced. No fake approval flags. Prior TLS/proxy criteria are retired for the selected direction, not treated as PASS. Existing D-065/D-066, G-07/G-11 and V-01–V-08 apply.
 
 | ID | IT / verification scope | Required evidence | STOP / NO-GO | Status |
 |---|---|---|---|---|
