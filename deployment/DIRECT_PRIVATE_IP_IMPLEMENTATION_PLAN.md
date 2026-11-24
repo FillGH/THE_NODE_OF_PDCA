@@ -1,6 +1,6 @@
 # Direct Private-IP LAN — Implementation Plan
 
-**Status: OWNER APPROVED WP-02–06; CANDIDATE UNDER VERIFICATION; NO MERGE / DEPLOY.** Date 2026-11-24. Owner explicitly approved ADR-001 rev2 and WP-02–06 with regression tests on 24 November 2026. ADR-001 revision 2 selects Direct HTTP/no proxy as planning direction. Runtime baseline `428885c44dda6aef7dd0bfbc8bd9cce13922388f`. Draft PR #1 remains untouched; planning-only PR #2. No time, budget or named IT assignee is assumed.
+**Status: OWNER APPROVED WP-07 FORMAL VERIFICATION; WP-08–09 HOLD; NO MERGE / DEPLOY.** Date 2026-11-24. Owner explicitly approved ADR-001 rev2 and WP-02–06 with regression tests on 24 November 2026. ADR-001 revision 2 selects Direct HTTP/no proxy as planning direction. Runtime baseline `428885c44dda6aef7dd0bfbc8bd9cce13922388f`. Draft PR #1 remains untouched; planning-only PR #2. No time, budget or named IT assignee is assumed.
 
 ## 1. Definition of Done
 
@@ -65,3 +65,7 @@ Stop if network scope unverified or changed, unauthorized client accepted, remot
 Owner command: "อนุมัติ ADR-001 revision 2 และแผน Direct Private-IP LAN ให้เริ่ม Implementation Phase 1–3 ตาม WP-02 ถึง WP-06 โดยรักษา Recovery exclusivity และ Data Integrity; ห้าม Merge/Deploy หรือใช้ข้อมูลจริงจนกว่าจะผ่าน Gate ที่กำหนด"
 
 **Disposition: WP-01 PREPARED; WP-02–06 AUTHORIZED / CANDIDATE IMPLEMENTATION; WP-07–09 HOLD except regression checks authorized within WP-02–06.** Verification results must be recorded separately. No Factory LAN configuration, deployment or acceptance is claimed.
+
+### WP-07 authorization (24 November 2026)
+
+Owner accepted F-10 (CI 45330657130, 3/3 fresh installs, 8/8 criteria) and approved WP-07 only. Gate II is not yet accepted. Reuse previous evidence only where the implementation is unchanged and the check maps to the requirement. Keep F-07 synthetic and Factory evidence separate. WP-08/09, Release, Merge, Deploy and real data/Pilot remain HOLD. Historical EACCES OS cause not established; retain bind/lease guards.

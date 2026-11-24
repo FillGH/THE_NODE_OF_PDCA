@@ -119,6 +119,107 @@ try {
     return graph.nodes.find(n=>n.title==='HTTP UUID fallback node');
   });
   assert.match(saved.id,/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/);
+
+  // WP-07: all browser actions go through actual page event handlers, never internal state mutation.
+  const list=await (await fetch(config.origin+'/api/pdca',{headers})).json();
+  const pdca=list.find(p=>p.title==='Direct Edge regression');
+  assert.ok(pdca);
+  const base=config.origin+'/api/pdca/'+pdca.id;
+  const graph=async()=>{const r=await fetch(base,{headers});assert.equal(r.status,200);return r.json();};
+  const click=selector=>evaluate('document.querySelector('+JSON.stringify(selector)+').click();true');
+  const ready=selector=>until(selector,()=>evaluate('!!document.querySelector('+JSON.stringify(selector)+') && !document.querySelector('+JSON.stringify(selector)+').disabled'));
+  const setField=(selector,value,event='input')=>evaluate('(()=>{const f=document.querySelector('+JSON.stringify(selector)+');f.value='+JSON.stringify(value)+';f.dispatchEvent(new Event('+JSON.stringify(event)+',{bubbles:true}));return true;})()');
+  const selectCard=id=>evaluate('document.querySelector('+JSON.stringify('[data-node-id="'+id+'"]')+').dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}));true');
+  const uuid=/^[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89ab][a-f0-9]{3}-[a-f0-9]{12}$/;
+  const prior=(await graph()).revision;
+  await ready('#addGeneral');await click('#addGeneral');
+  await until('Second node dialog',()=>evaluate("document.querySelector('#newModal').open"));
+  await evaluate("document.querySelector('#createTitle').value='WP07 second node';document.querySelector('#nodeForm').requestSubmit();true");
+  const second=await until('Second persisted node',async()=>{const g=await graph();return g.revision>prior&&g.nodes.find(n=>n.title==='WP07 second node');});
+  assert.match(second.id,uuid);assert.notEqual(saved.id,second.id);
+  await until('Second inspector',()=>evaluate("document.querySelector('#nodeTitle')?.value==='WP07 second node'"));
+  await ready('#inspectorTarget');await setField('#inspectorTarget',saved.id,'change');await click('[data-add-edge]');
+  const linked=await until('Persisted edge',async()=> (await graph()).edges.find(e=>e.from===second.id&&e.to===saved.id));
+  assert.match(linked.id,uuid);
+  await until('Duplicate edge not offered',()=>evaluate("!document.querySelector('#inspectorTarget') || ![...document.querySelector('#inspectorTarget').options].some(o=>o.value==="+JSON.stringify(saved.id)+")"));
+  await ready('[data-edit-edge]');await click('[data-edit-edge]');
+  await until('Edge edit dialog',()=>evaluate("document.querySelector('#edgeDialog').open"));
+  await evaluate("document.querySelector('#edgeLabel').value='WP07 edited relation';document.querySelector('#edgeDialog form').requestSubmit();true");
+  await until('Edge edit persisted',async()=> (await graph()).edges.some(e=>e.id===linked.id&&e.label==='WP07 edited relation'));
+  await until('Node title available',()=>evaluate("!!document.querySelector('#nodeTitle')"));
+  await click('#nodeTitle');
+  await until('Node edit permission',()=>evaluate("document.querySelector('#nodeTitle')&&!document.querySelector('#nodeTitle').readOnly"));
+  await setField('#nodeTitle','WP07 edited node');
+  await until('Edited node persisted',async()=> (await graph()).nodes.some(n=>n.id===second.id&&n.title==='WP07 edited node'));
+  await until('Document field writable',()=>evaluate("!!document.querySelector('#documentUrl')&&!document.querySelector('#documentUrl').readOnly"));
+  await setField('#documentUrl','https://example.invalid/wp07');await click('[data-add-document]');
+  await until('Document persisted',async()=> (await graph()).nodes.find(n=>n.id===second.id)?.documents.includes('https://example.invalid/wp07'));
+  await until('Image input available',()=>evaluate("!!document.querySelector('#nodeImage')&&!document.querySelector('#nodeImage').disabled&&!document.querySelector('#nodeTitle').readOnly"));
+  const dom=await cdp('DOM.getDocument');
+  const input=await cdp('DOM.querySelector',{nodeId:dom.root.nodeId,selector:'#nodeImage'});
+  await cdp('DOM.setFileInputFiles',{nodeId:input.nodeId,files:[join(stage,'demo/assets/cutting.png')]});
+  const attached=await until('Image persisted',async()=> (await graph()).nodes.find(n=>n.id===second.id)?.images[0]);
+  assert.match(attached.id,uuid);
+  const imageResponse=await fetch(config.origin+'/api/images/'+attached.id,{headers});
+  assert.equal(imageResponse.status,200);
+  assert.ok((await imageResponse.arrayBuffer()).byteLength>0);
+  await click('#closeDrawer');
+  await until('Drawer closed',()=>evaluate("document.querySelector('#drawer').inert"));
+  await click('#showHistory');
+  await until('History rendered',()=>evaluate("document.querySelector('#recordDialog').open && document.querySelector('#recordList').innerText.includes('WP07 edited node')"));
+  await click('#closeRecords');
+  await cdp('Browser.setDownloadBehavior',{behavior:'allow',downloadPath:browserDir});
+  await click('#showExport');
+  for(const [format,label] of [['pdf','PDF'],['xlsx','Excel'],['json','JSON']]){
+    await evaluate("Array.from(document.querySelectorAll('#recordList button')).find(b=>b.textContent==="+JSON.stringify(label)+").click();true");
+    const bytes=await until('Downloaded '+format,()=>{const path=join(browserDir,'PDCA-'+pdca.id+'.'+format);return existsSync(path)&&readFileSync(path);},65000);
+    if(format==='pdf')assert.equal(bytes.subarray(0,4).toString(),'%PDF');
+    if(format==='xlsx')assert.equal(bytes.subarray(0,2).toString(),'PK');
+    if(format==='json'){const data=JSON.parse(bytes.toString());assert.equal(data.pdca.id,pdca.id);assert.ok(data.nodes.some(n=>n.id===second.id&&n.title==='WP07 edited node'));}
+  }
+  await click('#closeRecords');
+  // The app must hide admin UI and deny direct privileged HTTP even with a correct synthetic IT key.
+  assert.equal(await evaluate("document.querySelector('#showAudit').hidden"),true);
+  for(const [path,method] of [['/api/deletion-audit','GET'],['/api/operations/restore','POST']]){
+    for(const key of [undefined,env.PDCA_IT_KEY]){
+      const r=await fetch(config.origin+path,{method,headers:{...headers,...(key?{'X-Pdca-Operator-Key':key}:{}),...(method==='POST'?{'Content-Type':'application/json'}:{})},...(method==='POST'?{body:'{}'}:{})});
+      assert.equal(r.status,403);
+    }
+  }
+  await selectCard(second.id);
+  await until('Selected node for trash',()=>evaluate("document.querySelector('#nodeTitle')?.value==='WP07 edited node'"));
+  await cdp('Page.enable');
+  const trashClick=click('[data-record-action="trash"]');
+  await until('Confirm trash dialog',async()=>{try{await cdp('Page.handleJavaScriptDialog',{accept:true});return true;}catch{return false;}});
+  await trashClick;
+  await until('Node moved to Trash',async()=>!(await graph()).nodes.some(n=>n.id===second.id));
+  await click('#home');
+  await until('Workspace home',()=>evaluate("!document.querySelector('#createPdca').disabled && document.querySelector('#overlay').classList.contains('open')"));
+  await click('#showTrash');
+  await until('Trash row',()=>evaluate("Array.from(document.querySelectorAll('#recordList article')).some(a=>a.innerText.includes('WP07 edited node'))"));
+  await evaluate("Array.from(document.querySelectorAll('#recordList article')).find(a=>a.innerText.includes('WP07 edited node')).querySelector('button').click();true");
+  await until('Trash restored',async()=> (await graph()).nodes.some(n=>n.id===second.id&&n.images.some(i=>i.id===attached.id)));
+  await click('#closeRecords');
+  await click('#sessionEnd');
+  await until('Browser session ended',()=>evaluate("document.querySelector('#identityDialog').open"));
+  // Verify saved state after abrupt Host exit and independent CLI integrity check, then restart.
+  kill(host);
+  const status=spawnSync(process.execPath,['--env-file='+file,join(stage,'src/ops.js'),'status'],{env:{...process.env,PDCA_OPERATOR_KEY:env.PDCA_IT_KEY},encoding:'utf8',timeout:20000});
+  assert.equal(status.status,0,'Post-exit local Status: '+status.stderr);
+  host=spawn(process.env.ComSpec,cmdargs('start'),{windowsVerbatimArguments:true,stdio:'ignore'});
+  await until('Restarted managed host',async()=> (await fetch(config.origin+'/',{signal:AbortSignal.timeout(1500)})).status===200);
+  await cdp('Page.navigate',{url:config.origin+'/'});
+  await until('Identity after restart',()=>evaluate("document.querySelector('#identityDialog').open"));
+  await evaluate("document.querySelector('#displayName').value='WP07 after restart';document.querySelector('#identityForm').requestSubmit();true");
+  await until('Saved workspace after restart',()=>evaluate("!!document.querySelector('[data-pdca="+JSON.stringify(pdca.id)+"]')"));
+  const login2=await fetch(config.origin+'/api/session',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({displayName:'WP07 verification'})});
+  assert.equal(login2.status,201);
+  const actor2=await login2.json();
+  const after=await (await fetch(base,{headers:{Authorization:'Bearer '+actor2.token}})).json();
+  assert.ok(after.nodes.some(n=>n.id===second.id&&n.title==='WP07 edited node'&&n.images.some(i=>i.id===attached.id)&&n.documents.includes('https://example.invalid/wp07')));
+  assert.ok(after.edges.some(e=>e.id===linked.id&&e.label==='WP07 edited relation'));
+  console.log('WP07 EDGE EXTENDED PASS: node and edge UUID/edit, duplicate UI guard, document/image, History, PDF/XLSX/JSON downloads, remote privilege denial, Trash restore, session end, managed restart and persistence');
+
   assert.deepEqual(errors,[],'Browser runtime exception(s)');
   console.log('DIRECT EDGE PASS: actual private-IP HTTP insecure context; real Edge login, create PDCA, create Node, autosave persisted UUID v4 and independent Session read; staged Diagnose/Start BAT PASS');
 } finally {
