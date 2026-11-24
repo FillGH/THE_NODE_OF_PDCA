@@ -339,6 +339,24 @@ try {
   assert.ok(after.edges.some(e=>e.id===linked.id&&e.label==='WP07 edited relation'));
   console.log('WP07 EDGE EXTENDED PASS: node and edge UUID/edit, duplicate UI guard, document/image, History, PDF/XLSX/JSON downloads, remote privilege denial, Trash restore, session end, managed restart and persistence');
 
+  // Onboarding-only local file UI: real browser, no web server for the guide.
+  const guide=join(stage,'README4IT.html');
+  if(existsSync(guide)){
+    await cdp('Page.navigate',{url:pathToFileURL(guide).href});
+    await until('Offline HTML guide loaded',()=>evaluate("location.protocol==='file:' && !!document.querySelector('#copyPrepare')"));
+    assert.equal(await evaluate("document.querySelector('#copyPrepare').disabled"),true);
+    const fields={base:join(tmpdir(),'PDCA Guide Test (Offline)'),zip:'PDCA-Direct-Windows-CANDIDATE-0123456789ab.zip',hash:'a'.repeat(64),ip:'192.168.1.50',port:'4175'};
+    await evaluate("Object.entries("+JSON.stringify(fields)+").forEach(([id,value])=>{const el=document.getElementById(id);el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));});document.querySelector('#approved').click();true");
+    assert.equal(await evaluate("document.querySelector('#copyPrepare').disabled || document.querySelector('#copySetup').disabled"),false);
+    assert.equal(await evaluate("document.querySelector('#setup').value.includes('seed --existing-empty')"),true);
+    await evaluate("document.querySelector('#ip').value='8.8.8.8';document.querySelector('#ip').dispatchEvent(new Event('input',{bubbles:true}));true");
+    assert.equal(await evaluate("document.querySelector('#copySetup').disabled"),true);
+    await evaluate("document.querySelector('#dailyTab').click();true");
+    assert.equal(await evaluate("document.querySelector('#first').hidden && !document.querySelector('#copyStart').disabled && !document.querySelector('#start').value.includes('seed --existing-empty')"),true);
+    await evaluate("document.querySelector('#copyStart').click();true");
+    await until('Guide clipboard feedback',()=>evaluate("document.querySelector('#copyStatus').textContent.length>0"));
+    console.log('HTML GUIDE EDGE PASS: local file UI, settings, invalid IP blocked, daily start, copy action feedback');
+  }
   assert.deepEqual(errors,[],'Browser runtime exception(s)');
   console.log('DIRECT EDGE PASS: actual private-IP HTTP insecure context; real Edge login, create PDCA, create Node, autosave persisted UUID v4 and independent Session read; staged Diagnose/Start BAT PASS');
 } finally {

@@ -128,10 +128,12 @@ if(typeof document!=="undefined"){
   }
   async function copy(key){
     const area=$(key),value=area.value;if(!value||!$("approved").checked)return;
-    try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(value);$("copyStatus").textContent="คัดลอกแล้ว — วางใน PowerShell";return;}}catch{}
+    const btn=$("copy"+key[0].toUpperCase()+key.slice(1)),label=btn.textContent;
+    const feedback=message=>{$("copyStatus").textContent=message;btn.textContent=message.startsWith("คัดลอกแล้ว")?"คัดลอกแล้ว ✓":"เลือกข้อความแล้ว";setTimeout(()=>{btn.textContent=label;},1800);};
+    try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(value);feedback("คัดลอกแล้ว — วางใน PowerShell");return;}}catch{}
     area.closest("details").open=true;area.focus();area.select();
-    try{if(document.execCommand("copy")){$("copyStatus").textContent="คัดลอกแล้ว — วางใน PowerShell";return;}}catch{}
-    $("copyStatus").textContent="Browser ไม่อนุญาต Clipboard: เลือกคำสั่งที่แสดงแล้วกด Ctrl+C";
+    try{if(document.execCommand("copy")){feedback("คัดลอกแล้ว — วางใน PowerShell");return;}}catch{}
+    feedback("Browser ไม่อนุญาต Clipboard: เลือกคำสั่งที่แสดงแล้วกด Ctrl+C");
   }
   for(const id of ["base","zip","hash","ip","port","approved"])$(id).addEventListener("input",refresh);
   $("pick").addEventListener("change",()=>{if($("pick").files.length){$("zip").value=$("pick").files[0].name;refresh();}});
