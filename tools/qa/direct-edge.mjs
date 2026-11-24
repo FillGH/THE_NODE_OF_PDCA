@@ -344,20 +344,8 @@ try {
   if(guide&&existsSync(guide)){
     await cdp('Page.navigate',{url:pathToFileURL(guide).href});
     await until('Offline HTML guide initialized',()=>evaluate("location.protocol==='file:' && document.readyState==='complete' && document.body.dataset.guideReady==='true'"));
-    assert.equal(await evaluate("document.querySelector('#copyPrepare').disabled && !document.querySelector('#hash')"),true);
-    const fields={base:join(stage,'..','PDCA Guide Test (Offline)'),ip:'192.168.1.50',port:'4175'};
-    await evaluate("Object.entries("+JSON.stringify(fields)+").forEach(([id,value])=>{const el=document.getElementById(id);el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));});document.querySelector('#approved').click();true");
-    const guideState=await evaluate("({prepare:document.querySelector('#copyPrepare').disabled,setup:document.querySelector('#copySetup').disabled,approved:document.querySelector('#approved').checked,error:document.querySelector('#validation').textContent,base:document.querySelector('#base').value})");
-    assert.equal(guideState.prepare||guideState.setup,false,'Guide controls not ready: '+JSON.stringify(guideState));
-    assert.equal(await evaluate("document.querySelector('#setup').value.includes('seed --existing-empty')"),true);
-    assert.equal(await evaluate("document.querySelector('#zip').value===DELIVERY.zip && document.querySelector('#prepare').value.includes(DELIVERY.source) && !document.querySelector('#prepare').value.includes('Get-FileHash')"),true);
-    await evaluate("document.querySelector('#ip').value='8.8.8.8';document.querySelector('#ip').dispatchEvent(new Event('input',{bubbles:true}));true");
-    assert.equal(await evaluate("document.querySelector('#copySetup').disabled"),true);
-    await evaluate("document.querySelector('#dailyTab').click();true");
-    assert.equal(await evaluate("document.querySelector('#first').hidden && !document.querySelector('#copyStart').disabled && !document.querySelector('#start').value.includes('seed --existing-empty')"),true);
-    await evaluate("document.querySelector('#copyStart').click();true");
-    await until('Guide clipboard feedback',()=>evaluate("document.querySelector('#copyStatus').textContent.length>0"));
-    console.log('HTML GUIDE EDGE PASS: local file UI, settings, invalid IP blocked, daily start, copy action feedback');
+    assert.equal(await evaluate("['install','layout','start','recovery'].every(id=>!!document.getElementById(id)) && document.getElementById('version').textContent.includes(DELIVERY.source) && !document.querySelector('input')"),true);
+    console.log('HTML GUIDE EDGE PASS: offline maintenance guide, stable layout, source metadata, no manual entry');
   }
   assert.deepEqual(errors,[],'Browser runtime exception(s)');
   console.log('DIRECT EDGE PASS: actual private-IP HTTP insecure context; real Edge login, create PDCA, create Node, autosave persisted UUID v4 and independent Session read; staged Diagnose/Start BAT PASS');

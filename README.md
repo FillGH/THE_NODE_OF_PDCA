@@ -27,7 +27,7 @@
 | รายละเอียดการสร้าง ZIP และ Recovery Safeguards | [deployment/PREBUILT_WINDOWS.md](deployment/PREBUILT_WINDOWS.md) |
 | Recovery Engine / Host Migration แบบเชิงลึก | [deployment/DIRECT_PRIVATE_IP_CANDIDATE.md](deployment/DIRECT_PRIVATE_IP_CANDIDATE.md) |
 
-**ผู้รับมอบระบบจาก IT:** เปิด **README4IT.html** เปิดไฟล์ HTML ด้วย Edge โดยตรงหลังดาวน์โหลด ไม่ต้องอ่านประวัติ BUILD 1–4 หรือเริ่มจากคำสั่ง npm
+**ผู้รับมอบระบบจาก IT:** เปิด **SETUP.cmd** จากชุดส่งมอบที่อนุมัติ เลือก Folder ติดตั้งแยก. เปิด START.cmd ใน Installed System สำหรับครั้งต่อไป; คู่มือใน Maintenance/README4IT.html. ไม่ต้อง npm
 
 ## Developer Local Test (ไม่ใช่คำสั่งติดตั้งบน Factory Server)
 

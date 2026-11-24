@@ -1,150 +1,30 @@
 <!doctype html>
-<html lang="th">
-<head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data:; connect-src 'none'; base-uri 'none'; form-action 'none'">
-<title>THE NODE OF PDCA | เริ่มใช้งาน</title>
-<style>
-:root{color-scheme:light;--ink:#172c40;--muted:#536577;--line:#d9e2ea;--blue:#1263ac;--paper:#fff;--bg:#f2f6f9;--warn:#8c4a04}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.65 "Segoe UI",Tahoma,sans-serif}main{max-width:930px;margin:auto;padding:24px}header{background:#123b59;color:white;padding:28px 30px;border-radius:16px}header p{margin:6px 0 0;color:#d9e9f3}h1{font-size:30px;line-height:1.25;margin:0}h2{font-size:22px;margin:0 0 12px}h3{font-size:18px;margin:0 0 6px}p{margin:6px 0 12px}.card{background:var(--paper);border:1px solid var(--line);border-radius:12px;padding:20px;margin-top:16px}.notice{border-left:4px solid #be790b;background:#fff7e8;padding:12px 16px;border-radius:6px;color:#633b08}.muted,small{color:var(--muted)}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}.full{grid-column:1/-1}label{display:block;font-weight:600;margin:8px 0 4px}input:not([type=checkbox]),textarea{font:inherit;width:100%;padding:9px 12px;border:1px solid #a6b5c3;border-radius:7px;background:white;color:var(--ink)}input[type=file]{font-size:14px}input[type=checkbox]{width:18px;height:18px;vertical-align:middle;margin-right:8px}button{font:inherit;border:0;border-radius:8px;background:var(--blue);color:white;font-weight:600;padding:10px 17px;cursor:pointer}button.secondary{background:#e8f1f8;color:#134b79}button:disabled{opacity:.48;cursor:not-allowed}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid #ebac38;outline-offset:2px}.actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}.step{border-top:1px solid var(--line);padding:16px 0}.step:first-child{border-top:0}.num{display:inline-grid;place-items:center;width:29px;height:29px;background:#e7f1fa;color:#134b79;border-radius:50%;margin-right:8px}.steps{margin-top:8px}.status{font-weight:600;color:#12663e;min-height:25px;margin:4px 0}.error{color:#9b310b}.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.tabs button[aria-selected=true]{background:#123b59;color:#fff}.tabs button[aria-selected=false]{background:#e2eaf0;color:#253e54}details{margin:8px 0}summary{cursor:pointer;color:#245b8d}textarea.cmd{font:13px/1.5 Consolas,monospace;min-height:100px;white-space:pre;overflow:auto;background:#f6f8fa;resize:vertical}code{font-family:Consolas,monospace;overflow-wrap:anywhere}ol,ul{padding-left:25px;margin:8px 0}a{color:#1263ac}footer{font-size:13px;color:var(--muted);margin:20px 0}[hidden]{display:none!important}@media(max-width:650px){main{padding:12px}.grid{grid-template-columns:1fr}header,.card{padding:16px}h1{font-size:24px}}
-</style>
-</head>
-<body><main>
-<header><h1>THE NODE OF PDCA</h1><p>คู่มือเปิดใช้งานบน Windows · Double-click Quick Start</p></header>
-<div class="card notice"><strong>สำหรับ Factory Test ด้วยข้อมูลสมมติเท่านั้น</strong><br>ก่อนเปิด LAN ให้ IT ยืนยันเครื่อง, IP/Port, สิทธิ์เข้าถึงและ ACL รวมถึงความเสี่ยง HTTP (ไม่เข้ารหัส; Display Name ไม่ใช่การยืนยันตัวตน) ห้ามเปิดให้ Guest/VPN/Internet หรือเครื่องที่ไม่ได้รับอนุญาต หาก IT กำหนด TLS ให้หยุด ไม่เปลี่ยน Firewall หรือ Policy เอง</div>
-<section class="card"><h2>เริ่มใช้งาน — ไม่ต้อง Copy คำสั่ง</h2><p><strong>ครั้งแรก:</strong> แตก ZIP ชั้นนอกทั้งหมดลง Folder ใหม่ เปิด SETUP.cmd กรอก IP และ Port ที่ IT อนุมัติ (Enter ใช้ 4175 เมื่อ IT อนุมัติ) ตรวจ ACL และพิมพ์ GO เพียงครั้งเดียว ระบบจะเตรียมข้อมูลสมมติ ตรวจฐานข้อมูล และเปิด Browser ให้เอง</p><p><strong>ครั้งต่อไป:</strong> เปิด START.cmd เท่านั้น ไม่ต้อง Seed หรือ ADOPT ซ้ำ ปิด Host ด้วย Ctrl+C หลังจัดการ Draft และปิดการเข้าถึงตาม IT policy</p><p class="notice">เก็บ _support ไว้ด้วย หากมีข้อมูลเดิม ห้าม Setup ใหม่ใน Folder เดิมหรือย้ายฐานข้อมูลเอง ให้ใช้คู่มือเดิม/IT migration หากมี STOP ให้เก็บข้อมูลทั้งหมดไว้ ไม่แก้ Firewall หรือ Execution Policy เอง</p></section><details><summary>ขั้นตอนเดิมแบบ Manual (สำหรับ IT Troubleshooting เท่านั้น)</summary><nav class="tabs" aria-label="เลือกงาน">
-<button type="button" id="firstTab" aria-selected="true">ติดตั้งครั้งแรก</button>
-<button type="button" id="dailyTab" aria-selected="false">เปิดโปรแกรมครั้งต่อไป</button>
-</nav>
-<section class="card">
-<h2>1. ระบุตำแหน่งไฟล์</h2>
-<p>สำหรับ Manual fallback เท่านั้น: ใช้ ZIP โปรแกรมและ HTML จากชุดที่ได้รับอนุมัติใน Folder เดียวกัน</p>
-<label for="base">Folder ที่วางไฟล์</label><input id="base" placeholder="D:\PDCA Test" autocomplete="off" spellcheck="false">
-<div class="grid">
-<div class="full"><label for="zip">ชื่อ Candidate ZIP</label><input id="zip" placeholder="PDCA-Direct-Windows-CANDIDATE-xxxxxxxxxxxx.zip" autocomplete="off" spellcheck="false"><small>ชื่อ ZIP ถูกเติมให้อัตโนมัติ หากเปลี่ยนชื่อไฟล์ให้เลือก ZIP ใหม่</small><input id="pick" type="file" accept=".zip" aria-label="เลือก Inner ZIP"></div>
-<div id="deliveryBox" class="full"><small id="deliveryNote">ใช้ ZIP จากชุดที่ได้รับอนุมัติเท่านั้น ไม่ต้องกรอกหรือตรวจ checksum เอง</small></div>
-<div id="ipBox"><label for="ip">IPv4 ของ Laptop ที่ IT อนุมัติ</label><input id="ip" placeholder="กรอก IP จริงจาก IT" autocomplete="off" spellcheck="false"><small>ดูด้วย <code>ipconfig</code> แต่ให้ IT เลือก NIC ที่ถูกต้อง</small></div>
-<div id="portBox"><label for="port">Port ที่ IT อนุมัติ</label><input id="port" type="text" inputmode="numeric" placeholder="เช่น 4175" autocomplete="off"><small>ตัวอย่างเท่านั้น ไม่ใช่การอนุมัติ</small></div>
-</div>
-<p class="muted" id="paths">เมื่อกรอกชื่อ ZIP จะเห็น Folder ที่โปรแกรมใช้</p>
-<div class="status error" id="validation" role="status" aria-live="polite"></div>
-<label><input type="checkbox" id="approved">IT อนุญาต Host, Endpoint, Network/Data Scope แล้ว และจะใช้ข้อมูลสมมติเท่านั้น</label>
-<small>ช่องยืนยันนี้เป็นเพียงตัวช่วย ไม่ใช่หลักฐาน IT Approval และไม่แทนการตรวจจริง</small>
-</section>
-<section class="card" id="first">
-<h2>2. ติดตั้งครั้งแรก</h2>
-<p>เปิด <strong>Windows PowerShell</strong> ปกติ (ไม่ต้อง Run as Administrator เว้นแต่ IT กำหนด) แล้วคัดลอกคำสั่งทีละขั้น กด Enter และตรวจผลก่อนขั้นถัดไป</p>
-<div class="steps">
-<div class="step"><h3><span class="num">1</span>ตรวจ ZIP และแตกไฟล์</h3><p>ใช้ Node.js <strong>24.x ตั้งแต่ 24.11.0</strong> (Windows x64 รุ่นที่ IT อนุมัติ) ไม่ต้อง Downgrade คำสั่งตรวจ Node, แตก ZIP และตรวจ Manifest อัตโนมัติ ไม่เขียนทับ Folder เดิม</p><div class="actions"><button id="copyPrepare" type="button" disabled>คัดลอกคำสั่ง 1</button><small>รอข้อความ PACKAGE READY</small></div><details><summary>ดูคำสั่ง</summary><textarea readonly class="cmd" id="prepare" aria-label="คำสั่งตรวจและแตก ZIP"></textarea></details></div>
-<div class="step"><h3><span class="num">2</span>เตรียม Config และข้อมูลสมมติ</h3><p>คำสั่งสร้าง Folder แยก ตรวจว่า IP/Port bind ได้ และหยุดถาม 2 ครั้ง ให้พิมพ์ GO เมื่อ IT ยืนยัน Endpoint/ข้อมูลสมมติ และตรวจสิทธิ์ NTFS จริงแล้ว จากนั้นใช้ Setup และ Seed เดิม ไม่เขียนทับข้อมูล</p><div class="actions"><button id="copySetup" type="button" disabled>คัดลอกคำสั่ง 2</button><small>รอข้อความ SYNTHETIC SEED READY</small></div><details><summary>ดูคำสั่ง</summary><textarea readonly class="cmd" id="setup" aria-label="คำสั่ง Setup และ Seed"></textarea></details><p class="notice">หากหยุดก่อนสร้าง host.env และทั้ง Folder Config/Data ยังว่างจริง สามารถกดคำสั่ง 2 ซ้ำได้หลัง IT ตรวจสิทธิ์ หากมีไฟล์ใดแล้วให้ STOP ห้ามลบ Folder / Seed ซ้ำ / แก้ Pointer เอง หากเห็น SYNTHETIC SEED READY แล้ว ให้ไปขั้น 3 เท่านั้น</p></div>
-<div class="step"><h3><span class="num">3</span>ยืนยันฐานข้อมูลครั้งแรก (ADOPT)</h3><p>ให้ผู้ดูแล IT เปิด <code id="keyFile">config\host.env</code> ด้วย Notepad เฉพาะในเครื่องนี้ เพื่ออ่านค่า PDCA_IT_KEY (ไม่รวมเครื่องหมายคำพูด) ปิดไฟล์โดยไม่บันทึก ห้ามส่ง Key หรือภาพหน้าจอที่มี Key</p><div class="actions"><button id="copyRecovery" type="button" disabled>คัดลอกคำสั่ง 3</button></div><details><summary>ดูคำสั่ง</summary><textarea readonly class="cmd" id="recovery" aria-label="คำสั่ง Recovery Menu"></textarea></details>
-<ol><li>กรอก IT Key ในช่องที่ไม่แสดงตัวอักษร</li><li>เลือก <strong>3</strong> แล้วพิมพ์ <strong>ADOPT</strong></li><li>เลือก <strong>1</strong> ตรวจ Status ต้องสำเร็จ ไม่มี Warning/Blocked/Busy และคู่ฐานถูกต้อง</li><li>เลือก <strong>0</strong> ออกจากเมนู แล้วไปเปิดโปรแกรมด้านล่าง</li></ol></div>
-</div>
-</section>
-<section class="card" id="startCard">
-<h2>3. เปิดโปรแกรม</h2>
-<p>ติดตั้งและ ADOPT สำเร็จแล้วเท่านั้น ครั้งต่อไปเปิด HTML ใน Folder app เดิม เลือก “เปิดโปรแกรมครั้งต่อไป” และใช้คำสั่งนี้ ไม่ต้อง Setup/Seed/ADOPT ใหม่</p>
-<div class="actions"><button id="copyStart" type="button" disabled>คัดลอกคำสั่งเปิดโปรแกรม</button><small>Diagnose ต้องผ่านก่อน Start</small></div>
-<details><summary>ดูคำสั่ง</summary><textarea readonly class="cmd" id="start" aria-label="คำสั่งเปิดโปรแกรม"></textarea></details>
-<p><strong>เปิด URL ที่หน้าต่าง Host แสดง</strong> ใน Edge และเปิด URL เดียวกันจากเครื่องลูกข่ายที่ IT อนุญาต ห้ามใช้ข้อมูลจริง ให้หน้าต่าง PowerShell ทำงานอยู่ตลอด เมื่อหยุดงานให้บันทึกและจัดการ Draft ก่อนปิด access, กด Ctrl+C แล้วตรวจว่า process จบ</p>
-<div id="copyStatus" class="status" aria-live="polite" role="status"></div>
-</section>
-</details><section class="card"><h2>ถ้าเปิดไม่ได้</h2>
-<details><summary>Node ไม่พบ / Version ไม่ตรง</summary><p>ให้ IT จัด Node.js 24.x ตั้งแต่ 24.11.0 ขึ้นไปที่อนุญาตและมี Security Patch เหมาะสม หากอัปเดต Runtime ให้ทดสอบเปิด/บันทึก/Backup/Recovery ก่อนใช้จริง ไม่ติดตั้ง npm package หรือดาวน์โหลด Registry บน Target</p></details>
-<details><summary>แตก ZIP ไม่สำเร็จ / Manifest ไม่ตรง หรือมี Folder เดิม</summary><p>STOP ใช้ ZIP จากชุดที่ได้รับอนุมัติ ห้ามแก้ไฟล์ใน app หรือแตกทับเดิม หากมี Config/Data เดิมใช้ Daily Start หรือ Migration ที่ได้รับการตรวจ</p></details>
-<details><summary>IP/Port ไม่ผ่าน / เครื่องอื่นเข้าไม่ได้</summary><p>ให้ IT ตรวจ assigned private IP, port bind, Firewall/ACL/NAC, guest/VPN/Internet และ access revocation ห้ามเปลี่ยนเป็น 0.0.0.0, ปิด Firewall หรือข้าม IT policy</p></details>
-<details><summary>หยุดกลางทาง ต้องเริ่มตรงไหน?</summary><p>หาก Windows แจ้ง Path ยาวเกินไป ให้ย้ายชุดไฟล์ไป Folder สั้นลงก่อนติดตั้งใหม่ ถ้า PACKAGE READY แล้ว ไม่ต้องแตก ZIP ซ้ำ ไปขั้น 2 ได้เลย ถ้าหยุดก่อนสร้าง Config/DB และ Folder ยังว่างจริง ให้รันขั้น 2 ซ้ำได้ หาก Seed สำเร็จแล้วและยังไม่ ADOPT ให้ทำขั้น 3 หลัง IT ยืนยันข้อมูลสมมติเดิม ถ้าไม่ทราบสถานะหรือมีไฟล์บางส่วน ให้ IT ตรวจ ห้ามลบหรือ Seed ทับ</p></details><details><summary>ADOPT / Status / Recovery ไม่ผ่าน</summary><p>หยุด Host ทั้งหมด เก็บข้อมูลและหลักฐานเดิม ให้ IT ตรวจคู่ Workspace/Audit และ Active Pointer ห้าม Seed ซ้ำ แก้ DB/Pointer หรือลบ Host Exclusion Lock</p></details>
-</section>
-<section class="card"><h2>สำหรับ IT — การดูแลและตรวจรับ</h2>
-<p>Backup บน Host เมื่อ Start และทุก 2 ชั่วโมง, retention 30 วัน; ทั้ง Host เสียหายอาจกู้ไม่ได้ Off-host ขึ้นกับ IT policy และต้องรักษาคู่ Workspace/Audit ที่ถูกต้อง RPO ≤4 ชั่วโมง / RTO ≤1 วันทำการ เมื่อมี Backup และ Infrastructure ที่ยังใช้ได้ ต้องซ้อมจริง</p>
-<p>Restore/Migration/ACTIVATE/ROLLBACK ทำตามคู่มือเดิมโดยผู้มีสิทธิ์และหยุดทุก Writer ก่อน; ห้ามคัดลอก Live SQLite Pair หรือแก้ Pointer เอง สำหรับ Task Scheduler หลัง IT GO ใช้ Start CMD และ absolute external host.env; ตรวจ reboot/backup และหยุด auto-restart ระหว่าง maintenance</p>
-<ul><li><a id="operatorLink">Direct operator guide</a></li><li><a id="networkLink">IT Network Acceptance (IT-N01–14)</a></li><li><a id="verifyLink">Factory Verification (V-01–08)</a></li><li><a id="technicalLink">Technical appendix</a></li></ul>
-<p class="muted">ลิงก์คู่มืออยู่ใน app ที่แตก ZIP แล้ว ผล CI ไม่ใช่ Factory PASS และไม่อนุญาต Real Data/Pilot</p></section>
-<footer>ไม่มีการส่งข้อมูลออกจากหน้านี้ · ไม่ใช้ CDN · ไม่บันทึก Key หรือ Browser Storage · คู่มือนี้สร้างคำสั่งเพื่อให้ผู้ใช้ตรวจและรันเอง ไม่ใช่ Installer</footer>
-</main>
-<noscript>เปิด JavaScript เพื่อสร้างคำสั่ง หรือให้ IT ใช้ Direct operator guide จาก Package ที่ตรวจรับแล้ว</noscript>
+<html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; connect-src 'none'; base-uri 'none'; form-action 'none'"><title>THE NODE OF PDCA | IT Maintenance</title>
+<style>body{font:16px/1.65 "Segoe UI",Tahoma,sans-serif;background:#f2f6f9;color:#172c40;margin:0}main{max-width:880px;margin:auto;padding:24px}header{background:#123b59;color:white;padding:24px;border-radius:12px}h1{font-size:28px;margin:0}h2{font-size:21px;margin:0 0 8px}section{background:white;padding:20px;margin:16px 0;border-radius:12px;border:1px solid #d9e2ea}p{margin:6px 0 12px}code,pre{font:14px/1.6 Consolas,monospace;overflow-wrap:anywhere}pre{white-space:pre-wrap;background:#eef3f7;padding:12px;border-radius:6px}.notice{border-left:4px solid #be790b}table{width:100%;border-collapse:collapse}th,td{padding:8px;text-align:left;border-bottom:1px solid #d9e2ea}small{color:#536577}@media(max-width:600px){main{padding:10px}section{padding:12px}}</style></head><body><main>
+<header><h1>THE NODE OF PDCA</h1><p>Installation &amp; IT Maintenance · Windows</p></header>
+<section class="notice"><h2>ขอบเขตการใช้งาน</h2><p>ใช้เฉพาะข้อมูลสมมติและเครื่อง/เครือข่ายที่ IT อนุมัติ Windows x64, Node.js 24.x ตั้งแต่ 24.11.0 ขึ้นไป ตาม IT patch policy. HTTP ไม่เข้ารหัส; Display Name ไม่ใช่การยืนยันตัวตน. ห้ามเปิด Guest/VPN/Internet หรือเปลี่ยน Firewall/Policy เอง. หาก IT กำหนด TLS ให้หยุด. ยังไม่อนุมัติ Production, Real Data หรือ Official Pilot.</p></section>
+<section id="install"><h2>1. ติดตั้งครั้งแรก</h2><ol><li>แตก ZIP ชุดส่งมอบทั้งหมดลง Folder สำหรับ Installation แยกจากระบบเดิม เก็บ _support ไว้ด้วย</li><li>ดับเบิลคลิก <code>SETUP.cmd</code> เลือก Folder ติดตั้ง (Enter ใช้ค่าเสนอได้) โดยใช้ Folder ใหม่แยกจากชุดส่งมอบ และ Parent Folder ต้องมีอยู่แล้ว</li><li>กรอก IPv4 และ Port ที่ IT อนุมัติ (4175 เป็นค่าเสนอเท่านั้น) ตรวจ ACL ของ Folder ที่แสดง แล้วพิมพ์ GO เมื่อ IT ยืนยันเงื่อนไขเครือข่าย ข้อมูลสมมติ สิทธิ์และ fresh ADOPT</li><li>รอ SETUP READY และ Ready: URL; Browser เปิดเอง หากไม่เปิดให้ใช้ URL ที่แสดง</li></ol><p>ไม่ต้อง Copy PowerShell, npm หรือกรอก SHA. เมื่อสำเร็จ เก็บชุดส่งมอบไว้ใน Software Archive ตาม IT policy ได้ ไม่ต้องใช้ในการเปิดระบบประจำวัน</p><p>ห้ามใช้ SETUP กับข้อมูลจริง/ข้อมูลเดิม/การ Update. ถ้าหยุดก่อนสร้าง config/seed และมีเพียง Configuration/Data ที่ว่างจริง ให้เริ่มใหม่ที่เดิมหลัง IT ตรวจ. หากมี Application หรือไฟล์ใดแล้ว ให้หยุดและรักษาข้อมูลไว้</p></section>
+<section id="layout"><h2>2. โครงสร้างหลังติดตั้ง</h2><pre>THE NODE OF PDCA/
+  START.cmd
+  Application/
+  Configuration/
+    host.env
+  Data/
+    workspace.sqlite
+    workspace.sqlite.audit.sqlite
+    active-db.json
+    backups/
+    restore/
+  Maintenance/
+    README4IT.html
+    RECOVERY.cmd
+    launcher.mjs</pre><table><tr><th>ตำแหน่ง</th><th>หน้าที่</th></tr><tr><td>Application</td><td>โปรแกรมและ Deployment Manifest สำหรับตรวจ Version; เครื่องมือ Runtime เดิมอยู่ที่นี่</td></tr><tr><td>Configuration</td><td>IP, Port, Keys — จำกัดสิทธิ์ IT ห้ามส่ง Key</td></tr><tr><td>Data</td><td>Workspace, Audit, Pointer, Backup และ Recovery; ห้ามลบหรือย้ายเอง</td></tr><tr><td>Maintenance</td><td>คู่มือและทางเข้า Recovery เดิม; ไม่ต้องเปิดเพื่อใช้งานปกติ</td></tr></table><p>ชื่อ Folder คงที่ แต่ไม่อนุญาตให้เปลี่ยนตำแหน่ง Installed System เอง เนื่องจาก Configuration และ Pointer อ้างอิง Absolute Path.</p></section>
+<section id="start"><h2>3. เปิดและหยุด Host</h2><p>ดับเบิลคลิก <code>START.cmd</code> ใน Folder ติดตั้ง ไม่ใช่ Folder ชุดส่งมอบ. บน IT Server ที่ไม่ต้องเปิด Browser ใช้ <code>START.cmd --no-browser</code> จาก Console หรือใช้ managed Host launcher ตาม IT policy. ไม่เปิด Host ซ้ำ. ก่อนหยุดให้จัดการ Draft และหยุดการเข้าถึงตามขั้นตอน IT แล้วกด Ctrl+C. ทดสอบ Reboot/Logout และการเปิดอัตโนมัติต่างหากก่อนอนุมัติ Server.</p></section>
+<section id="recovery"><h2>4. IT Recovery &amp; Maintenance</h2><p>เปิด <code>Maintenance\RECOVERY.cmd</code> ในเครื่อง Host เท่านั้น ใช้ IT Key จาก Configuration ตามสิทธิ์ที่ได้รับอนุญาต (ไม่ส่งหรือบันทึก Key ใน Log). ใช้ Status ตรวจคู่ Workspace/Audit; ก่อน ADOPT/ACTIVATE/ROLLBACK ต้องหยุด/ปิดทุก writer และทำตามคู่มือ Recovery เดิม. ห้าม ADOPT ซ้ำ, Seed ซ้ำ, แก้ Pointer หรือคัดลอก SQLite ที่กำลังเขียนเอง.</p><p>รายละเอียด Backup/Restore/Migration: <code>Application\deployment\DIRECT_PRIVATE_IP_CANDIDATE.md</code> และ <code>Application\deployment\PREBUILT_WINDOWS.md</code>. เก็บ Backup ตามนโยบายเดิมและทดสอบ Restore; ห้ามใช้ SETUP สำหรับอัปเกรด. การเปลี่ยน Version/ย้าย Host ต้องมี IT-reviewed migration/rollback และสำรองข้อมูลที่ตรวจสอบได้ก่อน</p></section>
+<section><h2>5. Troubleshooting</h2><p><strong>Node หรือ Path ไม่ผ่าน:</strong> ใช้ Node 24.x รุ่น IT อนุมัติ และ Folder local NTFS ที่ไม่ใช่ junction/share; หาก Windows แจ้ง Path ยาวเกินไปให้เลือก Folder ใหม่ที่สั้นลง.</p><p><strong>IP/Port ไม่ผ่าน:</strong> ให้ IT ตรวจ assigned private IP, bind, ACL/Firewall/NAC และขอบเขตเครือข่าย; ห้ามเปิด 0.0.0.0 หรือปิด Firewall.</p><p><strong>Setup/Start/Recovery STOP:</strong> เก็บ Console message โดยไม่เปิดเผย Key; รักษา Folder เดิมไว้ ห้ามลบ/เขียนทับหรือ Seed ซ้ำ. IT ตรวจโดยใช้เครื่องมือใน Application และคู่มือเทคนิค.</p></section>
+<small id="version">Source: template</small>
 <script>
-"use strict";
 const DELIVERY = null;
-const SOURCE_RE=/^[a-f0-9]{40}$/;
-function localDefaults(href){
-  try{
-    const u=new URL(href); if(u.protocol!=="file:"||u.host) return {};
-    const p=decodeURIComponent(u.pathname).replace(/^\/(?=[A-Za-z]:)/,"").replace(/\//g,"\\");
-    let base=p.slice(0,p.lastIndexOf("\\")); const last=base.split("\\").pop();
-    const m=/^app-([a-f0-9]{12})$/i.exec(last);
-    return m?{base:base.slice(0,base.lastIndexOf("\\")),zip:"PDCA-Direct-Windows-CANDIDATE-"+m[1]+".zip",daily:true}:{base};
-  }catch{return {};}
-}
-function safePart(p){
-  return !!p&&/^[\p{L}\p{M}\p{N} _.()-]+$/u.test(p)&&!/[. ]$/.test(p)&&![".",".."].includes(p)&&!/^(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(\.|$)/i.test(p);
-}
-function validBase(s){
-  return /^[A-Za-z]:\\/.test(s)&&s.slice(3).split("\\").every(safePart);
-}
-function privateIp(s){
-  if(!/^(0|[1-9]\d{0,2})(\.(0|[1-9]\d{0,2})){3}$/.test(s))return false;
-  const a=s.split(".").map(Number);return a.every(n=>n<=255)&&(a[0]===10||a[0]===172&&a[1]>=16&&a[1]<=31||a[0]===192&&a[1]===168);
-}
-const psQuote=s=>"'"+s.replace(/'/g,"''")+"'";
-function makePlan(fields){
-  const base=fields.base.trim().replace(/\\+$/,"");
-  const zipName=fields.zip.trim();
-  if(!validBase(base))throw Error("Folder ต้องเป็น local drive เช่น D:\\PDCA Test; ห้ามใช้ UNC, path alias หรืออักขระที่ไม่รองรับ");
-  if(!DELIVERY||!SOURCE_RE.test(DELIVERY.source))throw Error("เปิด README4IT.html จาก Package ที่ได้รับอนุมัติ ไม่ใช่ไฟล์ต้นฉบับใน GitHub");
-  if(!safePart(zipName)||!/\.zip$/i.test(zipName))throw Error("เลือก ZIP โปรแกรมที่อยู่ใน Folder เดียวกัน");
-  const id=DELIVERY.source.slice(0,12), app=base+"\\app-"+id, cfg=base+"\\config-"+id, data=base+"\\data-"+id, config=cfg+"\\host.env";
-  const ip=fields.ip.trim(), port=fields.port.trim();
-  const endpointOK=privateIp(ip)&&/^[1-9]\d{3,4}$/.test(port)&&Number(port)>=1024&&Number(port)<=65535;
-  const lines=(...xs)=>xs.join("\r\n");
-  const pre=lines("& {","$ErrorActionPreference = 'Stop'","$app = "+psQuote(app),"$config = "+psQuote(config),"$data = "+psQuote(data),"if (Get-ChildItem Env: | Where-Object Name -like 'PDCA_*') { throw 'STOP: open a clean PowerShell' }","$nodeVersion = (& node.exe --version).Trim()","if ($LASTEXITCODE -ne 0 -or $nodeVersion -notmatch '^v24\\.\\d+\\.\\d+$' -or [version]($nodeVersion.Substring(1)) -lt [version]'24.11.0') { throw 'STOP: stable Node 24.x >=24.11.0 required' }");
-  const checkApp=lines("if (-not (Test-Path -LiteralPath $app -PathType Container)) { throw 'STOP: app missing' }","$manifest = Get-Content -LiteralPath (Join-Path $app 'DEPLOYMENT_MANIFEST.json') -Raw | ConvertFrom-Json","if ($manifest.profile -ne 'direct-ip' -or "+ "$manifest.sourceCommit -ne "+psQuote(DELIVERY.source)+") { throw 'STOP: wrong candidate' }","& node.exe (Join-Path $app 'tools/prebuilt/verify.mjs') $app","if ($LASTEXITCODE -ne 0) { throw 'STOP: package verification failed' }");
-  const prepare=lines(pre,"$zip = "+psQuote(base+"\\"+zipName),"if (Test-Path -LiteralPath $app) { throw 'STOP: app already exists; do not overwrite' }","Expand-Archive -LiteralPath $zip -DestinationPath $app",checkApp,"Write-Host 'PACKAGE READY' -ForegroundColor Green","}");
-  const setup=endpointOK?lines(pre,checkApp,"$cfg = "+psQuote(cfg),"$ip = "+psQuote(ip),"$port = "+port,"foreach ($dir in @($cfg,$data)) { if (Test-Path -LiteralPath $dir) { $item = Get-Item -LiteralPath $dir -Force; if (-not $item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -or (Get-ChildItem -LiteralPath $dir -Force)) { throw 'STOP: config/data exists and is not an empty directory; no fresh seed' } } }","if ((Read-Host 'IT approved endpoint, synthetic data, stopped other writers? Type GO') -cne 'GO') { throw 'STOP: approval not confirmed' }","$listener = [System.Net.Sockets.TcpListener]::new([System.Net.IPAddress]::Parse($ip),$port)","try { $listener.Server.ExclusiveAddressUse = $true; $listener.Start() } finally { $listener.Stop() }","foreach ($dir in @($cfg,$data)) { if (-not (Test-Path -LiteralPath $dir)) { New-Item -ItemType Directory -Path $dir | Out-Null } }","Write-Host ('IT must check local NTFS and restrict ACL: ' + $cfg + ' / ' + $data)","if ((Read-Host 'IT verified actual ACL and empty data directory? Type GO') -cne 'GO') { throw 'STOP: ACL not confirmed' }","foreach ($dir in @($cfg,$data)) { $item = Get-Item -LiteralPath $dir -Force; if (-not $item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -or (Get-ChildItem -LiteralPath $dir -Force)) { throw 'STOP: config/data no longer empty or safe; no fresh seed' } }","& (Join-Path $app 'tools/direct/setup.cmd') $config $ip ([string]$port) $data","if ($LASTEXITCODE -ne 0) { throw 'STOP: Setup failed; preserve files' }","try { $env:PDCA_DEMO_DIR = $data; & node.exe (Join-Path $app 'demo/demo.mjs') seed --existing-empty; if ($LASTEXITCODE -ne 0) { throw 'STOP: Seed failed; do not retry' } } finally { Remove-Item Env:PDCA_DEMO_DIR -ErrorAction SilentlyContinue }","Write-Host 'SYNTHETIC SEED READY' -ForegroundColor Green","}"):null;
-  const recovery=lines(pre,"if (-not (Test-Path -LiteralPath $config -PathType Leaf)) { throw 'STOP: config missing' }","& (Join-Path $app 'tools/recovery/recovery-menu.cmd') $config","if ($LASTEXITCODE -ne 0) { throw 'STOP: Recovery Menu failed' }","}");
-  const start=lines(pre,"if (-not (Test-Path -LiteralPath $config -PathType Leaf)) { throw 'STOP: config missing' }","& (Join-Path $app 'tools/direct/diagnose.cmd') $config","if ($LASTEXITCODE -ne 0) { throw 'STOP: Diagnose failed' }","& (Join-Path $app 'tools/direct/start.cmd') $config","if ($LASTEXITCODE -ne 0) { throw 'STOP: Start failed' }","}");
-  return {base,app,cfg,data,config,endpointOK,prepare,setup,recovery,start};
-}
-if(typeof document!=="undefined"){
-  const $=id=>document.getElementById(id);
-  const d=localDefaults(location.href); $("base").value=d.base||""; $("zip").value=d.zip||(DELIVERY&&DELIVERY.zip)||"";
-  let daily=!!d.daily, plan=null;
-  function localLink(path){return "file:///"+path.split("\\").map((p,i)=>i===0?p:encodeURIComponent(p)).join("/");}
-  function refresh(){
-    $("first").hidden=daily; $("deliveryBox").hidden=daily; $("ipBox").hidden=daily; $("portBox").hidden=daily;
-    $("firstTab").setAttribute("aria-selected",String(!daily)); $("dailyTab").setAttribute("aria-selected",String(daily));
-    $("startCard").querySelector("h2").textContent=daily?"2. เปิดโปรแกรม":"3. เปิดโปรแกรม";
-    plan=null; let error="";
-    try{plan=makePlan({base:$("base").value,zip:$("zip").value,ip:$("ip").value,port:$("port").value});
-      if(!daily&&!plan.endpointOK)error="กรอก private IPv4 และ Port 1024–65535 ที่ IT อนุมัติเพื่อใช้คำสั่ง 2";
-    }catch(e){error=e.message;}
-    $("validation").textContent=error;
-    $("deliveryNote").textContent=DELIVERY?"Candidate "+DELIVERY.source.slice(0,12)+" · ใช้ ZIP จากแหล่งที่อนุมัติเท่านั้น":"คู่มือฉบับต้นฉบับ — ให้ดาวน์โหลด Package ที่ได้รับอนุมัติ";
-    $("paths").textContent=plan?"App: "+plan.app+" | Data: "+plan.data:"เมื่อกรอกชื่อ ZIP จะเห็น Folder ที่โปรแกรมใช้";
-    $("keyFile").textContent=plan?plan.config:"config\\host.env";
-    for(const [id,key] of [["Prepare","prepare"],["Setup","setup"],["Recovery","recovery"],["Start","start"]]){
-      $(key).value=plan&&plan[key]||"";
-      $("copy"+id).disabled=!(plan&&plan[key]&&$("approved").checked);
-    }
-    for(const [id,p] of [["operatorLink","deployment\\DIRECT_PRIVATE_IP_CANDIDATE.md"],["networkLink","deployment\\IT_NETWORK_ACCEPTANCE_PHASE0.md"],["verifyLink","design\\PILOT_VERIFY.md"],["technicalLink","deployment\\PREBUILT_WINDOWS.md"]]){
-      if(plan)$(id).href=localLink(plan.app+"\\"+p);else $(id).removeAttribute("href");
-    }
-  }
-  async function copy(key){
-    const area=$(key),value=area.value;if(!value||!$("approved").checked)return;
-    const btn=$("copy"+key[0].toUpperCase()+key.slice(1)),label=btn.textContent;
-    const feedback=message=>{$("copyStatus").textContent=message;btn.textContent=message.startsWith("คัดลอกแล้ว")?"คัดลอกแล้ว ✓":"เลือกข้อความแล้ว";setTimeout(()=>{btn.textContent=label;},1800);};
-    try{if(navigator.clipboard&&navigator.clipboard.writeText){await navigator.clipboard.writeText(value);feedback("คัดลอกแล้ว — วางใน PowerShell");return;}}catch{}
-    area.closest("details").open=true;area.focus();area.select();
-    try{if(document.execCommand("copy")){feedback("คัดลอกแล้ว — วางใน PowerShell");return;}}catch{}
-    feedback("Browser ไม่อนุญาต Clipboard: เลือกคำสั่งที่แสดงแล้วกด Ctrl+C");
-  }
-  for(const id of ["base","zip","ip","port","approved"])$(id).addEventListener("input",refresh);
-  $("approved").addEventListener("change",refresh);
-  $("pick").addEventListener("change",()=>{if($("pick").files.length){$("zip").value=$("pick").files[0].name;refresh();}});
-  $("firstTab").addEventListener("click",()=>{daily=false;refresh();});$("dailyTab").addEventListener("click",()=>{daily=true;refresh();});
-  for(const [id,key] of [["Prepare","prepare"],["Setup","setup"],["Recovery","recovery"],["Start","start"]])$("copy"+id).addEventListener("click",()=>copy(key));
-  refresh();
-  document.body.dataset.guideReady='true';
-}
-</script>
-</body></html>
+document.getElementById('version').textContent=DELIVERY?'Source: '+DELIVERY.source:'Source: template — use an approved delivery';
+document.body.dataset.guideReady='true';
+</script></main></body></html>

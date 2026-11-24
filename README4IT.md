@@ -1,5 +1,5 @@
 # THE NODE OF PDCA — IT Quick Start
 
-แตก Actions Artifact ชั้นนอกทั้งหมดลง Folder ใหม่ แล้วดับเบิลคลิก **SETUP.cmd** สำหรับครั้งแรก (ข้อมูลสมมติเท่านั้น) และ **START.cmd** สำหรับเปิดครั้งถัดไป. ใช้ Windows x64 Node 24.x ตั้งแต่ 24.11.0 ที่ IT อนุมัติ ไม่ต้อง npm, SHA หรือ Copy PowerShell. เก็บ _support ไว้ด้วย.
+แตกชุดส่งมอบใน Folder แยก แล้วเปิด **SETUP.cmd** เลือก Folder ติดตั้งใหม่, IP/Port ที่ IT อนุมัติ และยืนยัน GO หลังตรวจ ACL. ข้อมูลสมมติเท่านั้น. Installed root มี START.cmd, Application, Configuration, Data, Maintenance. เปิด **START.cmd** ใน Folder ติดตั้งครั้งต่อไป; ไม่ต้องใช้ชุดส่งมอบอีก. เก็บชุดส่งมอบใน Software Archive. ไม่ต้อง npm หรือกรอก SHA.
 
-[README4IT.html](README4IT.html) สำหรับคำแนะนำและ Manual fallback. ห้าม Setup ทับข้อมูลเดิม. ยืนยัน IT endpoint/ACL และ fresh ADOPT ก่อน GO; ห้าม Real Data, Production Deploy หรือ Official Pilot.
+[README4IT.html](README4IT.html) เป็นคู่มือหลัก (สำเนาใน Maintenance). ห้าม Setup ทับข้อมูลเดิมหรือย้าย Installed System เอง. Recovery: Maintenance/RECOVERY.cmd. Production/Real Data/Official Pilot ยังไม่อนุมัติ.

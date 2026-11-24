@@ -1,6 +1,6 @@
 @echo off
 setlocal DisableDelayedExpansion
-node.exe "%~dp0_support\launcher.mjs" start %*
+node.exe "%~dp0Maintenance\launcher.mjs" start %*
 if errorlevel 1 (
   echo See STOP message above. Do not delete existing data.
   pause

@@ -72,7 +72,7 @@ if (profile === '--direct') {
   const template = await readFile(guide, 'utf8');
   const marker = 'const DELIVERY = null;';
   assert.equal(template.split(marker).length, 2, 'Expected one guide metadata marker');
-  const delivery = { source: sourceSha, zip: 'PDCA-Direct-Windows-CANDIDATE-' + sourceSha.slice(0,12) + '.zip' };
+  const delivery = { source: sourceSha, zip: 'PDCA.zip' };
   await writeFile(guide, template.replace(marker, 'const DELIVERY = ' + JSON.stringify(delivery) + ';'));
 }
 const paths = (await walk(stage)).sort();

@@ -53,19 +53,20 @@ jobs:
           $bad = Get-ChildItem $stage -Recurse -Force -File | Where-Object { $_.Name -match '(^host\.env$|^\.env($|\.)|\.sqlite($|-)|\.db$|^active-db\.json$|^operations\.jsonl$|\.pem$|\.pfx$|\.key$)' -and $_.FullName -notlike '*\node_modules\*' }
           if ($bad) { throw 'Unexpected runtime state or key file in package' }
           Add-Type -AssemblyName System.IO.Compression.FileSystem
-          $zip = Join-Path $dist ('PDCA-Direct-Windows-CANDIDATE-' + $env:ACCEPTED_SOURCE.Substring(0,12) + '.zip')
+          $zip = Join-Path $dist 'PDCA.zip'
           [System.IO.Compression.ZipFile]::CreateFromDirectory($stage,$zip,[System.IO.Compression.CompressionLevel]::Optimal,$false)
           $sha = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
           "archive_sha256=$sha" >> $env:GITHUB_OUTPUT
           Write-Host ("Direct ARCHIVE BUILT: source="+$env:ACCEPTED_SOURCE+" sha256="+$sha+" bytes="+(Get-Item $zip).Length+" files="+$manifest.files.Count)
           Copy-Item (Join-Path $stage 'README4IT.html') (Join-Path $dist 'README4IT.html')
           New-Item -ItemType Directory -Path (Join-Path $dist '_support') | Out-Null
-          Copy-Item tools/onboarding/SETUP.cmd,tools/onboarding/START.cmd $dist
+          Copy-Item tools/onboarding/SETUP.cmd $dist
+          Copy-Item tools/onboarding/START.cmd,tools/onboarding/RECOVERY.cmd (Join-Path $dist '_support')
           $launcher = [IO.File]::ReadAllText((Join-Path $PWD 'tools/onboarding/launcher.mjs'))
           if ([regex]::Matches($launcher,'const DELIVERY = null;').Count -ne 1) { throw 'Invalid launcher template' }
           $metadata = @{source=$env:ACCEPTED_SOURCE;zip=(Split-Path $zip -Leaf)} | ConvertTo-Json -Compress
           [IO.File]::WriteAllText((Join-Path $dist '_support/launcher.mjs'),$launcher.Replace('const DELIVERY = null;',('const DELIVERY = '+$metadata+';')),[Text.UTF8Encoding]::new($false))
-          Copy-Item tools/qa/direct-edge.mjs,tools/qa/direct-endpoint-preflight.mjs,tools/qa/it-guide-commands.mjs,tools/qa/double-click.mjs (Join-Path $qa 'tools/qa')
+          Copy-Item tools/qa/direct-edge.mjs,tools/qa/direct-endpoint-preflight.mjs,tools/qa/double-click.mjs (Join-Path $qa 'tools/qa')
           Copy-Item src/network-config.js (Join-Path $qa 'src')
           Copy-Item test/direct-lan.test.js,test/recovery-operator.test.js (Join-Path $qa 'test')
           Copy-Item package.json (Join-Path $qa 'package.json')
@@ -119,7 +120,7 @@ jobs:
           $zip = $zips[0].FullName
           $actual = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
           if ($actual -ne $env:EXPECTED_ARCHIVE_SHA) { throw 'CI artifact transfer mismatch' }
-          if (@(Get-ChildItem -LiteralPath $download -Force).Count -ne 5 -or -not (Test-Path (Join-Path $download '_support/launcher.mjs'))) { throw 'Incorrect delivery layout' }
+          if (@(Get-ChildItem -LiteralPath $download -Force).Count -ne 4 -or -not (Test-Path (Join-Path $download '_support/launcher.mjs'))) { throw 'Incorrect delivery layout' }
           $extract = Join-Path $env:RUNNER_TEMP 'direct-clean extract'
           if (Test-Path $extract) { throw 'Target is not clean' }
           Expand-Archive -LiteralPath $zip -DestinationPath $extract
@@ -192,7 +193,9 @@ jobs:
             if ((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $actual) { throw 'Archive changed' }
             if (Test-Path $env:npm_config_cache) { throw 'Unexpected npm cache created' }
             # Exercise delivered CMD launchers on a separate synthetic dataset.
-            $guideBase = Join-Path $env:RUNNER_TEMP 'PDCA Double Click (Offline)'
+            $layoutParent = Join-Path $env:RUNNER_TEMP 'PDCA Layout Test (Offline)'
+            New-Item -ItemType Directory -Path $layoutParent | Out-Null
+            $guideBase = Join-Path $layoutParent 'Delivery'
             Copy-Item -LiteralPath $download -Destination $guideBase -Recurse
             $selectedGuide = node (Join-Path $qa 'tools/qa/direct-endpoint-preflight.mjs')
             if ($LASTEXITCODE -ne 0) { throw 'Launcher endpoint preflight failed' }
