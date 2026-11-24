@@ -1,6 +1,6 @@
 # Direct Private-IP LAN — Implementation Plan
 
-**Status: WP-01–08 ACCEPTED IN CI CANDIDATE SCOPE; WP-09 AUTHORIZED; RELEASE / MERGE / DEPLOY HOLD.** Date 2026-11-24. Owner explicitly approved ADR-001 rev2 and WP-02–06 with regression tests on 24 November 2026. ADR-001 revision 2 selects Direct HTTP/no proxy as planning direction. Runtime baseline `428885c44dda6aef7dd0bfbc8bd9cce13922388f`. Draft PR #1 remains untouched; planning-only PR #2. No time, budget or named IT assignee is assumed.
+**Status: WP-01–09 OWNER ACCEPTED / CLOSED IN ENGINEERING AND WINDOWS CI CANDIDATE SCOPE; GATE III/IV / RELEASE / MERGE / DEPLOY / REAL DATA / PILOT HOLD.** Date 2026-11-24. Owner explicitly approved ADR-001 rev2 and WP-02–06 with regression tests on 24 November 2026. ADR-001 revision 2 selects Direct HTTP/no proxy as planning direction. Runtime baseline `428885c44dda6aef7dd0bfbc8bd9cce13922388f`. Draft PR #1 remains untouched; planning-only PR #2. No time, budget or named IT assignee is assumed.
 
 ## 1. Definition of Done
 
@@ -83,3 +83,6 @@ Owner accepted WP-08 10/10 (6/6 jobs), Gate II CI package scope, and approved IT
 ### WP-09 documentation correction (24 November 2026)
 
 Owner approved D01/D02 documentation-only increment after prior review 8/10, CI 6/6. Reconcile legacy source precondition, planned cutover ordering and historical checkout/launcher references. New archive identity requires new Build + Independent Clean Target and parallel regression. No runtime changes; WP-09 not closed until review. All subsequent gates HOLD.
+### Owner acceptance and freeze (24 November 2026)
+
+WP09-D01/D02 CLOSED; WP-09 10/10 accepted; all nine implementation WPs CLOSED in engineering/Windows CI candidate scope. [PROJECT.md](../PROJECT.md) records the current Owner decision, full frozen source and inner ZIP identity, verification evidence and holds. Frozen candidate `a109423103732a905edee228e7caa5fdb3e1fbf6`; inner ZIP SHA-256 `dd2f9ee800b002c33d3726d7e855de2458868e2209f6527503c9dec74dc6e045`; CI 45345202050 and 45345202114 attempt 1, 6/6 jobs. Later Project Record commit is not packaged source; no rebuild or release authorized. Gate III/IV, Merge, Final Release, Factory Deploy, real data and Official Pilot remain HOLD; IT distribution and Factory acceptance not performed. F-07 mitigated/open Factory. Preserve the verified ZIP and checksum before expiry; no claim of actual preservation.

@@ -1007,7 +1007,7 @@ Production release remains pending VERIFY, Official Pilot results, the Project O
 
 `DEFINE → DESIGN → BUILD → VERIFY → OPERATE → LEARN`
 
-Current stage: **BUILD 4 accepted; Windows Prebuilt/Managed Recovery refinement under Draft PR. Factory VERIFY with fictional data pending; Official Pilot/Release not approved.**
+Current stage: **BUILD 4 accepted; Direct Private-IP Implementation WP-01–09 owner accepted/closed in Windows CI Candidate scope. Frozen candidate a109423; Factory Gate III/IV HOLD / NOT TESTED; Merge, Release, Deploy, real data and Official Pilot HOLD.**
 
 
 ### Post-BUILD 4 deployment/recovery tooling decision (23 November 2026)
@@ -1075,3 +1075,34 @@ Owner accepted WP-08 10/10 and CI 6/6 jobs, completing Gate II within Windows CI
 ### WP-09 corrective authorization — WP09-D01 / D02 (24 November 2026)
 
 Owner approved documentation-only correction after [WP-09 review](https://github.com/FillGH/THE_NODE_OF_PDCA/pull/3#issuecomment-7124454126): package CI 6/6 but documentation 8/10. Split managed vs genuine pre-witness legacy source preconditions, preserve original files, review inventory/cutoff, use isolated legacy copy migration before ADOPT; never bypass missing managed pointer. Settle committed saves before planned cutover access closure, explicitly handle drafts; remove Factory VERIFY source-checkout ambiguity and use Start CMD. No runtime, database schema, security or recovery logic changes. Rebuild new exact source candidate ZIP and SHA-256 and repeat independent clean-target and parallel regression before WP-09 acceptance. Final Release, Merge, Factory Deploy, real data and Pilot HOLD. Actual IT handover/Factory evidence not authorized.
+
+### Owner acceptance — Direct Private-IP Implementation closure (24 November 2026)
+
+**Decision: WP09-D01 CLOSED; WP09-D02 CLOSED; WP-09 ACCEPTED/CLOSED (10/10); Direct Private-IP Implementation WP-01–09 CLOSED (9/9) in Engineering / Windows CI Candidate scope.** Owner explicitly accepted the [final engineering review](https://github.com/FillGH/THE_NODE_OF_PDCA/pull/3#issuecomment-7124789510). This is the current decision and supersedes earlier implementation HOLD records for these nine WPs only. It is not project/production closure or authorization to open Factory LAN.
+
+#### Frozen candidate identity (do not rebuild or alter under this approval)
+
+| Field | Accepted value |
+|---|---|
+| Candidate source SHA | `a109423103732a905edee228e7caa5fdb3e1fbf6` |
+| Accepted application/runtime baseline | `7666598bceb170932f4d5b5abc6e1a71c868c8f8` (unchanged runtime) |
+| Inner deployment ZIP | `PDCA-Direct-Windows-CANDIDATE-a10942310373.zip` |
+| Inner ZIP SHA-256 | `dd2f9ee800b002c33d3726d7e855de2458868e2209f6527503c9dec74dc6e045` |
+| Inner ZIP size | 15,644,103 bytes |
+| Manifest | 6,910 hashed files; verified before and after tests |
+| Runtime | Windows x64 candidate, Node.js 24.11.0 |
+| Package CI | [45345202050](https://github.com/FillGH/THE_NODE_OF_PDCA/actions/runs/45345202050), attempt 1, 2/2 jobs |
+| Parallel regression | [45345202114](https://github.com/FillGH/THE_NODE_OF_PDCA/actions/runs/45345202114), attempt 1, 4/4 jobs |
+| Candidate artifact | [14898140722](https://github.com/FillGH/THE_NODE_OF_PDCA/actions/runs/45345202050/artifacts/14898140722), NOT RELEASE; expires 2026-12-08 07:05:47 UTC |
+
+Build 60/60 full tests; independent extracted 31/31 (12 Direct, 15 Recovery, 4 historical LAN contract); three parallel Windows runners each 60/60 full and 27/27 staged; actual Edge, collaboration, offline draft/reconnect, security, documented installation, restart, ACL and immutable archive/manifest PASS. No npm invocation or registry dependency on isolated target in CI. D01/D02 corrected and reviewed, R-14 legacy-copy regression PASS. F-07 five paired synthetic runs: 2,000/2,000 edits, 249/249 IT Status, zero surfaced BUSY/unexpected errors; latest duration +1.86% with polling, p95 edit cycle -0.33%; no causal performance claim. F-07 MITIGATED / Factory OPEN.
+
+This approval record is written **after** the frozen candidate commit. Later Project Record commit(s) are not the packaged source, do not modify the accepted ZIP or its checksum, and do not authorize a rebuild. Do not use a later branch HEAD as the candidate identity. Preserve the exact inner ZIP and checksum in approved storage before artifact expiry; retention/download is not yet evidenced. Any rebuilt/changed package needs new identity, hash, independent verification and approval. No Release tag or publication authorized.
+
+#### Remaining gates / authority
+
+- Gate I and Gate II accepted in defined architecture / local engineering and Windows CI candidate scope.
+- Gate III Factory LAN synthetic verification: HOLD / NOT TESTED; actual IT authorization, HTTP residual risk/data classification, network admission, IT-N01–N14, V-01–V-08, representative load/F-07, recovery drill and RPO/RTO evidence required.
+- Gate IV actual Dedicated Server migration / relevant pilot readiness: HOLD / NOT TESTED; migration and rollback rehearsal, one writable authority and applicable IT/Owner acceptance required.
+- Merge, Final Release, Factory Deploy, real data and Official Pilot remain HOLD; actual IT distribution not authorized by this closure. PR #3 remains Draft/Open/Unmerged.
+- No runtime, database schema, security, recovery, dependency or test logic change authorized. Further actions require separate Owner approval.
