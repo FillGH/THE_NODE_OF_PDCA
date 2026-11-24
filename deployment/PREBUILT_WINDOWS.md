@@ -1,31 +1,28 @@
 # Prebuilt Windows Package — Technical Appendix
 
-**IT เริ่มจาก [README4IT.md](../README4IT.md) ก่อนเสมอ** — ไฟล์นี้มีรายละเอียดทางเทคนิคเพื่อใช้ตรวจสอบความถูกต้องและจัดการ Failure ไม่ใช่ชุดคำสั่งติดตั้งที่ IT ต้องอ่านตั้งแต่ต้น
+**IT เริ่มจาก [README4IT.html](../README4IT.html) ก่อนเสมอ** — ไฟล์นี้มีรายละเอียดทางเทคนิคเพื่อใช้ตรวจสอบความถูกต้องและจัดการ Failure ไม่ใช่ชุดคำสั่งติดตั้งที่ IT ต้องอ่านตั้งแต่ต้น
 
-**สถานะ:** Implementation ผ่าน Windows CI ตาม GitHub Workflow ของ Commit ที่บรรจุใน Artifact เท่านั้น; ยังต้องผ่าน IT Review และ Factory LAN V-01..V-08. Source of Truth = [PROJECT.md](../PROJECT.md).
+**สถานะ:** Implementation ผ่าน Windows CI ตาม GitHub Workflow ของ Commit ที่บรรจุใน Artifact เท่านั้น; ยังต้องผ่าน IT Review และ Factory LAN V-01..V-08. Source of Truth = [PROJECT.md](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/PROJECT.md).
 
 ## 1. Packaging Provenance & Dependency Boundary
 
-- `.github/workflows/prebuilt-windows.yml` ใช้ Windows Server 2022, Node.js 24.11.0, `npm ci` ตาม `package-lock.json` และ `npm test`. ขั้นตอนนี้เกิดใน Build Runner ไม่ใช่ Factory Server
-- `tools/prebuilt/package.mjs` สร้าง ZIP จาก Allowlist เท่านั้น: App Source, Web, Demo, Assets, Runtime `node_modules`, Root README, README4IT, ชุดตรวจ Runtime/Recovery และเอกสาร IT ที่จำเป็น
-- `DEPLOYMENT_MANIFEST.json` มี Source SHA, Platform/Architecture, Node Version, Locked Dependency Metadata, SHA-256 และ Size ของไฟล์ทุกตัว; `*.zip.sha256` ตรวจความถูกต้องระดับ Archive
-- Independent Windows Runner **ไม่มี Repository Checkout และไม่ใช้ `npm ci`**: ดาวน์โหลด ZIP, ตรวจ SHA-256/Manifest, แกะ ZIP, เริ่ม Demo ด้วย `node`, ตรวจ Session/Export/Restart Persistence, และรัน `test/recovery-operator.test.js` จาก ZIP
-- เฉพาะ Artifact ชื่อ `PDCA-Prebuilt-Windows-Verified` หลัง CI ทั้งสอง Job PASS จึงใช้เสนอ IT Review ได้; `pdca-prebuilt-candidate` ยังไม่ผ่าน Gate
-- SHA-256 ตรวจ Integrity ไม่ได้ยืนยันผู้ส่งเอง ต้องเทียบ Source Commit กับ GitHub Actions Run และ IT Approval Record
+- WP-08/WP-09 are historical accepted candidates. For new changes, use PROJECT.md risk-based C0–C3 policy: record-only changes do not rebuild; a changed ZIP needs new identity, SHA-256, manifest, runtime/dependency equivalence and impact-based independent verification. Use the approved artifact and manifest source commit. For new Direct candidates the separate delivery contains PDCA.zip, README4IT.html, SETUP.cmd and _support (launcher and START/RECOVERY templates); installed root contains exactly START.cmd, Application, Configuration, Data and Maintenance; archive digest is CI evidence only, not an installation gate. Historical packages retain their original records.
+- Windows CI Node.js 24.11.0 builds the pinned package with locked dependencies; the separate regression workflow runs the full source suite for material source/packaging/CI changes. Package workflow independently verifies the archive and affected extracted runtime; independent Windows target has no source checkout, uses extracted node_modules, isolated Node runtime, verifies manifest and runs applicable Direct/Recovery regression and actual Edge. Historical LAN contracts remain source-level tests for lean Direct-IP packaging. No npm/Registry dependency on target. Not a physical airgap.
+- Allowlist packages app, dependencies, tools and docs only. Runtime data/config/keys external. SHA-256 is integrity, not source authentication; compare approved GitHub source/run/record.
+- Candidate artifact is NOT RELEASE until separate authorization. Historic proxy workflow artifacts do not authorize Direct deployment.
 
 ## 2. Runtime / Service Boundary
 
-- Windows Host ต้องมี Node.js 24.x และ Permission ที่ IT อนุญาต; ไม่ต้องติดต่อ npm Registry หรือรัน npm เมื่อใช้ Prebuilt ZIP ที่ตรวจแล้ว
-- Web App รันแบบ Single Writable Host บน `127.0.0.1:PDCA_PORT`; LAN Client ใช้ IT-managed HTTPS Reverse Proxy บน Host เดียวกันเท่านั้น
-- Proxy ต้องตรวจการอนุญาตและถอนสิทธิ์ และลบ `x-pdca-ingress-key` และ `x-pdca-operator-key` จาก Client ก่อนใส่เฉพาะ Key ที่ IT เป็นเจ้าของ
-- Workspace, Audit, Backup, Restore Staging, Operations Log, Env Keys และ Active Pointer เป็น **Runtime Data นอก ZIP**; ใช้ Local NTFS/ACL ไม่ใส่ Secret หรือข้อมูลจริงลง Repository, ZIP หรือผล Test
-- `PDCA_ORIGIN` ต้องเป็น HTTPS Origin ที่ตรงกับ Client (DNS หรือ IP + Port ที่ Certificate ถูกต้อง). อนุญาตเฉพาะกลุ่มผู้ใช้/อุปกรณ์ที่ IT กำหนด ไม่เปิด Direct Node Port, Internet หรือ VPN ตรง
+- Assigned RFC1918 IPv4 and fixed approved port; default loopback remains local only. Direct HTTP derives origin, no proxy/ingress key, no remote operator/audit/restore route. Local IT CLI/menu only.
+- HTTP is cleartext, display name not authentication; actual IT admission, denied unapproved/VPN/guest/Internet and data classification acceptance mandatory. If TLS required, STOP.
+- External config and canonical local NTFS data root with restricted ACL; one writable Host per dataset; managed lock held through Host/maintenance, never delete/replace lock file. See [Direct operator guide](DIRECT_PRIVATE_IP_CANDIDATE.md).
+- Legacy HTTPS proxy scripts and docs remain historical, not prerequisites. Direct-IP candidate supports stable Windows x64 Node >=24.11.0 and <25.0.0; legacy remains exact-version. CI validates the same package on 24.11.0 and 24.14.1. IT selects security-patched runtime and rechecks start/save/backup/recovery after updates; do not infer every future version is verified. HTML source/default ZIP filename metadata is generated before packaging; the internal and external guide are identical. Safe renamed ZIP files are supported. Double-click SETUP in the separate delivery and START in the installed root is the normal path. Maintenance/RECOVERY.cmd delegates to the original Application recovery menu with Configuration/host.env. Archive the delivery separately; installed startup does not depend on it. Never move the installed root or use SETUP for upgrade/migration. No archive hash or sidecar required on Target; automatic extracted manifest verification and trusted distribution remain required.
 
 ## 3. Managed Recovery Architecture
 
 **Operator Entry:** `tools/recovery/recovery-menu.cmd "<IT host.env>"` เรียก `recovery-menu.ps1`; PS Script เป็น Logic ที่จำเป็น และไม่ใช่ redundant BAT. CLI เชิงเทคนิคอยู่ที่ `src/ops.js`.
 
-**Authority:** `PDCA_ACTIVE_DB_POINTER` (ไฟล์ `active-db.json` ที่ IT คุม) เป็น Single Selector ของ **Workspace + Audit**. Startup, Offline Status/Inspect, Backup และ Recovery ต้องอ่านคู่เดียวกัน. Config/Pointer ต้องอยู่ภายใต้ `PDCA_DATA_ROOT` และห้ามแก้ Pointer ด้วยมือ
+**Authority:** `PDCA_ACTIVE_DB_POINTER` (ไฟล์ `active-db.json` ที่ IT คุม) เป็น Single Selector ของ **Workspace + Audit**. Startup, Offline Status/Inspect, Backup และ Recovery ต้องอ่านคู่เดียวกัน. Pointer ต้องอยู่ภายใต้ `PDCA_DATA_ROOT`; host.env แยกภายนอก app และห้ามแก้ Pointer ด้วยมือ
 
 **ขั้นตอน:** `ADOPT → Status → List Backup → Restore to Staging → Review restore.json → IT Prepare → ACTIVATE / ACTIVATE-RECOVERY → Restart & Verify → Optional ROLLBACK`
 
@@ -35,7 +32,7 @@
 - `ACTIVATE` จะผ่านก็ต่อเมื่อ Candidate มี **Full Inventory** ตรงกับ Live Workspace/Audit รวมถึง Graph Edits และ Conflict Metadata ที่ไม่ได้เพิ่ม Deletion Audit Event. Candidate จะถูก **Promote ไปยัง `PDCA_DATA_ROOT/active-db/.../workspace.sqlite`** นอก Restore Staging ก่อน Reseal Workspace/Audit Witness และเปลี่ยน Pointer
 - `ACTIVATE-RECOVERY` เป็นการยอมรับ Recovery Point และความเสี่ยงข้อมูลสูญหายอย่างเจาะจงโดย IT เมื่อ Live แตกต่าง/เสียหาย ต้องตรวจ Snapshot Time, Recent Work, Audit, RPO/RTO และ Record Evidence ก่อนดำเนินการ
 - `ROLLBACK` ใช้ได้ต่อเมื่อ Full Inventory ของ Current/Previous ตรงกัน รวมทั้ง `last_save_id`, `scope_versions` และ `save_receipts`; หากมีงานเขียนหลัง Cutover ปฏิเสธและให้ IT ทำ Recovery/Reconciliation แทน. หากผ่านจึง Reseal คู่ Previous/Audit ก่อนสลับ Pointer
-- Server Port Guard เป็นเพียงการตรวจ Port ที่ตั้งไว้; IT ยังต้อง Disable Auto-restart, ตรวจว่ามี Single Writer เท่านั้น และไม่แก้ DB Paths/Pointer เพื่อข้ามการป้องกัน
+- Managed exclusion lease และ TCP reservation ใช้ร่วมกัน; IT ยังต้อง Disable Auto-restart, ตรวจว่ามี Single Writer เท่านั้น และไม่แก้ DB Paths/Pointer เพื่อข้ามการป้องกัน
 
 **Audit-specific Limit:** Snapshot มี Workspace + Metadata แต่ไม่มีสำเนา Audit ทั้งชุด ต้องรักษา Latest Authorized Audit จาก Host ที่รับการเขียน ถ้า Audit หาย/ไม่ครบ การ Replay ไม่ถือว่าปลอดภัย ระบบต้องคง Candidate ไว้ใน Staging; ห้ามเปิดไฟล์เก่าโดยเดา
 
@@ -49,9 +46,9 @@ Source Rollback และ Database Rollback เป็นคนละขั้น
 
 - **CI Check:** Package Integrity, smoke/local API/JSON-XLSX-PDF, all Node Tests, Recovery Operator Guard Tests, Windows Launcher Usage Guard
 - **Factory Acceptance:** [design/PILOT_VERIFY.md](../design/PILOT_VERIFY.md) V-01..V-08, รันบน Windows Factory Host + Authorized/Unauthorized Clients จริง และวัด RPO/RTO ของ Restore Drill จริง
-- **NO-GO:** Source/Hash ไม่ตรง, Missing Audit/Pointer, ผู้ไม่รับอนุญาตผ่าน Proxy, Incorrect Active DB, Silent Data Loss, Permission/Restore Failure หรือไม่มีหลักฐาน Recovery
+- **NO-GO:** Manifest/source ไม่ตรง, Missing Audit/Pointer, ผู้ไม่รับอนุญาตเข้าถึง Direct endpoint, Incorrect Active DB, Silent Data Loss, Permission/Restore Failure หรือไม่มีหลักฐาน Recovery
 
-Operational Runbook สำหรับ Detail/Host Migration: [design/BUILD4_HOST_RUNBOOK.md](../design/BUILD4_HOST_RUNBOOK.md). Historical IT Requirements: [design/IT_HANDOFF.md](../design/IT_HANDOFF.md).
+Operational Runbook: [Direct operator guide](DIRECT_PRIVATE_IP_CANDIDATE.md). Historical references (repository only): [BUILD4_HOST_RUNBOOK.md](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/design/BUILD4_HOST_RUNBOOK.md), [IT_HANDOFF.md](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/design/IT_HANDOFF.md).
 
 ## F-01/F-05/F-06 — Data Integrity and Crash Recovery
 

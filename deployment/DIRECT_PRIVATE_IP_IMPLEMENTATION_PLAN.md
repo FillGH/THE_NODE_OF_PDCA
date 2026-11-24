@@ -1,6 +1,6 @@
 # Direct Private-IP LAN — Implementation Plan
 
-**Status: PLANNED / NOT STARTED (except WP-01 documentation).** Date 2026-11-24. Owner explicitly requested preparing the plan and issuing execution instructions later. ADR-001 revision 2 selects Direct HTTP/no proxy as planning direction. Runtime baseline `428885c44dda6aef7dd0bfbc8bd9cce13922388f`. Draft PR #1 remains untouched; planning-only PR #2. No time, budget or named IT assignee is assumed.
+**Status: WP-01–09 OWNER ACCEPTED / CLOSED IN ENGINEERING AND WINDOWS CI CANDIDATE SCOPE; GATE III/IV / RELEASE / MERGE / DEPLOY / REAL DATA / PILOT HOLD.** Date 2026-11-24. Owner explicitly approved ADR-001 rev2 and WP-02–06 with regression tests on 24 November 2026. ADR-001 revision 2 selects Direct HTTP/no proxy as planning direction. Runtime baseline `428885c44dda6aef7dd0bfbc8bd9cce13922388f`. Draft PR #1 remains untouched; planning-only PR #2. No time, budget or named IT assignee is assumed.
 
 ## 1. Definition of Done
 
@@ -60,8 +60,31 @@ Use same artifact SHA; different external config and independent dataset/credent
 
 Stop if network scope unverified or changed, unauthorized client accepted, remote operator path accessible, cleartext risk not accepted for intended data, browser compatibility fails, exclusivity can be bypassed, wrong data pair, integrity/recovery regression, or required approval/evidence absent. Block ingress via IT controls; stop new writes and preserve latest data/evidence using approved procedure. Restore prior validated runtime only after compatibility and data-state checks; no blind overwrite of live files or active pointer. Preserve current HTTPS baseline as historical rollback/reference, not an additional runtime prerequisite.
 
-## 6. Next instruction (not yet issued)
+## 6. Authorization record (issued)
 
-Suggested Owner command: "อนุมัติ ADR-001 revision 2 และแผน Direct Private-IP LAN ให้เริ่ม Implementation Phase 1–3 ตาม WP-02 ถึง WP-06 โดยรักษา Recovery exclusivity และ Data Integrity; ห้าม Merge/Deploy หรือใช้ข้อมูลจริงจนกว่าจะผ่าน Gate ที่กำหนด"
+Owner command: "อนุมัติ ADR-001 revision 2 และแผน Direct Private-IP LAN ให้เริ่ม Implementation Phase 1–3 ตาม WP-02 ถึง WP-06 โดยรักษา Recovery exclusivity และ Data Integrity; ห้าม Merge/Deploy หรือใช้ข้อมูลจริงจนกว่าจะผ่าน Gate ที่กำหนด"
 
-**Disposition: WP-01 PREPARED; WP-02–09 HOLD.** No software modification, CI run, LAN configuration, deployment or Factory acceptance is claimed by this plan.
+**Disposition: WP-01 PREPARED; WP-02–06 AUTHORIZED / CANDIDATE IMPLEMENTATION; WP-07–09 HOLD except regression checks authorized within WP-02–06.** Verification results must be recorded separately. No Factory LAN configuration, deployment or acceptance is claimed.
+
+### WP-07 authorization (24 November 2026)
+
+Owner accepted F-10 (CI 45330657130, 3/3 fresh installs, 8/8 criteria) and approved WP-07 only. Gate II is not yet accepted. Reuse previous evidence only where the implementation is unchanged and the check maps to the requirement. Keep F-07 synthetic and Factory evidence separate. WP-08/09, Release, Merge, Deploy and real data/Pilot remain HOLD. Historical EACCES OS cause not established; retain bind/lease guards.
+
+WP-07 evidence is tracked in [WP07_ENGINEERING_EVIDENCE.md](WP07_ENGINEERING_EVIDENCE.md). Gate II remains pending; no later work package is authorized.
+
+### WP-08 authorization (24 November 2026)
+
+Owner accepted WP-07 local candidate engineering at `7666598bceb170932f4d5b5abc6e1a71c868c8f8` ([run 45332235054](https://github.com/FillGH/THE_NODE_OF_PDCA/actions/runs/45332235054)), deferring final package acceptance to WP-08. Package the pinned accepted source, not the subsequent CI/documentation commit. Independent runner receives archive/checksum and separate QA harness from same source, no repository checkout, exact Node 24.11.0; isolate node.exe from npm/npx and caches, no npm/registry commands, synthetic data outside archive, verify hash, manifest, Direct/Recovery tests, documented Setup/Seed/ADOPT/Diagnose/Start/Edge/restart and ACL. Candidate only; no release/merge/deploy/real data. WP-09 handover and IT-facing documentation reconciliation remain HOLD.
+
+### WP-09 authorization (24 November 2026)
+
+Owner accepted WP-08 10/10 (6/6 jobs), Gate II CI package scope, and approved IT handover preparation only. README4IT is the active entry, Direct operator guide covers backup, migration, recovery and rollback. Old proxy kit historical. New docs change archive content; WP-09 candidate must be built from exact new commit with unchanged runtime relative to 7666598, new inner ZIP SHA-256, manifest and independent clean-target E2E. Retain prior verified artifact identity separately. No Factory deploy, real data, release, merge, actual IT handover or Pilot authorization. Gate III/IV NOT TESTED.
+
+### WP-09 documentation correction (24 November 2026)
+
+Owner approved D01/D02 documentation-only increment after prior review 8/10, CI 6/6. Reconcile legacy source precondition, planned cutover ordering and historical checkout/launcher references. New archive identity requires new Build + Independent Clean Target and parallel regression. No runtime changes; WP-09 not closed until review. All subsequent gates HOLD.
+### Owner acceptance and freeze (24 November 2026)
+
+WP09-D01/D02 CLOSED; WP-09 10/10 accepted; all nine implementation WPs CLOSED in engineering/Windows CI candidate scope. [PROJECT.md](../PROJECT.md) records the current Owner decision, full frozen source and inner ZIP identity, verification evidence and holds. Frozen candidate `a109423103732a905edee228e7caa5fdb3e1fbf6`; inner ZIP SHA-256 `dd2f9ee800b002c33d3726d7e855de2458868e2209f6527503c9dec74dc6e045`; CI 45345202050 and 45345202114 attempt 1, 6/6 jobs. Later Project Record commit is not packaged source; no rebuild or release authorized. Gate III/IV, Merge, Final Release, Factory Deploy, real data and Official Pilot remain HOLD; IT distribution and Factory acceptance not performed. F-07 mitigated/open Factory. Preserve the verified ZIP and checksum before expiry; no claim of actual preservation.
+
+Subsequent Lean Engineering & Simplification V0.1 policy and current Owner decisions: [PROJECT.md](../PROJECT.md). Historical WP-specific verification requirements above describe those accepted increments; do not treat them as new work packages or duplicate current acceptance records.

@@ -8,12 +8,15 @@ import { DatabaseSync } from 'node:sqlite';
 import { auditSuffix, inspectWitnessPair, resealWitness } from './audit.js';
 import { inspectWorkspaceFile } from './recovery.js';
 import { openStore } from './store.js';
+import { normalizeEnv, networkConfig, pathUnderRoot } from './network-config.js';
+import { acquireManagedLease } from './host-exclusion.js';
 
 function requireState(ok, message) {
   if (!ok) throw new Error(message);
 }
 
 function managed(env) {
+  env = normalizeEnv(env);
   if (!env.PDCA_ACTIVE_DB_POINTER) return null;
   for (const name of ['PDCA_DATA_ROOT', 'PDCA_DB', 'PDCA_AUDIT', 'PDCA_BACKUP_DIR',
     'PDCA_RESTORE_DIR', 'PDCA_OPS_LOG', 'PDCA_PORT']) {
@@ -23,23 +26,13 @@ function managed(env) {
   const pointer = resolve(env.PDCA_ACTIVE_DB_POINTER);
   const permitted = path => {
     requireState(typeof path === 'string' && isAbsolute(path), 'Managed database paths must be absolute');
-    const full = resolve(path);
-    const rel = relative(root, full);
-    requireState(rel && rel !== '..' && !rel.startsWith('..' + (process.platform === 'win32' ? '\\' : '/')) &&
-      !isAbsolute(rel), 'Managed database path outside PDCA_DATA_ROOT: ' + full);
-    if (existsSync(full)) {
-      const actual = realpathSync(full);
-      const realRel = relative(root, actual);
-      requireState(realRel && realRel !== '..' && !realRel.startsWith('..' + (process.platform === 'win32' ? '\\' : '/')) &&
-        !isAbsolute(realRel), 'Managed database symlink escapes PDCA_DATA_ROOT');
-    }
-    return full;
+    return pathUnderRoot(root, path);
   };
   for (const key of ['PDCA_DB', 'PDCA_AUDIT', 'PDCA_BACKUP_DIR', 'PDCA_RESTORE_DIR', 'PDCA_OPS_LOG']) permitted(resolve(env[key]));
   permitted(pointer);
   const port = Number(env.PDCA_PORT);
   requireState(Number.isInteger(port) && port > 0 && port < 65536, 'Managed recovery needs a fixed PDCA_PORT');
-  return { root, pointer, permitted, port };
+  return { root, pointer, permitted, port, bind: networkConfig(env).bind };
 }
 
 function pair(config, value) {
@@ -79,6 +72,7 @@ export function inspectActivePair(file, auditFile, { busyTimeoutMs = 0 } = {}) {
 }
 
 export function readActiveState(env) {
+  env = normalizeEnv(env);
   const config = managed(env);
   if (!config) return null;
   requireState(existsSync(config.pointer), 'Active DB pointer missing; service startup blocked until IT ADOPT');
@@ -114,22 +108,39 @@ async function atomicPointer(path, data) {
 }
 
 async function withStoppedServer(env, task) {
+  env = normalizeEnv(env);
   const config = managed(env);
   requireState(config, 'PDCA_ACTIVE_DB_POINTER is required for managed recovery');
-  const server = createServer();
+  const release = acquireManagedLease(env);
+  const server = createServer(socket => socket.destroy());
   try {
     await new Promise((done, fail) => {
       server.once('error', fail);
-      server.listen(config.port, '127.0.0.1', done);
+      server.listen({ port: config.port, host: config.bind, exclusive: true }, done);
     });
   } catch (error) {
+    release();
     throw new Error('STOP: PDCA server port is occupied or cannot be reserved. Stop/disable the service: ' + error.message);
   }
   try { return await task(config); }
-  finally { await new Promise(done => server.close(done)); }
+  finally { try { await new Promise(done => server.close(done)); } finally { release(); } }
+}
+
+// Preserve IT-only deletion Audit access without sending an operator key over HTTP.
+export async function readDeletionAudit(env, role) {
+  env = normalizeEnv(env);
+  requireState(role === 'IT', 'IT authorization required to view deletion Audit');
+  return withStoppedServer(env, async () => {
+    const { state } = readActiveState(env);
+    inspectActivePair(state.current.workspace, state.current.audit);
+    const db = new DatabaseSync(state.current.audit, { readOnly: true });
+    try { return { events: db.prepare('SELECT * FROM events ORDER BY seq DESC').all() }; }
+    finally { db.close(); }
+  });
 }
 
 export async function adoptActive(env, role, confirmation) {
+  env = normalizeEnv(env);
   requireState(role === 'IT' && confirmation === 'ADOPT', 'IT authorization and ADOPT confirmation required');
   return withStoppedServer(env, async config => {
     requireState(!existsSync(config.pointer), 'Active DB pointer exists: ADOPT refused');
@@ -146,6 +157,7 @@ export async function adoptActive(env, role, confirmation) {
 // IT-only enrollment of EXISTING pre-witness BUILD 4 databases on NEW copies.
 // Never modifies originals or creates the Active Pointer; service must be stopped.
 export async function prepareLegacyAdoption(env, role, confirmation) {
+  env = normalizeEnv(env);
   requireState(role === 'IT' && confirmation === 'MIGRATE-LEGACY',
     'IT authorization and MIGRATE-LEGACY confirmation required');
   return withStoppedServer(env, async config => {
@@ -181,6 +193,7 @@ export async function prepareLegacyAdoption(env, role, confirmation) {
 }
 
 export async function activeStatus(env, role) {
+  env = normalizeEnv(env);
   requireState(role === 'IT', 'IT authorization required');
   const selection = readActiveState(env);
   requireState(selection, 'Managed recovery is not configured');
@@ -208,6 +221,7 @@ export async function activeStatus(env, role) {
 }
 
 export async function activatePrepared(env, role, stageId, confirmation) {
+  env = normalizeEnv(env);
   requireState(role === 'IT' && ['ACTIVATE','ACTIVATE-RECOVERY'].includes(confirmation),
     'IT authorization and ACTIVATE or ACTIVATE-RECOVERY confirmation required');
   requireState(/^[a-f0-9-]{36}$/.test(stageId || ''), 'Invalid prepared stage ID');
@@ -262,6 +276,7 @@ export async function activatePrepared(env, role, stageId, confirmation) {
 }
 
 export async function rollbackActive(env, role, confirmation) {
+  env = normalizeEnv(env);
   requireState(role === 'IT' && confirmation === 'ROLLBACK', 'IT authorization and ROLLBACK confirmation required');
   return withStoppedServer(env, async () => {
     const { config, state } = readActiveState(env);

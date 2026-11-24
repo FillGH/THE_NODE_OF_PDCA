@@ -10,12 +10,15 @@ import { collaboration } from './collaboration.js';
 import { operationsConfig, secretMatches } from './ops.js';
 import { runRecovery, startBackups } from './recovery.js';
 import { inspectActivePair } from './active-db.js';
+import { normalizeEnv } from './network-config.js';
+import { acquireManagedLease, rejectUnmanagedManagedRoot } from './host-exclusion.js';
 
 const files = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/canvas.css', ['canvas.css', 'text/css; charset=utf-8']],
   ['/canvas.js', ['canvas.js', 'text/javascript; charset=utf-8']],
   ['/model.js', ['model.js', 'text/javascript; charset=utf-8']],
+  ['/uuid.js', ['uuid.js', 'text/javascript; charset=utf-8']],
   ['/changes.js', ['changes.js', 'text/javascript; charset=utf-8']],
   ['/session.js', ['session.js', 'text/javascript; charset=utf-8']],
   ['/autosave.js', ['autosave.js', 'text/javascript; charset=utf-8']],
@@ -68,8 +71,13 @@ export function makeServer(store, sessions = collaboration(), allowRequest = () 
       if (req.headers.host !== new URL(origin).host || (req.headers.origin && req.headers.origin !== origin)) {
         throw new RequestError(403, 'ที่อยู่หรือ Origin ไม่ตรงกับที่กำหนด');
       }
+      if (operations.direct && (!req.url.startsWith('/') || req.url.startsWith('//'))) throw new RequestError(403, 'Direct LAN: invalid request target');
       const url = new URL(req.url, origin);
       const path = url.pathname;
+      if (operations.direct && (Object.keys(req.headers).some(k => k === 'forwarded' || k.startsWith('x-forwarded-') || k === 'x-pdca-operator-key' || k === 'x-pdca-ingress-key') ||
+          req.headers['sec-fetch-site'] === 'cross-site' || path === '/api/deletion-audit' || path.startsWith('/api/operations/'))) {
+        throw new RequestError(403, 'Direct LAN: privileged or forwarded request denied');
+      }
       const token = req.headers.authorization?.replace(/^Bearer /, '');
       const checkAccess = () => {
         if (allowRequest(req)) return;
@@ -238,12 +246,16 @@ export function makeServer(store, sessions = collaboration(), allowRequest = () 
 }
 
 export async function startHost(env = process.env, { demoEvidence = false } = {}) {
-  const port = Number(env.PDCA_PORT || 4173);
-  const { file, auditFile, root, recoveryRoot, origin, ingress, authorize } = operationsConfig(env);
+  env = normalizeEnv(env);
+  const release = acquireManagedLease(env);
+  let store, server;
+  try {
+  const { file, auditFile, root, recoveryRoot, origin, ingress, authorize, direct, bind, port } = operationsConfig(env);
+  if (!env.PDCA_ACTIVE_DB_POINTER) rejectUnmanagedManagedRoot(file, auditFile);
   const log = resolve(env.PDCA_OPS_LOG || resolve(dirname(file), 'operations.jsonl'));
   const lowSpaceBytes = Number(env.PDCA_LOW_SPACE_BYTES ?? 1024 ** 3);
   if (!Number.isSafeInteger(lowSpaceBytes) || lowSpaceBytes < 0) throw new Error('Invalid low-space threshold');
-  const role = req => authorize(req.headers['x-pdca-operator-key']);
+  const role = req => direct ? null : authorize(req.headers['x-pdca-operator-key']);
   const notify = event => {
     const line = JSON.stringify(event);
     try { appendFileSync(log, line + '\n'); } catch (error) { console.error('Operations log unavailable', error.message); }
@@ -252,11 +264,12 @@ export async function startHost(env = process.env, { demoEvidence = false } = {}
   for (const path of [file, auditFile, log]) await mkdir(dirname(path), { recursive: true });
   // A managed pointer must select a fully consistent Workspace/Audit pair before opening the live store.
   if (env.PDCA_ACTIVE_DB_POINTER) inspectActivePair(file, auditFile);
-  const store = openStore(file, { auditFile });
-  const allowRequest = req => !origin || secretMatches(req.headers['x-pdca-ingress-key'], ingress);
+  store = openStore(file, { auditFile });
+  // Direct mode is explicit and relies on IT-controlled endpoint/network admission.
+  const allowRequest = req => direct || !origin || secretMatches(req.headers['x-pdca-ingress-key'], ingress);
   let restoring = false;
-  const server = makeServer(store, undefined, allowRequest, req => role(req) === 'IT', {
-    origin, role, demoEvidence,
+  server = makeServer(store, undefined, allowRequest, req => role(req) === 'IT', {
+    origin, role, demoEvidence, direct,
     async restore(id, role) {
       if (restoring) throw new RequestError(409, 'กำลังกู้ Backup อีกชุด');
       restoring = true;
@@ -269,30 +282,35 @@ export async function startHost(env = process.env, { demoEvidence = false } = {}
       }
     },
   });
-  try {
-    store.purge();
-    await new Promise((ready, reject) => {
-      server.once('error', reject);
-      server.listen(port, '127.0.0.1', () => {
-        server.off('error', reject);
-        ready();
-      });
+  store.purge();
+  await new Promise((ready, reject) => {
+    server.once('error', reject);
+    server.listen({ port, host: bind, exclusive: true }, () => {
+      server.off('error', reject);
+      ready();
     });
-  } catch (error) {
-    store.close();
-    throw error;
-  }
+  });
   const backups = startBackups({ file, auditFile, root, notify, lowSpaceBytes,
     snapshot: () => runRecovery('backup', { file, auditFile, root }),
   });
+  let stopping;
   return { server, backups, async stop() {
-    await Promise.all([backups.stop(), new Promise(done => server.close(done))]);
-    store.close();
+    return stopping ??= (async () => {
+      await Promise.all([backups.stop(), new Promise(done => server.close(done))]);
+      store.close();
+      release();
+    })();
   } };
+  } catch (error) {
+    if (server?.listening) await new Promise(done => server.close(done));
+    store?.close();
+    release();
+    throw error;
+  }
 }
 
 if (process.argv[1] && pathToFileURL(resolve(process.argv[1])).href === import.meta.url) {
   const host = await startHost();
-  console.log('PDCA BUILD 4 · http://127.0.0.1:' + host.server.address().port);
+  console.log('PDCA BUILD 4 · ' + (process.env.PDCA_ORIGIN || 'http://' + host.server.address().address + ':' + host.server.address().port));
   for (const signal of ['SIGINT', 'SIGTERM']) process.once(signal, () => host.stop());
 }

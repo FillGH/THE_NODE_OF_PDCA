@@ -1,0 +1,151 @@
+name: PDCA Direct-IP candidate regression
+on:
+  push:
+    branches: [codex/direct-private-ip-implementation]
+    paths-ignore:
+      - 'PROJECT.md'
+      - 'AGENTS.md'
+      - 'README.md'
+      - 'README4IT.md'
+      - 'deployment/DIRECT_PRIVATE_IP_CANDIDATE.md'
+      - 'deployment/DIRECT_PRIVATE_IP_IMPLEMENTATION_PLAN.md'
+      - 'deployment/PREBUILT_WINDOWS.md'
+      - 'deployment/IT_NETWORK_ACCEPTANCE_PHASE0.md'
+      - 'design/PILOT_VERIFY.md'
+      - 'design/qa/COLLABORATION_ACCEPTANCE.md'
+      - 'design/BUILD3_EXPORT_CONTRACT.md'
+      - '.github/workflows/wp08-direct-prebuilt.yml'
+      - '.github/workflows/wp09-direct-handover.yml'
+  workflow_dispatch:
+    inputs:
+      extended:
+        description: 'Three fresh Windows installation and Edge checks'
+        type: boolean
+        default: false
+      f07:
+        description: 'Representative contention/load comparison'
+        type: boolean
+        default: false
+permissions:
+  contents: read
+jobs:
+  windows-regression:
+    name: windows-regression (fresh ${{ matrix.installation }})
+    strategy:
+      fail-fast: false
+      matrix:
+        installation: ${{ fromJSON(github.event_name == 'workflow_dispatch' && inputs.extended && '[1,2,3]' || '[1]') }}
+    runs-on: windows-2022
+    timeout-minutes: 25
+    outputs:
+      f07: ${{ steps.impact.outputs.f07 }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Assess F-07 impact (unknown comparison fails safe)
+        id: impact
+        shell: pwsh
+        env:
+          BEFORE: ${{ github.event.before }}
+          MANUAL_F07: ${{ inputs.f07 }}
+        run: |
+          $needed = $env:MANUAL_F07 -eq 'true'
+          if ($env:GITHUB_EVENT_NAME -eq 'push') {
+            $changed = @()
+            if ($env:BEFORE -and $env:BEFORE -notmatch '^0+$') {
+              $changed = @(git diff --name-only $env:BEFORE $env:GITHUB_SHA)
+              if ($LASTEXITCODE -ne 0) { $needed = $true }
+            } else { $needed = $true }
+            if ($changed -match '^(src/|package(-lock)?\.json$|tools/qa/f07|test/(direct-lan|recovery-operator|collaboration)\.test\.js$)') { $needed = $true }
+          }
+          "f07=$($needed.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+          Write-Host "F-07 impact: $needed"
+          exit 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.14.1'
+      - name: Full regression plus Direct LAN and Recovery
+        shell: pwsh
+        run: |
+          npm.cmd ci --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { throw 'npm ci failed' }
+          npm.cmd test
+          if ($LASTEXITCODE -ne 0) { throw 'Full regression failed' }
+      - name: Stage candidate for launcher tests only (no release artifact)
+        if: github.event_name == 'workflow_dispatch' && inputs.extended
+        shell: pwsh
+        run: |
+          $stage = Join-Path $env:RUNNER_TEMP 'pdca-direct-test-stage'
+          node tools/prebuilt/package.mjs $stage (git rev-parse HEAD).Trim() --direct
+          if ($LASTEXITCODE -ne 0) { throw 'Candidate staging failed' }
+          node tools/prebuilt/verify.mjs $stage
+          if ($LASTEXITCODE -ne 0) { throw 'Candidate verification failed' }
+          $testDir = Join-Path $stage 'test'
+          if (Test-Path $testDir) { throw 'QA files in delivery package' }
+          try {
+            New-Item -ItemType Directory -Path $testDir | Out-Null
+            Copy-Item test/direct-lan.test.js,test/recovery-operator.test.js $testDir
+            node --test (Join-Path $testDir 'direct-lan.test.js') (Join-Path $testDir 'recovery-operator.test.js')
+            if ($LASTEXITCODE -ne 0) { throw 'Staged candidate tests failed' }
+          } finally {
+            Remove-Item -LiteralPath $testDir -Recurse -Force
+          }
+          node tools/prebuilt/verify.mjs $stage
+          if ($LASTEXITCODE -ne 0) { throw 'QA overlay changed package' }
+      - name: Windows BAT first setup / repeat / diagnose guards
+        if: github.event_name == 'workflow_dispatch' && inputs.extended
+        shell: pwsh
+        run: |
+          $stage = Join-Path $env:RUNNER_TEMP 'pdca-direct-test-stage'
+          $root = Join-Path $env:RUNNER_TEMP 'pdca-direct-bat-data'
+          $configDir = Join-Path $env:RUNNER_TEMP 'pdca-direct-bat-config'
+          New-Item -ItemType Directory -Path $root,$configDir | Out-Null
+          $file = Join-Path $configDir 'host.env'
+          $selection = node tools/qa/direct-endpoint-preflight.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'No bindable assigned private endpoint; installation NOT VERIFIED' }
+          $endpoint = $selection | ConvertFrom-Json
+          Write-Host ("DIRECT ENDPOINT PREFLIGHT PASS: " + $endpoint.ip + ":" + $endpoint.port + " (fixed for this installation)")
+          & (Join-Path $stage 'tools/direct/setup.cmd') $file $endpoint.ip ([string]$endpoint.port) $root
+          if ($LASTEXITCODE -ne 0) { throw 'First BAT setup failed' }
+          $hash = (Get-FileHash -LiteralPath $file).Hash
+          & (Join-Path $stage 'tools/direct/setup.cmd') $file
+          if ($LASTEXITCODE -ne 0) { throw 'Repeat BAT setup failed' }
+          if ((Get-FileHash -LiteralPath $file).Hash -ne $hash) { throw 'Repeat setup rewrote config' }
+          & (Join-Path $stage 'tools/direct/diagnose.cmd') $file
+          if ($LASTEXITCODE -ne 1) { throw 'Diagnose must block before ADOPT' }
+          if (Get-ChildItem -LiteralPath $root -Force) { throw 'Setup unexpectedly created data' }
+          Write-Host 'DIRECT BAT GUARDS PASS: initial config only, repeat unchanged, pre-ADOPT blocked'
+          exit 0
+      - name: Actual Edge HTTP private-IP UI and staged BAT launch
+        if: github.event_name == 'workflow_dispatch' && inputs.extended
+        shell: pwsh
+        run: |
+          $stage = Join-Path $env:RUNNER_TEMP 'pdca-direct-test-stage'
+          $file = Join-Path $env:RUNNER_TEMP 'pdca-direct-bat-config\host.env'
+          $root = Join-Path $env:RUNNER_TEMP 'pdca-direct-bat-data'
+          $acl = (Get-Acl -LiteralPath $root).Sddl
+          node tools/qa/direct-edge.mjs $stage $file
+          if ($LASTEXITCODE -ne 0) { throw 'Actual Edge/BAT smoke failed' }
+          if ((Get-Acl -LiteralPath $root).Sddl -ne $acl) { throw 'IT-prepared root ACL changed' }
+          Write-Host 'DIRECT INSTALL E2E PASS: Setup, documented Seed, repeat-seed refusal, ADOPT, Diagnose, Start, Edge; root ACL unchanged'
+  f07-representative:
+    needs: windows-regression
+    if: needs.windows-regression.outputs.f07 == 'true'
+    runs-on: windows-2022
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.0'
+      - name: Fixed synthetic 200-node / 10-editor F-07 comparison
+        shell: pwsh
+        run: |
+          npm.cmd ci --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { throw 'npm ci failed' }
+          node tools/qa/f07-representative.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'F-07 workload or integrity failed' }

@@ -1,4 +1,6 @@
-# THE NODE OF PDCA — Laptop Host + Client / Factory LAN Dry Run
+# HISTORICAL — THE NODE OF PDCA — Laptop HTTPS Proxy Kit
+
+> Superseded by ADR-001 revision 2. Do not follow these proxy instructions for the selected Direct-IP candidate. Start at [README4IT.md](../README4IT.md) and [IT matrix](IT_NETWORK_ACCEPTANCE_PHASE0.md). Retained for historical regression/reference only; no approval to deploy.
 
 **Status: PREPARED DESIGN & TOOLING, not deployed, not Factory Verified.** Project Owner authorized preparing an IT-controlled *fictional-data* LAN test. This document augments [README4IT.md](../README4IT.md) and [PILOT_VERIFY.md](../design/PILOT_VERIFY.md). **Never put live factory data or secret keys in GitHub, ZIP, or screenshots.**
 

@@ -1,29 +1,23 @@
-# THE NODE OF PDCA · VERIFY และ LAN Test
+# THE NODE OF PDCA · Lean Verification & Pilot Test Plan
 
-> **เอกสารนี้เป็น Test Plan/Evidence Matrix ไม่ใช่คู่มือติดตั้งล่าสุด** สำหรับการส่งมอบ **Prebuilt ZIP** ให้ IT เริ่มที่ **[README4IT.md](../README4IT.md)** ก่อน คำสั่ง `git clone` / `npm.cmd ci` ด้านล่างเป็นวิธี Development Source Checkout ย้อนหลังเท่านั้น **ไม่จำเป็นบน Factory Server** หลัง ADOPT เข้าสู่ Managed Mode ให้เปิดด้วย `src/server.js` ไม่ใช่ Demo Launcher
+> **เอกสารนี้เป็น Test Plan/Evidence Matrix ไม่ใช่คู่มือติดตั้ง** สำหรับ Direct-IP Prebuilt ZIP ให้เริ่มที่ [README4IT.html](../README4IT.html); หลัง ADOPT ให้ใช้ `tools\direct\start.cmd` พร้อม external host.env เท่านั้นตามคู่มือ IT. ไม่ใช้ Developer/Demo Launcher บน Managed Host.
 
-วันที่ส่งมอบ 10 พฤศจิกายน 2026 · สาขา `codex/build-increment-4`
+Roadmap ที่ Owner อนุมัติ 25 พฤศจิกายน 2026 · รวม Gate III/IV เป็น Phase 1 และ Pilot/Final Acceptance เป็น Phase 2 โดยรักษาเกณฑ์เดิมทั้งหมด เอกสารนี้ไม่ใช่การอนุมัติติดตั้ง Server หรือใช้ข้อมูลจริง
 
-เจ้าของโครงการรับ BUILD 4 และให้ส่งแพ็กเกจเพื่อเริ่ม LAN Test ด้วยข้อมูลสมมติ ใช้ชุดนี้เก็บหลักฐานบน Laptop บริษัทและเครื่องลูกข่ายที่ IT อนุญาต ก่อนพิจารณา Official Pilot และก่อนนำข้อมูลจริงเข้าระบบ [ข้อกำหนดและเกณฑ์ตัดสิน](../PROJECT.md)
+| Phase | ขอบเขต | จุดตรวจรับ |
+| --- | --- | --- |
+| 1 — Server Readiness | ติดตั้ง Candidate ที่ Owner ตรวจรับแล้วบน Server เป้าหมายและตรวจ LAN ด้วยข้อมูลสมมติ ภายใต้ IT/Owner authorization | STOP/GO 1: ผ่านข้อบังคับก่อน Pilot และ IT/Owner อนุมัติการใช้ข้อมูลจริง/Official Pilot แยก |
+| 2 — Pilot & Final Acceptance | Hybrid Pilot 3 วันทำการบน Server ที่ตรวจรับแล้ว ตามเกณฑ์เดิม | STOP/GO 2: Owner ตัดสิน GO / REFINE & RETEST / NO-GO และ IT อนุมัติที่เกี่ยวข้อง ก่อนอนุมัติ Release/Production |
 
-## 1. ทางเลือก Developer Source Checkout (Historical) และชุด Demo ทดสอบ
+ใช้ Server เป้าหมายโดยตรงหาก IT พร้อม ไม่ต้องทดสอบเต็มรูปแบบบน Laptop ซ้ำ หาก Server ยังไม่พร้อม Laptop เป็นทางเลือกชั่วคราวที่ต้องได้รับอนุญาตตามเดิม และต้องตรวจข้อที่ขึ้นกับ Server อีกครั้งภายหลัง ยังไม่มีหลักฐานว่า Server พร้อมหรือ IT อนุมัติจริง. เก็บหลักฐานในตารางเดียวตาม §5 ระบุ Candidate, Host, Runtime, Configuration, Dataset และขอบเขตการทดสอบ; ใช้ผลเดิมซ้ำได้เฉพาะเมื่อยังใช้ยืนยันข้อกำหนดนั้นได้จริง ไม่ใช้ผล CI/Laptop แทนข้อที่ต้องตรวจบน Server จริง. [ข้อกำหนดและเกณฑ์ตัดสิน](../PROJECT.md)
 
-วิธีนี้สำหรับผู้พัฒนาเท่านั้น ไม่ใช่ขั้นตอนที่ IT ต้องทำเมื่อได้รับ Verified ZIP. ใช้ Git และ Node.js 24 ตาม `package.json` ตั้งพื้นที่ทดสอบบนดิสก์ภายในเครื่อง เช่น `C:\PDCA-LAN-Test` ภายใต้สิทธิ์ที่ IT จัดให้ เก็บ SQLite, Audit และ Backup บน volume เดียวกันในโฟลเดอร์ที่ผู้ใช้ LAN เข้าถึงผ่านแอปเท่านั้น
+## Phase 1 — Server Readiness
 
-```powershell
-git clone --branch codex/build-increment-4 --single-branch https://github.com/FillGH/THE_NODE_OF_PDCA.git
-Set-Location THE_NODE_OF_PDCA
-git rev-parse HEAD
-node --version
-npm.cmd ci
-npm.cmd test
-npm.cmd run demo:seed
-npm.cmd run demo:start
-```
+**Entry:** Candidate ผ่าน Engineering และ Owner acceptance; IT และ Owner ยืนยัน Server/เครือข่าย/ขอบเขตข้อมูลสมมติที่อนุญาตก่อนติดตั้ง. การอนุมัติ Laptop เดิมไม่ใช่การอนุมัติ Server. Image Viewer Candidate `57c54860958b41479b4886883af3713370cfd909` ผ่าน Engineering และ Owner acceptance / FROZEN เป็น Baseline ปัจจุบัน ([Artifact 14971614509](https://github.com/FillGH/THE_NODE_OF_PDCA/actions/runs/45505656996/artifacts/14971614509)); เก็บ Frozen 5e0b877 เดิมและข้อมูลเดิมไว้ ระบุ Candidate ที่ใช้จริง ไม่ Rebuild หรือใช้รุ่นที่ยังไม่ผ่านตรวจรับ. เอกสารที่อยู่ใน ZIP เดิมเป็น snapshot ณ วัน Build; ใช้ Test Plan ฉบับปัจจุบันนี้สำหรับ Phase 1 โดยไม่แก้ ZIP.
 
-เปิด [Demo บน Laptop](http://127.0.0.1:4175) ด้วย Edge ใช้ Display Name สมมติ เก็บ SHA จาก `git rev-parse HEAD` ไว้กับผลทดสอบ หาก LAN Test แยกจากอินเทอร์เน็ต ให้ IT clone และติดตั้ง dependency ตาม `package-lock.json` ในพื้นที่ที่องค์กรอนุญาตก่อนย้ายเข้าเครือข่าย
+## 1. ชุด Demo ทดสอบ — Verified Prebuilt ZIP เท่านั้น
 
-คำสั่ง `demo:seed` สร้างฐานและ Audit ใหม่ใน `.pdca-dev/pilot-demo` และปฏิเสธเมื่อไดเรกทอรีมีอยู่แล้ว หลังหยุดด้วย `Ctrl+C` ใช้ `demo:start` เพื่อเปิดชุดเดิมได้ หากต้องการชุดตั้งต้นอีกชุดหรือเปลี่ยน URL ให้ตั้ง `PDCA_DEMO_DIR` เป็นโฟลเดอร์ใหม่แล้ว seed ด้วย URL ที่จะใช้
+สำหรับ Factory synthetic verification ให้ IT ใช้ Candidate ZIP ที่ผ่านตรวจรับและได้รับอนุมัติแยกตาม README4IT.html จาก Artifact ที่อนุมัติ เท่านั้น: ใช้ SETUP.cmd จากชุดส่งมอบแยก / START.cmd จาก Installed System เป็นขั้นตอนปกติ, ตรวจ Manifest อัตโนมัติหลังแตก ZIP, Setup, Seed ใน data root ว่าง, ADOPT, Status, Diagnose และ Start CMD. ไม่ต้อง clone, npm หรือ Registry บน Target. ห้าม seed ซ้ำหรือใช้ Demo Launcher เปิด Managed Host. ขั้นตอน Developer Source Checkout เดิมเก็บไว้ใน Git history และ README ส่วน Developer Local Test เท่านั้น ไม่ใช่ทางเลือกสำหรับ Factory IT. เปิด URL Direct HTTP ที่ Host แสดงจาก Edge ที่ได้รับอนุญาต และบันทึก Candidate source ตาม Manifest และ Approval Record (ไม่ต้องตรวจ ZIP SHA เอง).
 
 | ผังตั้งต้น | สิ่งที่ใช้ตรวจ |
 | --- | --- |
@@ -35,32 +29,9 @@ npm.cmd run demo:start
 
 `demo.json` ในโฟลเดอร์ข้อมูลระบุ ID ของผัง จำนวน Node/เส้น รูป และ `oldSnapshot` สำหรับซ้อมการเทียบ Audit ผลซ้อมเบื้องต้นอยู่ใน `restore/<stageId>/restore.json` ชุดเก่านี้ตั้งเวลาให้จำลองการ purge ได้ จึงใช้ตรวจการคืนสถานะตาม Audit และใช้ snapshot ใหม่จากรอบ Backup จริงสำหรับวัด RPO
 
-## 2. ต่อ LAN ภายใต้การควบคุมของ IT
+## 2. ต่อ Server และ LAN ภายใต้การควบคุมของ IT — Direct Private-IP (ADR-001 rev 2)
 
-1. IT ระบุผู้ดูแลหลัก ผู้ดูแลสำรอง คนรับแจ้งเมื่อ Backup มีปัญหา และคนที่มีสิทธิ์เริ่ม Restore รวมถึงบัญชีบริการ โฟลเดอร์ที่เขียนได้ เครื่องลูกข่ายที่อนุญาต และหน้าต่างเวลาสำหรับซ้อมกู้
-2. IT ให้ URL แบบ HTTPS ที่มีชื่อ DNS และใบรับรองที่เครื่องบริษัทเชื่อถือ แล้วใช้ reverse proxy ที่ IT ดูแลเป็นทางเข้าเดียว Proxy ตรวจสิทธิ์เครื่องหรือผู้ใช้ตามนโยบายก่อนส่ง request ไปยังแอปที่ `http://127.0.0.1:4175` บน Host เดียวกัน
-3. ตั้งค่า proxy ให้คง **Host** จาก HTTPS origin ที่อนุญาตและส่ง **Origin** ของเบราว์เซอร์ตามจริง ลบ `x-pdca-ingress-key` และ `x-pdca-operator-key` ที่มากับ client ทุกครั้ง แล้วให้ proxy ใส่ `x-pdca-ingress-key` จากค่าที่เก็บฝั่ง IT เท่านั้น ใช้ CLI บน Host สำหรับ Restore ในการทดสอบรอบแรก หากต้องเปิด API ผู้ดูแลผ่าน proxy ให้ IT ยืนยันตัวตนและบทบาทก่อนใส่ operator key ของบทบาทนั้น ให้ G-11 ครอบคลุม route หน้าแรก ไฟล์ static และ API ด้วย
-4. ใช้ไฟล์ env แยกนอก repo ให้บัญชีบริการและ IT อ่านได้ ค่า URL ตัวอย่างด้านล่างให้แทนด้วยชื่อทดสอบจริง และตั้งคีย์สามค่าที่ต่างกัน สร้างแต่ละค่าด้วย `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"` ในสภาพแวดล้อมที่ IT ควบคุม
-
-```dotenv
-PDCA_DEMO_DIR=C:\PDCA-LAN-Test\data\lan-01
-PDCA_PORT=4175
-PDCA_ORIGIN=https://pdca-test.example.invalid
-PDCA_INGRESS_KEY=<ใส่คีย์ ingress ที่สร้างใหม่>
-PDCA_IT_KEY=<ใส่คีย์ IT ที่สร้างใหม่>
-PDCA_PHIL_KEY=<ใส่คีย์ Phil ที่สร้างใหม่>
-```
-
-5. เปิด PowerShell ใหม่ที่โฟลเดอร์ repo แล้วรันคำสั่งจากไฟล์ env เดียวกัน Node จะให้ค่าที่ตั้งไว้แล้วใน process environment มาก่อนค่าในไฟล์ env จึงควรใช้ shell สำหรับ LAN Test แยกต่างหาก
-
-```powershell
-$pilotEnv = 'C:\PDCA-LAN-Test\config\demo.env'
-node --env-file="$pilotEnv" demo/demo.mjs seed
-node --env-file="$pilotEnv" demo/demo.mjs serve
-```
-
-6. เปิด URL HTTPS จากเครื่องที่อนุญาต ตรวจรูป ลิงก์เอกสาร ฟอนต์ การบันทึก และ Auto-save จากนั้นทดสอบเครื่องที่ไม่ได้รับสิทธิ์ เครื่องที่ถูกถอนสิทธิ์ Internet ตรง และ Company VPN ตามแผน IT เมื่อเข้าตรงที่พอร์ต Node จากเครื่องอื่นให้เชื่อมต่อไม่ได้ เมื่อไม่ผ่านสิทธิ์ที่ proxy ให้เข้าไม่ถึงข้อมูลหรือคำสั่งของแอป และชื่อที่กรอกในแอปไม่มีผลกับผลอนุญาต
-7. สำหรับทดสอบเปิดเครื่องก่อนล็อกอิน ให้ IT ตั้ง Task Scheduler และ ACL ตามคู่มือ BUILD 4 เปลี่ยน script ใน action เป็น `demo/demo.mjs serve` พร้อมไฟล์ env เดิม หยุดโปรเซสที่เปิดด้วยมือก่อนเริ่ม task แล้วเก็บเวลาเปิดบริการและเวลา Backup รอบแรกจาก `operations.jsonl` หลังบูตจริง [คู่มือ BUILD 4](BUILD4_HOST_RUNBOOK.md#งานตั้งค่าที่-it-ต้องยืนยัน) · [รายการ IT-01–IT-06](IT_HANDOFF.md)
+ใช้ [README4IT](../README4IT.html) และ [Direct operator guide](../deployment/DIRECT_PRIVATE_IP_CANDIDATE.md) เป็นขั้นตอนติดตั้งและ Recovery เท่านั้น. ไม่ใช้ proxy, DNS, certificate หรือ npm บน Target. หลัง Owner/IT อนุมัติ synthetic test ให้ IT ยืนยัน assigned IP/port, local NTFS/ACL, account/backup owners, HTTP risk and allowed data scope ตาม [IT-N01–N14](../deployment/IT_NETWORK_ACCEPTANCE_PHASE0.md). Host และ approved peer PC เปิด URL Direct เดียวกัน; ทดสอบ denied clients/guest/VPN/Internet/revocation กับหลักฐาน enforcement. ห้ามเปิด LAN หรือใช้ข้อมูลจริงจากผล CI เพียงอย่างเดียว. Task Scheduler ใช้ direct Start CMD + absolute external host.env; หยุด task/manual writer เดิมก่อน maintenance; ตรวจ reboot และ startup backup. HTTP ไม่เข้ารหัส; Display Name ไม่ใช่ authentication.
 
 ## 3. ตารางตรวจรับ VERIFY
 
@@ -68,49 +39,41 @@ node --env-file="$pilotEnv" demo/demo.mjs serve
 
 | ตรวจ | วิธีและเกณฑ์ผ่าน | หลักฐาน |
 | --- | --- | --- |
-| V-01 Host และการตั้งค่า | บันทึก commit SHA, Node, Edge และ Laptop/Windows รุ่นที่ใช้ ทดสอบ HTTPS จากเครื่องลูกข่าย Full HD 1920×1080 เปิดแอปได้ก่อนล็อกอินที่ Host และเกิด Backup ตรวจแล้วหลังบูต ทดสอบการกลับมาหลังรีสตาร์ตโดยข้อมูลที่บันทึกแล้วอยู่ครบ | เวลา, task result, log `backup-verified`, snapshot ID |
-| V-02 สิทธิ์และเครือข่าย · G-07/G-11 | อนุญาตเฉพาะเครื่องหรือผู้ใช้ที่ IT กำหนด ทดสอบจากเครื่องไม่มีสิทธิ์ LAN, VPN, Internet, พอร์ตตรง และหลังถอนสิทธิ์ขณะที่แท็บเปิดอยู่ ลองชื่อซ้ำและลองส่ง header ปลอมผ่าน proxy ตรวจว่าคำขอไปหน้าแรก ไฟล์รูป และ API ไม่ผ่านตามสิทธิ์ | ต้นทางทดสอบที่ระบุด้วยรหัส, URL/HTTP status, บันทึก proxy ที่ปิดคีย์และข้อมูลบริษัท |
+| V-01 Host และการตั้งค่า | บันทึก commit SHA, Node, Edge และ Host/Windows รุ่นที่ใช้ (Server เป้าหมาย; ระบุ Laptop แยกหากใช้ชั่วคราว) ทดสอบ Direct HTTP จากเครื่องลูกข่าย Full HD 1920×1080 เปิดแอปได้ก่อนล็อกอินที่ Host และเกิด Backup ตรวจแล้วหลังบูต ทดสอบการกลับมาหลังรีสตาร์ตโดยข้อมูลที่บันทึกแล้วอยู่ครบ | เวลา, task result, log `backup-verified`, snapshot ID |
+| V-02 สิทธิ์และเครือข่าย · G-07/G-11 | อนุญาตเฉพาะเครื่องหรือผู้ใช้ที่ IT กำหนด ทดสอบจากเครื่องไม่มีสิทธิ์ LAN, guest, VPN, Internet และหลังถอนสิทธิ์ขณะที่แท็บเปิดอยู่ ลองชื่อซ้ำและ header ปลอมที่ Direct endpoint; ตรวจหน้าแรก ไฟล์รูป API และ remote audit/restore denial | ต้นทางทดสอบที่ระบุด้วยรหัส, URL/HTTP status, หลักฐาน IT enforcement ที่ปิดคีย์และข้อมูลบริษัท |
 | V-03 ฟังก์ชันและข้อมูล · G-01–G-04/G-12 | สร้างผังเปล่าและทดสอบชื่อซ้ำแต่ ID ต่างกัน สร้างครบเจ็ดประเภท แก้ชื่อบน Card ค้นชื่อและเนื้อหา เปลี่ยนหมวด ทดสอบเส้นทางเดียวและย้อนกลับ ปฏิเสธเส้นซ้ำ/เข้าตัวเอง/ข้ามผัง ติดภาพ เปิดเอกสาร และยืนยันบันทึกจากอีกเครื่อง ทดสอบ Snap/Free Float, ล็อกขนาด, Auto Arrange, Undo, หมวด Workspace และฟอนต์ | ID ผัง/Node/เส้น, revision, ภาพก่อนและหลัง, ผลเปิดจากเครื่องที่สอง |
 | V-04 Action, ประวัติ และ Export · G-03/G-12 | ใช้ DEMO 02 ตรวจเลข Action คงเดิม PIC และ Due Date ว่างได้ เลือกหลายสถานะและตรวจ Overdue ตามเวลาไทย ทดสอบ History/Restore ข้อความ ประเภท และเส้น ดาวน์โหลด PDF, Excel, JSON ด้วยผู้ใช้ที่ IT อนุญาต ตรวจว่ามีเฉพาะผังที่เลือก รูปปรากฏตามแบบรายงานและ JSON อ้างอิงรูป | ID, รายการ History, สรุปไฟล์และผลเทียบ [Export contract](BUILD3_EXPORT_CONTRACT.md) |
 | V-05 แก้พร้อมกัน · G-05/G-12 | ใช้ DEMO 03 ให้ผู้ทดสอบราว 10 คนจากเครื่องหรือโปรไฟล์แยกกันแก้ Node คนละใบด้วยข้อความระบุรอบ แล้วเทียบทั้ง 10 รายการจากเครื่องที่สอง ทดสอบแย่งแก้ Node เดียว การสลับแท็บ และการเปลี่ยนเส้นหรือ layout ชนกัน | ตารางผู้ทดสอบ/Node/ข้อความ/เวลา, revision, History และหลักฐานไม่มีการเขียนทับ |
 | V-06 หลุด LAN, Session และ Trash | ใช้กรณี C-01–C-11 ทดสอบตัด LAN ขณะมี draft กลับมาเทียบฉบับล่าสุดก่อนยืนยัน ทดสอบสิทธิ์หมด จบ Session คืนแท็บ และกู้ Node/PDCA จาก Trash ให้สัมพันธ์กับเส้นและรูปที่ถูกซ่อน | บันทึกข้อ C ที่ทำจริง สถานะก่อน/หลัง และผลจากอีก Session [ตาราง C-01–C-11](qa/COLLABORATION_ACCEPTANCE.md) |
 | V-07 Backup และ Restore · G-09/G-10 | ใช้หลักฐาน Backup รอบแรกและรอบถัดไปประมาณ 2 ชั่วโมง ตรวจอายุเก็บ 30 วันด้วยเวลาจำลอง ตรวจการแจ้งเมื่อ Backup ล้มเหลวหรือพื้นที่ต่ำในพื้นที่แยก และซ้อม Restore ตาม §4 จนเปิด candidate แยกแล้วตรวจข้อมูลได้ | snapshot ID/hash, ผลเทียบ Audit, เวลาที่ใช้วัด RPO/RTO, หลักฐานผู้ดูแลรับแจ้ง |
-| V-08 การปฏิบัติการ · G-08 | IT ทวน dependency/ใบอนุญาตและค่าใช้จ่าย อนุมัติพื้นที่และบัญชีบริการ ทวน rollback และซ้อมย้าย Host ตามแผนหากมีเครื่องเป้าหมาย ให้บริการเขียนได้ครั้งละ Host เดียว | รายชื่อผู้รับผิดชอบ, หลักฐานสิทธิ์และดิสก์, ผลย้าย/rollback หรือเหตุผลที่ยังไม่ทดสอบ |
+| V-08 การปฏิบัติการ · G-08 | IT ทวน dependency/ใบอนุญาตและค่าใช้จ่าย อนุมัติพื้นที่และบัญชีบริการ ทวน rollback และซ้อมย้าย Host ตามแผนด้วยข้อมูลสมมติ; ถ้ามีข้อมูลเดิมที่ต้องเก็บให้ย้ายครบตาม D-019/R-15 และตรวจความถูกต้องก่อน Cutover; หากไม่มีข้อมูลต้องย้าย ให้บันทึก N/A เฉพาะการย้ายข้อมูลจริง แต่ยังต้องซ้อม Migration/Rollback ตามข้อกำหนด ให้บริการเขียนได้ครั้งละ Host เดียว | รายชื่อผู้รับผิดชอบ, หลักฐานสิทธิ์และดิสก์, ผลย้าย/rollback หรือเหตุผลที่ยังไม่ทดสอบ |
 
 สำหรับ V-05 ให้รันพร้อมกันจริงและจดเวลาใกล้กัน เริ่มจากแก้คนละ Node แล้วค่อยทดสอบชนกัน แยกผลจำลองสองแท็บกับผลจากผู้ใช้ราว 10 คน หากมีเครื่องไม่พอให้บันทึกจำนวนที่ทดสอบจริงและคงเกณฑ์ 10 คนเป็น **NOT TESTED** จนได้หลักฐานตามเงื่อนไข
 
 ## 4. ซ้อมกู้และวัด RPO/RTO
 
-- ทดสอบ **Audit replay** ด้วย `oldSnapshot` จาก `demo.json` เริ่มจากชุด Demo ที่เพิ่งสร้าง และบันทึกว่า Node ใดถูกกู้กลับ อยู่ใน Trash หรือถูก purge ใช้ `restore` ให้ระบบสร้าง staging ใหม่ ตรวจ `restore.json` ว่าจุดตัดและผลการเทียบตรงกับ Audit รวมถึงวันหมดอายุเดิม ซ้อมกรณี Audit หายหรือไม่ครบจากสำเนาแยกและตรวจว่าได้ `held`
-- ทดสอบ **เวลาในการกู้** ด้วย snapshot ใหม่ที่ผ่านการตรวจ บันทึกข้อความสมมติที่รู้เวลาบันทึกก่อนและหลัง snapshot แล้วเริ่มซ้อมเหตุขัดข้องที่กู้ได้ เก็บเวลาเริ่มเหตุและ `capturedAt` ของ snapshot ที่กู้ได้จริง คำนวณ **RPO = เวลาเริ่มเหตุ − capturedAt** เป้าหมาย ≤4 ชั่วโมง วัด **RTO = เวลาที่ผู้ใช้ทดสอบซึ่งได้รับสิทธิ์เปิดและตรวจข้อมูลบนบริการที่กู้แล้วได้ − เวลาเริ่มเหตุ** เป้าหมาย ≤1 วันทำการเมื่อ Backup และเครื่องกู้พร้อม ระบุเวลาทำการตามที่ IT ยืนยันและใช้บริการกู้แยกสำหรับการซ้อม
-- เริ่มด้วย snapshot ต้นฉบับและ Audit ล่าสุด จัด role ทดสอบ IT กับ Phil และทดสอบผู้ไม่มีคีย์ถูกปฏิเสธ ใช้ IT ตรวจจุดตัดกับ checksum ก่อน `prepare` แล้วเปิด candidate กับสำเนา Audit ที่ตรงกันผ่าน loopback พอร์ตแยก ตรวจชื่อ/ID, จำนวน Node/เส้น, รูป, ลิงก์, Action, หมวด Workspace, History และ Trash เทียบจุดที่ตั้งไว้ หยุดเขียนในฐาน LAN Test ระหว่างจับคู่ Audit กับ candidate
-- หากสิทธิ์ LAN ผิดพลาด พบการบันทึกทับ หรือ Restore ยังตรวจไม่ครบ ให้ IT ปิดทางเข้าของ LAN Test และเก็บหลักฐานกับชุด staging ใช้ Backup และ Audit ที่ตรวจแล้วในการกู้หรือย้อนเครื่องตาม runbook แล้วทดสอบข้อที่กระทบซ้ำ [ขั้นตอน Restore, ย้าย Host และย้อนกลับ](BUILD4_HOST_RUNBOOK.md#ซ้อมกู้และย้าย-laptop-ไป-server)
-
-ตัวอย่างคำสั่งกู้จาก PowerShell บน Host กำหนดฐานตรงกับ `PDCA_DEMO_DIR` ที่ใช้จริง กรอกคีย์ตามบทบาทที่ IT อนุญาตจาก prompt แบบซ่อนข้อความ
-
-```powershell
-$pilotEnv = 'C:\PDCA-LAN-Test\config\demo.env'
-$pilotData = 'C:\PDCA-LAN-Test\data\lan-01'
-$env:PDCA_DB = Join-Path $pilotData 'workspace.sqlite'
-$manifest = Get-Content (Join-Path $pilotData 'demo.json') -Raw | ConvertFrom-Json
-$pilotKey = Read-Host 'Operator key' -AsSecureString
-$env:PDCA_OPERATOR_KEY = [System.Net.NetworkCredential]::new('', $pilotKey).Password
-try {
-    node --env-file="$pilotEnv" src/ops.js restore $manifest.oldSnapshot
-} finally {
-    Remove-Item Env:PDCA_OPERATOR_KEY -ErrorAction SilentlyContinue
-}
-```
+ใช้ [Managed recovery / migration](../deployment/DIRECT_PRIVATE_IP_CANDIDATE.md) บนชุดสมมติแยกที่ IT อนุมัติเท่านั้น. สำหรับ planned maintenance ให้ settle/verify committed saves ก่อนปิด access ตามคู่มือ migration 4.1; incident ให้ contain ทันทีตามความเสี่ยง. หยุดและ disable ทุก writer ก่อน maintenance; preserve verified current Workspace/Audit, pointer and backups; use Menu 4/5 then reviewed ACTIVATE or explicitly approved ACTIVATE-RECOVERY. ทดสอบ oldSnapshot/Audit replay และ held หาก Audit หายหรือไม่ครบใน isolated copy; ห้ามเปิด Preview คู่ Live Audit หรือแก้ Pointer. ตรวจ ID, revision, graph, images, Action, history, Trash, inventory, restart และ verified backup; ทำ rollback drill ตามข้อจำกัด. RPO = เวลาเริ่มเหตุ − capturedAt ของ recovery point ที่กู้ได้จริง ≤4 ชั่วโมง; RTO = เวลาเริ่มเหตุถึง authorized user ตรวจบริการที่กู้แล้วได้ ≤1 วันทำการภายใต้ backup/infrastructure ที่พร้อม. จดเวลาจริงและข้อจำกัด; CI ไม่แทน Factory. ถ้าไม่ผ่าน STOP.
 
 ## 5. บันทึกผลและตัดสินใจ
 
 คัดลอกแม่แบบต่อไปนี้ไว้ในพื้นที่ของ IT สำหรับแต่ละรอบ กรอกเวลาตาม Asia/Bangkok และใช้รหัสสมมติแทนชื่อผู้ใช้หรือชื่อเครื่องจริงในเอกสารที่จะแชร์นอกทีม
 
-| วันและเวลา | commit SHA | ข้อ V/C/G | ผู้ทดสอบ/เครื่อง | ผล | หลักฐานหรือเหตุผล | ผู้แก้/รอบทดสอบซ้ำ |
+| Phase / วันและเวลา | Candidate SHA | ข้อ IT-N/V/C/G/F/AC | Host / Runtime / Config / Dataset / ผู้ทดสอบ | ผล | หลักฐานหรือเหตุผล (รวมการนำหลักฐานเดิมมาใช้) | ผู้แก้/รอบทดสอบซ้ำ |
 | --- | --- | --- | --- | --- | --- | --- |
-| | | | | NOT TESTED | | |
+| Phase 1 | | | | NOT TESTED | | |
 
-เมื่อปิดผล LAN Test และข้อบังคับที่เกี่ยวข้องแล้ว ให้เจ้าของโครงการกับ IT ทวน Hard Gates ก่อนเริ่ม Official Pilot ช่วง Pilot ใช้เวลา 3 วันทำการ มี Cutting & Packing และอีก 1–2 แผนก ใช้ผู้ทดสอบครั้งแรกอย่างน้อย 5 คนและกรณีงานจริงที่ได้รับอนุมัติ 1 ผังต่อแผนก แต่ละคนต้องทำงานสำคัญครบและทำงานทั้งหมดได้อย่างน้อย 80% โดยไม่รับคำแนะนำ ให้ผ่านอย่างน้อย 80% ทั้งภาพรวมและในทุกแผนก คะแนนใช้ง่ายเฉลี่ยอย่างน้อย 4/5 เจ้าของโครงการตัดสิน GO, ปรับแล้วทดสอบซ้ำ หรือ NO-GO จากหลักฐานและการอนุมัติของ IT [เกณฑ์ Pilot และการวัดผล](../PROJECT.md#9-acceptance-criteria)
+**STOP/GO 1 — Server Readiness:** ใช้ IT-N01–N14 (N04 N/A ตาม design; หาก IT ต้องการ TLS ให้ STOP), V-01–V-08, C-01–C-11, F-07 และ Hard Gates ก่อน Pilot ครบถ้วน ตรวจ Start ก่อน Login/Reboot, 200 Nodes/10 editors, ความถูกต้องของข้อมูล, Backup/Restore ตาม RPO/RTO, Migration/Rollback และ Primary/Backup Administrator/Technical Maintainer. ข้อบังคับที่ FAIL/NOT TESTED หรือหลักฐานหมดความใช้ได้ต้องแก้และทดสอบก่อน GO; บันทึกเหตุผลสำหรับ N/A ที่ใช้ได้จริง. IT อนุมัติความพร้อมและขอบเขตข้อมูลจริง Owner อนุมัติ Official Pilot และการเตรียม dataset/cutover ตามขั้นตอนที่อนุมัติแยก. ห้าม Seed ทับข้อมูลเดิมหรือเปิดข้อมูลจริงก่อน GO. การอนุมัติ Roadmap ไม่ใช่ GO.
+
+## Phase 2 — Pilot & Final Acceptance
+
+เริ่มเมื่อ STOP/GO 1 ผ่านครบและได้รับอนุมัติจริง โดยใช้ Server เป้าหมายที่ผ่าน Phase 1. เตรียม Standardized Task Checklist, Critical Tasks และแบบประเมินก่อนทดสอบ. ช่วง Hybrid Pilot ใช้เวลา 3 วันทำการ มี Cutting & Packing และอีก 1–2 แผนก ผู้ทดสอบครั้งแรกอย่างน้อย 5 คนต่อแผนก และกรณีงานจริงที่ได้รับอนุมัติ 1 ผังต่อแผนก (แยกหลักฐานจาก Standardized Task Test).
+
+- Critical Tasks: สร้าง Node, แก้ Node, เชื่อม Node, ได้รับการยืนยัน Autosave และย้อนเส้นจาก Result ไปถึง Problem (D-055); แต่ละคน PASS เมื่อทำ Critical Tasks ครบ 100% และ Standardized Tasks ทั้งหมด ≥80% โดยไม่รับคำแนะนำ.
+- อัตราผู้ทดสอบ PASS ≥80% ทั้งภาพรวม AND ทุกแผนก; คะแนน Ease of Use เฉลี่ยรวม ≥4/5. ประเมินกรณีงานจริงและ Hard Gates แยกจากคะแนน Task.
+- ทุกฟังก์ชัน in-scope และ Hard Gates เดิมต้องผ่าน รวม Node/Link persistence, ไม่มี silent lost/overwritten data, full-dataset Backup/Restore และ restricted factory access. ใช้หลักฐาน Phase 1 ที่ยังมีผลได้ ไม่ต้องทำซ้ำโดยไม่มีเหตุ; ตรวจผลใน Pilot และ retest ข้อที่ได้รับผลกระทบหรือหลักฐานใช้ไม่ได้. ไม่ลดเกณฑ์ recovery/load/security.
+- **STOP/GO 2 — Final Acceptance:** Owner ตัดสิน GO / REFINE & RETEST / NO-GO โดยมีหลักฐานครบและ IT/security approval ที่เกี่ยวข้อง (D-070/D-071). หากไม่ผ่าน ให้ Owner เลือก targeted retest พร้อม regression หรือ Pilot เต็มรอบ; Hard Gates ที่ไม่ผ่าน/ยังไม่ตรวจ/ใช้หลักฐานไม่ได้ต้องผ่านก่อน GO. เมื่ออนุมัติ GO และอนุมัติ Release แยกอย่างชัดเจนแล้ว จึง Merge/Release V1.0/Production Deploy และเปิดให้แผนกที่ได้รับอนุญาตใช้โดยสมัครใจ (D-072). ไม่ต้องเปิด Phase ตรวจรับอีกชุด.
+
+[เกณฑ์ Pilot และการวัดผล](../PROJECT.md#9-acceptance-criteria) · ใช้ตารางหลักฐาน §5 เดิมทั้งสอง Phase; Addenda ด้านล่างเป็นเกณฑ์เดิมของ Phase 1 และตรวจซ้ำตามผลกระทบใน Phase 2.
 
 ## V-07 Addendum — Prebuilt Managed Recovery
 
@@ -124,7 +87,7 @@ try {
 - ทดสอบ Restore → Prepare → ACTIVATE จากนั้นจัดเก็บ/ลบ Staging ตามนโยบาย แล้ว Restart/Backup ต้องใช้งานได้ด้วย Workspace ที่ Promote ไป `active-db/` อย่างถูกต้อง
 - ทดสอบ ROLLBACK หลังเปลี่ยน `scope_versions`, `save_receipts` หรือ `last_save_id` ต้องไม่สูญข้อมูลเงียบ; ตรวจค่า Full Inventory และหลักฐานเหตุการณ์
 - จำลองการขัดข้องระหว่าง Reseal Witness กับ Pointer Replacement; ต้อง Fail Closed และต้องมี IT-controlled Recovery Plan ไม่แก้ Pointer JSON ด้วยมือ
-- บันทึก Node.js Build/Run Version ตาม Manifest; รุ่นที่ CI ทดสอบคือ 24.11.0. หากใช้ Node Patch อื่น ให้แยกผล Revalidation/IT Approval ชัดเจน
+- บันทึก Node.js Build/Run Version ตาม Manifest; Direct-IP รองรับ stable Windows x64 Node 24.x ตั้งแต่ 24.11.0; CI ของ Candidate ใหม่ทดสอบ 24.11.0 และ 24.14.1. ใช้ Patch ที่ IT อนุมัติและบันทึกผล Revalidation หลังเปลี่ยน Runtime
 
 
 ### V-07 — C-01/C-02/C-03 Compatibility and Fault Injection

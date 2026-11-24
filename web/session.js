@@ -1,8 +1,9 @@
+import { uuidV4 } from './uuid.js';
 import { api } from './autosave.js';
 
 export function browserSession({ onEnter, onExit, onLogin, onMessage }) {
   const channel = new BroadcastChannel('pdca-collaboration-v2');
-  const tabId = crypto.randomUUID();
+  const tabId = uuidV4();
   let actor;
   let nonce;
   let epoch = 0;
@@ -37,7 +38,7 @@ export function browserSession({ onEnter, onExit, onLogin, onMessage }) {
     }
   }
   function discover() {
-    const ask = nonce = crypto.randomUUID();
+    const ask = nonce = uuidV4();
     channel.postMessage({ type: 'discover', ask });
     setTimeout(() => {
       if (nonce !== ask) return;

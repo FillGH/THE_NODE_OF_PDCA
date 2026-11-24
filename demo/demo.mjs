@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, stat, writeFile, lstat, realpath, readdir } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { operationsConfig } from '../src/ops.js';
@@ -10,6 +10,7 @@ import { edgeColors, statuses } from '../web/model.js';
 
 // Prevent accidentally seeding or serving a managed production Active DB from the demo launcher.
 // Use unmanaged demo:seed first; IT can then ADOPT and use src/server.js for managed recovery testing.
+if (process.env.PDCA_BIND_HOST && process.env.PDCA_BIND_HOST !== '127.0.0.1') throw new Error('Direct LAN uses managed Host after explicit local demo seed and ADOPT');
 if (process.env.PDCA_ACTIVE_DB_POINTER) throw new Error('Demo launcher cannot be run with PDCA_ACTIVE_DB_POINTER; use normal host after IT ADOPT.');
 const base = dirname(fileURLToPath(import.meta.url));
 const data = resolve(process.env.PDCA_DEMO_DIR || '.pdca-dev/pilot-demo');
@@ -66,13 +67,26 @@ function trash(store, graph, subject, restore = false, actor = author) {
 }
 
 async function seed() {
-  await mkdir(dirname(data), { recursive: true });
-  try {
-    await mkdir(data);
-  } catch (error) {
-    if (error.code === 'EEXIST') throw new Error('Demo directory already exists. Serve it or choose a new PDCA_DEMO_DIR.');
-    throw error;
+  const existingEmpty = process.argv[3] === '--existing-empty';
+  if (process.argv.length > (existingEmpty ? 4 : 3)) throw new Error('Use seed [--existing-empty]');
+  if (existingEmpty) {
+    // Opt-in only: preserve the IT-created directory and its inherited ACL.
+    // Refuse aliases and any existing content (including hidden/lock files).
+    if (!process.env.PDCA_DEMO_DIR) throw new Error('Explicit PDCA_DEMO_DIR required for --existing-empty');
+    const info = await lstat(data);
+    if (!info.isDirectory() || info.isSymbolicLink() || await realpath(data) !== data)
+      throw new Error('Demo seed requires a canonical existing directory');
+    if ((await readdir(data)).length !== 0) throw new Error('Demo seed requires an empty directory; existing data is never overwritten');
+  } else {
+    await mkdir(dirname(data), { recursive: true });
+    try { await mkdir(data); }
+    catch (error) {
+      if (error.code === 'EEXIST') throw new Error('Demo directory already exists. Serve it or choose a new PDCA_DEMO_DIR.');
+      throw error;
+    }
   }
+  // Exclusive mkdir is also the seed claim: a second seed must fail here.
+  // A partial failed seed is deliberately retained for IT inspection, not auto-erased.
   await mkdir(root);
   let time = today - 9 * day;
   const store = openStore(file, { now: () => time });

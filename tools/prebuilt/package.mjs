@@ -8,16 +8,27 @@ import { fileURLToPath } from 'node:url';
 const root = fileURLToPath(new URL('../../', import.meta.url));
 const stage = resolve(process.argv[2] || '');
 const sourceSha = process.argv[3];
-const included = [
-  'README.md', 'README4IT.md', 'package.json', 'package-lock.json', 'src', 'web', 'demo', 'assets',
+const profile = process.argv[4] || '--legacy';
+assert.ok(['--direct', '--legacy'].includes(profile), 'Unknown packaging profile');
+const legacyIncluded = [
+  'README.md', 'README4IT.md', 'README4IT.html', 'package.json', 'package-lock.json', 'src', 'web', 'demo', 'assets',
   'node_modules', 'tools/prebuilt/verify.mjs', 'tools/prebuilt/smoke.mjs',
   'tools/recovery/recovery-menu.ps1', 'tools/recovery/recovery-menu.cmd',
-  'test/recovery-operator.test.js', 'test/laptop-lan.test.js', 'tools/lan',
+  'test/recovery-operator.test.js', 'test/laptop-lan.test.js', 'test/direct-lan.test.js', 'tools/lan', 'tools/direct',
   'PROJECT.md', 'AGENTS.md', 'design/BUILD4_HOST_RUNBOOK.md', 'design/PILOT_VERIFY.md',
   'design/BUILD3_EXPORT_CONTRACT.md', 'design/qa/COLLABORATION_ACCEPTANCE.md',
   'design/prototypes/DESIGN_collaboration-recovery.html',
-  'design/IT_HANDOFF.md', 'deployment/PREBUILT_WINDOWS.md', 'deployment/LAPTOP_HOST_LAN_TEST.md',
+  'design/IT_HANDOFF.md', 'deployment/PREBUILT_WINDOWS.md', 'deployment/LAPTOP_HOST_LAN_TEST.md', 'deployment/DIRECT_PRIVATE_IP_CANDIDATE.md', 'deployment/DIRECT_PRIVATE_IP_IMPLEMENTATION_PLAN.md', 'deployment/IT_NETWORK_ACCEPTANCE_PHASE0.md', 'design/architecture/ADR-001-private-ip-lan-transport.md',
 ];
+const directIncluded = [
+  'README.md', 'README4IT.md', 'README4IT.html', 'package.json', 'package-lock.json', 'src', 'web', 'demo', 'assets',
+  'node_modules', 'tools/prebuilt/verify.mjs', 'tools/recovery/recovery-menu.ps1',
+  'tools/recovery/recovery-menu.cmd', 'tools/direct',
+  'deployment/PREBUILT_WINDOWS.md', 'deployment/DIRECT_PRIVATE_IP_CANDIDATE.md',
+  'deployment/IT_NETWORK_ACCEPTANCE_PHASE0.md', 'design/PILOT_VERIFY.md',
+  'design/BUILD3_EXPORT_CONTRACT.md', 'design/qa/COLLABORATION_ACCEPTANCE.md',
+];
+const included = profile === '--direct' ? directIncluded : legacyIncluded;
 
 assert.equal(process.platform, 'win32', 'Build a Windows package on a Windows runner');
 assert.equal(Number(process.versions.node.split('.')[0]), 24, 'Node.js 24 required');
@@ -55,6 +66,15 @@ for (const name of included) {
   await mkdir(dirname(to), { recursive: true });
   await cp(from, to, { recursive: true, force: false, errorOnExist: true });
 }
+// One identical guide inside and outside the Direct archive; no archive digest in HTML.
+if (profile === '--direct') {
+  const guide = join(stage, 'README4IT.html');
+  const template = await readFile(guide, 'utf8');
+  const marker = 'const DELIVERY = null;';
+  assert.equal(template.split(marker).length, 2, 'Expected one guide metadata marker');
+  const delivery = { source: sourceSha, zip: 'PDCA.zip' };
+  await writeFile(guide, template.replace(marker, 'const DELIVERY = ' + JSON.stringify(delivery) + ';'));
+}
 const paths = (await walk(stage)).sort();
 const files = [];
 for (const path of paths) {
@@ -65,9 +85,10 @@ const manifest = {
   schemaVersion: 1,
   kind: 'THE_NODE_OF_PDCA_WINDOWS_PREBUILT',
   sourceCommit: sourceSha,
+  ...(profile === '--direct' ? { profile: 'direct-ip' } : {}),
   packagedAtUtc: new Date().toISOString(),
   build: { platform: process.platform, arch: process.arch, nodeVersion: process.version },
-  runtime: { nodeMajor: 24, platform: 'win32', arch: process.arch },
+  runtime: { nodeMajor: 24, ...(profile === '--direct' ? { nodeMin: '24.11.0' } : {}), platform: 'win32', arch: process.arch },
   packageLockSha256: await sha256(join(stage, 'package-lock.json')),
   directDependencies: direct,
   excludes: ['runtime databases', 'audit logs', 'backups', 'credentials', 'host.env'],

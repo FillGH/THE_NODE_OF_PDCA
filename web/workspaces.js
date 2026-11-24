@@ -1,3 +1,4 @@
+import { uuidV4 } from './uuid.js';
 import { ApiError, autosave } from './autosave.js';
 import { categoryNames } from './model.js';
 import { applyGraphOps, diffGraph, graphSnapshot, scope } from './changes.js';
@@ -241,7 +242,7 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
         const guard = forceGuard ?? (layoutGuard || ops.some(op => op.kind === 'layout') ? initialRevision : null);
         layoutGuard = false;
         const ids = new Set(local.nodes.flatMap(node => node.images));
-        const body = { ...credentials(), ops, guard, saveId: crypto.randomUUID(),
+        const body = { ...credentials(), ops, guard, saveId: uuidV4(),
           nodeTokens: Object.fromEntries(locks.filter(lock => lock.mine).map(lock => [lock.nodeId, lock.token])),
           uploads: [...uploads.values()].filter(image => ids.has(image.id)) };
         return { body, local };
@@ -454,7 +455,7 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
   }
   function askHandoff(intent) {
     return new Promise(resolve => {
-      const requestId = crypto.randomUUID();
+      const requestId = uuidV4();
       const timer = setTimeout(() => {
         showError(new Error('แท็บเดิมยังไม่คืนสิทธิ์ กรุณาลองอีกครั้ง'));
         complete(false);
@@ -908,7 +909,7 @@ export function installWorkspaces({ onOpen, onHome, onSync, onImagesSaved, canva
     });
     if (workspace !== current || !online || blocked || review || !saver ||
         !tab?.token || !lockFor(node.id)?.mine) throw new Error('สิทธิ์แก้ไขเปลี่ยนไปก่อนเพิ่มรูป');
-    const id = crypto.randomUUID();
+    const id = uuidV4();
     uploads.set(id, { id, name: file.name, data });
     current.nodes.find(item => item.id === node.id).images.push({ id, name: file.name });
     queue();

@@ -1,6 +1,6 @@
 # IT Network Acceptance Matrix — Direct Private-IP LAN (revision 2)
 
-**Status: PROPOSED / FACTORY NOT TESTED.** See [ADR-001 revision 2](../design/architecture/ADR-001-private-ip-lan-transport.md) and [implementation plan](DIRECT_PRIVATE_IP_IMPLEMENTATION_PLAN.md). Owner reports IT permits the Float Monitor-style approach; actual PDCA controls and authorized data scope remain to be evidenced. No fake approval flags. Prior TLS/proxy criteria are retired for the selected direction, not treated as PASS. Existing D-065/D-066, G-07/G-11 and V-01–V-08 apply.
+**Status: WP-09 handover candidate / FACTORY NOT TESTED.** See [ADR-001 revision 2](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/design/architecture/ADR-001-private-ip-lan-transport.md) and [implementation plan](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/deployment/DIRECT_PRIVATE_IP_IMPLEMENTATION_PLAN.md). Owner reports IT permits the Float Monitor-style approach; actual PDCA controls and authorized data scope remain to be evidenced. No fake approval flags. Prior TLS/proxy criteria are retired for the selected direction, not treated as PASS. Existing D-065/D-066, G-07/G-11 and V-01–V-08 apply.
 
 | ID | IT / verification scope | Required evidence | STOP / NO-GO | Status |
 |---|---|---|---|---|
@@ -21,4 +21,4 @@
 
 Evidence record per actual Host/configuration/test: Host ID, environment, source/package SHA, timestamp, endpoint/test scope, expected/observed result, PASS/FAIL/BLOCKED/NOT TESTED/N/A with rationale, evidence location and verifier. Keep actual internal addresses, secrets and personnel records in IT-controlled storage, not public repository.
 
-**Gates:** Phase 0 direction selected, plan only; separate Owner command required for WP-02–06. Engineering PASS before Factory synthetic test; IT confirms network/access and permitted data scope before LAN opening. Factory results and existing hard gates before Official Pilot/production; no real data on basis of CI or Float Monitor approval alone. If IT requires TLS, do not force HTTP or relax policy. F-07 remains MITIGATED / OPEN.
+**Gates:** Owner accepted WP-01–08 within engineering/CI candidate scope and authorized WP-09 preparation only; no merge or deployment. Engineering PASS before Factory synthetic test; IT confirms network/access and permitted data scope before LAN opening. Factory results and existing hard gates before Official Pilot/production; no real data on basis of CI or Float Monitor approval alone. If IT requires TLS, do not force HTTP or relax policy. F-07 remains MITIGATED / OPEN.
