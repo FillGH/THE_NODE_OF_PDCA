@@ -55,13 +55,9 @@ jobs:
           $zip = Join-Path $dist ('PDCA-Direct-Windows-CANDIDATE-' + $env:ACCEPTED_SOURCE.Substring(0,12) + '.zip')
           [System.IO.Compression.ZipFile]::CreateFromDirectory($stage,$zip,[System.IO.Compression.CompressionLevel]::Optimal,$false)
           $sha = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          Set-Content -LiteralPath ($zip+'.sha256') -Value ($sha+'  '+(Split-Path $zip -Leaf)) -NoNewline
           "archive_sha256=$sha" >> $env:GITHUB_OUTPUT
           Write-Host ("Direct ARCHIVE BUILT: source="+$env:ACCEPTED_SOURCE+" sha256="+$sha+" bytes="+(Get-Item $zip).Length+" files="+$manifest.files.Count)
-          $template = [IO.File]::ReadAllText((Join-Path $stage 'README4IT.html'))
-          if ([regex]::Matches($template,'const DELIVERY = null;').Count -ne 1) { throw 'Missing unique guide metadata marker' }
-          $delivery = @{source=$env:ACCEPTED_SOURCE;zip=(Split-Path $zip -Leaf);sha256=$sha} | ConvertTo-Json -Compress
-          [IO.File]::WriteAllText((Join-Path $dist 'README4IT.html'),$template.Replace('const DELIVERY = null;',('const DELIVERY = '+$delivery+';')),[Text.UTF8Encoding]::new($false))
+          Copy-Item (Join-Path $stage 'README4IT.html') (Join-Path $dist 'README4IT.html')
           Copy-Item tools/qa/direct-edge.mjs,tools/qa/direct-endpoint-preflight.mjs,tools/qa/it-guide-commands.mjs (Join-Path $qa 'tools/qa')
           Copy-Item src/network-config.js (Join-Path $qa 'src')
           Copy-Item test/direct-lan.test.js,test/recovery-operator.test.js (Join-Path $qa 'test')
@@ -115,20 +111,19 @@ jobs:
           if ($zips.Count -ne 1) { throw 'Expected exactly one candidate ZIP' }
           $zip = $zips[0].FullName
           $actual = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
-          $sidecar = ((Get-Content -LiteralPath ($zip+'.sha256') -Raw).Trim() -split '\s+')
-          if ($sidecar.Count -ne 2 -or $sidecar[0] -ne $actual -or $sidecar[1] -ne $zips[0].Name -or $actual -ne $env:EXPECTED_ARCHIVE_SHA) { throw 'Archive checksum/provenance mismatch' }
+          if ($actual -ne $env:EXPECTED_ARCHIVE_SHA) { throw 'CI artifact transfer mismatch' }
+          if (@(Get-ChildItem -LiteralPath $download -Force).Count -ne 2) { throw 'Delivery must contain only ZIP and HTML' }
           $extract = Join-Path $env:RUNNER_TEMP 'direct-clean extract'
           if (Test-Path $extract) { throw 'Target is not clean' }
           Expand-Archive -LiteralPath $zip -DestinationPath $extract
           $manifest = Get-Content (Join-Path $extract 'DEPLOYMENT_MANIFEST.json') -Raw | ConvertFrom-Json
           if ($manifest.sourceCommit -ne $env:ACCEPTED_SOURCE -or $manifest.profile -ne 'direct-ip' -or $manifest.build.nodeVersion -ne 'v24.11.0') { throw 'Unexpected manifest provenance' }
           $guide = Join-Path $download 'README4IT.html'
-          $template = [IO.File]::ReadAllText((Join-Path $extract 'README4IT.html'))
-          $outerGuide = [IO.File]::ReadAllText($guide)
-          $match = [regex]::Match($outerGuide,'const DELIVERY = (\{[^\r\n]+\});')
-          if (-not $match.Success -or $outerGuide.Replace($match.Value,'const DELIVERY = null;') -cne $template) { throw 'External guide differs beyond delivery metadata' }
+          if ((Get-FileHash -LiteralPath $guide).Hash -ne (Get-FileHash -LiteralPath (Join-Path $extract 'README4IT.html')).Hash) { throw 'External guide differs from package' }
+          $match = [regex]::Match([IO.File]::ReadAllText($guide),'const DELIVERY = (\{[^\r\n]+\});')
+          if (-not $match.Success) { throw 'Missing delivery metadata' }
           $delivery = $match.Groups[1].Value | ConvertFrom-Json
-          if ($delivery.source -cne $env:ACCEPTED_SOURCE -or $delivery.zip -cne $zips[0].Name -or $delivery.sha256 -cne $actual) { throw 'External guide delivery metadata mismatch' }
+          if ($delivery.source -cne $env:ACCEPTED_SOURCE -or $delivery.zip -cne $zips[0].Name) { throw 'Guide candidate mismatch' }
           $nodeOnly = Join-Path $env:RUNNER_TEMP 'direct-node-only'
           New-Item -ItemType Directory -Path $nodeOnly | Out-Null
           Copy-Item (Get-Command node.exe -ErrorAction Stop).Source (Join-Path $nodeOnly 'node.exe')
@@ -193,22 +188,16 @@ jobs:
             # No firewall/policy changes, no automatic recovery credential use.
             $guideBase = Join-Path $env:RUNNER_TEMP 'PDCA Guide Test (Offline)'
             New-Item -ItemType Directory -Path $guideBase | Out-Null
-            Copy-Item -LiteralPath $zip,($zip+'.sha256'),$guide -Destination $guideBase
+            Copy-Item -LiteralPath $guide -Destination $guideBase
+            $renamedZip = 'PDCA Test.zip'
+            Copy-Item -LiteralPath $zip -Destination (Join-Path $guideBase $renamedZip)
             $selectedGuide = node (Join-Path $qa 'tools/qa/direct-endpoint-preflight.mjs')
             if ($LASTEXITCODE -ne 0) { throw 'Guide endpoint preflight failed' }
             $guideEndpoint = $selectedGuide | ConvertFrom-Json
-            $guidePlanJson = node (Join-Path $qa 'tools/qa/it-guide-commands.mjs') $guide $guideBase $zips[0].Name $guideEndpoint.ip ([string]$guideEndpoint.port)
+            $guidePlanJson = node (Join-Path $qa 'tools/qa/it-guide-commands.mjs') $guide $guideBase $renamedZip $guideEndpoint.ip ([string]$guideEndpoint.port)
             if ($LASTEXITCODE -ne 0) { throw 'Guide command generation failed' }
             $guidePlan = $guidePlanJson | ConvertFrom-Json
             if (-not $guidePlan.prepare -or -not $guidePlan.setup) { throw 'Guide omitted required commands' }
-            # Negative: correct ZIP but replaced sidecar must stop before extraction.
-            $sidecarPath = Join-Path $guideBase ($zips[0].Name+'.sha256')
-            $correctSidecar = [IO.File]::ReadAllText($sidecarPath)
-            [IO.File]::WriteAllText($sidecarPath,(('0'*64)+'  '+$zips[0].Name))
-            $rejected = $false
-            try { & ([scriptblock]::Create($guidePlan.prepare)) } catch { if ($_.Exception.Message -match 'ZIP checksum mismatch') { $rejected = $true } else { throw } }
-            if (-not $rejected -or (Test-Path -LiteralPath $guidePlan.app)) { throw 'Tampered sidecar was not rejected' }
-            [IO.File]::WriteAllText($sidecarPath,$correctSidecar)
             & ([scriptblock]::Create($guidePlan.prepare))
             if (-not (Test-Path -LiteralPath (Join-Path $guidePlan.app 'DEPLOYMENT_MANIFEST.json'))) { throw 'Guide extraction failed' }
             # CI-only confirmation fixture: synthetic private endpoint and local runner-owned directories.
@@ -241,7 +230,7 @@ jobs:
             if (-not $repeatBlocked) { throw 'Guide repeat setup was not blocked' }
             node (Join-Path $guidePlan.app 'tools/prebuilt/verify.mjs') $guidePlan.app
             if ($LASTEXITCODE -ne 0) { throw 'Guide package changed' }
-            Write-Host 'HTML GUIDE COMMANDS PASS: pinned external guide and inner template, spaced path, automatic ZIP/sidecar verification and tamper refusal, synthetic setup/seed, repeat refused, manifest intact'
+            Write-Host 'HTML GUIDE COMMANDS PASS: identical internal/external guide, renamed ZIP, spaced path, automatic extracted manifest verification without delivery checksum, synthetic setup/seed, repeat refused, manifest intact'
             Write-Host 'Direct CLEAN TARGET PASS: exact archive and manifest, isolated Node runtime, extracted Direct/Recovery regression, Setup/Seed/ADOPT/Diagnose/Start/Edge, restart, ACL and unchanged package; no npm command in target'
           } finally {
             Remove-NetFirewallRule -Name $ruleName -ErrorAction Stop

@@ -8,7 +8,7 @@ Baseline ประวัติ BUILD 4: 10 พฤศจิกายน 2026 · �
 
 ## 1. ชุด Demo ทดสอบ — Verified Prebuilt ZIP เท่านั้น
 
-สำหรับ Factory synthetic verification ให้ IT ใช้ Candidate ZIP ที่ผ่านตรวจรับและได้รับอนุมัติแยกตาม README4IT.html ฉบับภายนอกจาก Artifact ที่อนุมัติ (คู่มือภายในใช้สำหรับ Daily Start) เท่านั้น: ตรวจ SHA-256/Manifest, Setup, Seed ใน data root ว่าง, ADOPT, Status, Diagnose และ Start CMD. ไม่ต้อง clone, npm หรือ Registry บน Target. ห้าม seed ซ้ำหรือใช้ Demo Launcher เปิด Managed Host. ขั้นตอน Developer Source Checkout เดิมเก็บไว้ใน Git history และ README ส่วน Developer Local Test เท่านั้น ไม่ใช่ทางเลือกสำหรับ Factory IT. เปิด URL Direct HTTP ที่ Host แสดงจาก Edge ที่ได้รับอนุญาต และบันทึก Source/ZIP SHA ตาม Manifest และ Approval Record.
+สำหรับ Factory synthetic verification ให้ IT ใช้ Candidate ZIP ที่ผ่านตรวจรับและได้รับอนุมัติแยกตาม README4IT.html จาก Artifact ที่อนุมัติ เท่านั้น: ตรวจ Manifest อัตโนมัติหลังแตก ZIP, Setup, Seed ใน data root ว่าง, ADOPT, Status, Diagnose และ Start CMD. ไม่ต้อง clone, npm หรือ Registry บน Target. ห้าม seed ซ้ำหรือใช้ Demo Launcher เปิด Managed Host. ขั้นตอน Developer Source Checkout เดิมเก็บไว้ใน Git history และ README ส่วน Developer Local Test เท่านั้น ไม่ใช่ทางเลือกสำหรับ Factory IT. เปิด URL Direct HTTP ที่ Host แสดงจาก Edge ที่ได้รับอนุญาต และบันทึก Candidate source ตาม Manifest และ Approval Record (ไม่ต้องตรวจ ZIP SHA เอง).
 
 | ผังตั้งต้น | สิ่งที่ใช้ตรวจ |
 | --- | --- |

@@ -6,7 +6,7 @@
 
 ## 1. Packaging Provenance & Dependency Boundary
 
-- WP-08/WP-09 are historical accepted candidates. For new changes, use PROJECT.md risk-based C0–C3 policy: record-only changes do not rebuild; a changed ZIP needs new identity, SHA-256, manifest, runtime/dependency equivalence and impact-based independent verification. Use the approved run, inner ZIP SHA-256 sidecar and manifest source commit, not an older hash. GitHub Artifact wrapper digest differs from inner ZIP hash.
+- WP-08/WP-09 are historical accepted candidates. For new changes, use PROJECT.md risk-based C0–C3 policy: record-only changes do not rebuild; a changed ZIP needs new identity, SHA-256, manifest, runtime/dependency equivalence and impact-based independent verification. Use the approved artifact and manifest source commit. For new Direct candidates the delivery contains only ZIP and identical HTML; archive digest is CI evidence only, not an installation gate. Historical packages retain their original records.
 - Windows CI Node.js 24.11.0 builds the pinned package with locked dependencies; the separate regression workflow runs the full source suite for material source/packaging/CI changes. Package workflow independently verifies the archive and affected extracted runtime; independent Windows target has no source checkout, uses extracted node_modules, isolated Node runtime, verifies manifest and runs applicable Direct/Recovery regression and actual Edge. Historical LAN contracts remain source-level tests for lean Direct-IP packaging. No npm/Registry dependency on target. Not a physical airgap.
 - Allowlist packages app, dependencies, tools and docs only. Runtime data/config/keys external. SHA-256 is integrity, not source authentication; compare approved GitHub source/run/record.
 - Candidate artifact is NOT RELEASE until separate authorization. Historic proxy workflow artifacts do not authorize Direct deployment.
@@ -16,7 +16,7 @@
 - Assigned RFC1918 IPv4 and fixed approved port; default loopback remains local only. Direct HTTP derives origin, no proxy/ingress key, no remote operator/audit/restore route. Local IT CLI/menu only.
 - HTTP is cleartext, display name not authentication; actual IT admission, denied unapproved/VPN/guest/Internet and data classification acceptance mandatory. If TLS required, STOP.
 - External config and canonical local NTFS data root with restricted ACL; one writable Host per dataset; managed lock held through Host/maintenance, never delete/replace lock file. See [Direct operator guide](DIRECT_PRIVATE_IP_CANDIDATE.md).
-- Legacy HTTPS proxy scripts and docs remain historical, not prerequisites. Direct-IP candidate supports stable Windows x64 Node >=24.11.0 and <25.0.0; legacy remains exact-version. CI validates the same package on 24.11.0 and 24.14.1. IT selects security-patched runtime and rechecks start/save/backup/recovery after updates; do not infer every future version is verified. External HTML is generated after ZIP creation with pinned source/filename/hash; inner template is daily-use only. No manual checksum input; trusted distribution still required.
+- Legacy HTTPS proxy scripts and docs remain historical, not prerequisites. Direct-IP candidate supports stable Windows x64 Node >=24.11.0 and <25.0.0; legacy remains exact-version. CI validates the same package on 24.11.0 and 24.14.1. IT selects security-patched runtime and rechecks start/save/backup/recovery after updates; do not infer every future version is verified. HTML source/default ZIP filename metadata is generated before packaging; the internal and external guide are identical. Safe renamed ZIP files are supported. No archive hash or sidecar required on Target; automatic extracted manifest verification and trusted distribution remain required.
 
 ## 3. Managed Recovery Architecture
 
@@ -46,7 +46,7 @@ Source Rollback และ Database Rollback เป็นคนละขั้น
 
 - **CI Check:** Package Integrity, smoke/local API/JSON-XLSX-PDF, all Node Tests, Recovery Operator Guard Tests, Windows Launcher Usage Guard
 - **Factory Acceptance:** [design/PILOT_VERIFY.md](../design/PILOT_VERIFY.md) V-01..V-08, รันบน Windows Factory Host + Authorized/Unauthorized Clients จริง และวัด RPO/RTO ของ Restore Drill จริง
-- **NO-GO:** Source/Hash ไม่ตรง, Missing Audit/Pointer, ผู้ไม่รับอนุญาตเข้าถึง Direct endpoint, Incorrect Active DB, Silent Data Loss, Permission/Restore Failure หรือไม่มีหลักฐาน Recovery
+- **NO-GO:** Manifest/source ไม่ตรง, Missing Audit/Pointer, ผู้ไม่รับอนุญาตเข้าถึง Direct endpoint, Incorrect Active DB, Silent Data Loss, Permission/Restore Failure หรือไม่มีหลักฐาน Recovery
 
 Operational Runbook: [Direct operator guide](DIRECT_PRIVATE_IP_CANDIDATE.md). Historical references (repository only): [BUILD4_HOST_RUNBOOK.md](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/design/BUILD4_HOST_RUNBOOK.md), [IT_HANDOFF.md](https://github.com/FillGH/THE_NODE_OF_PDCA/blob/codex/direct-private-ip-implementation/design/IT_HANDOFF.md).
 

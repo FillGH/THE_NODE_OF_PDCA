@@ -66,6 +66,15 @@ for (const name of included) {
   await mkdir(dirname(to), { recursive: true });
   await cp(from, to, { recursive: true, force: false, errorOnExist: true });
 }
+// One identical guide inside and outside the Direct archive; no archive digest in HTML.
+if (profile === '--direct') {
+  const guide = join(stage, 'README4IT.html');
+  const template = await readFile(guide, 'utf8');
+  const marker = 'const DELIVERY = null;';
+  assert.equal(template.split(marker).length, 2, 'Expected one guide metadata marker');
+  const delivery = { source: sourceSha, zip: 'PDCA-Direct-Windows-CANDIDATE-' + sourceSha.slice(0,12) + '.zip' };
+  await writeFile(guide, template.replace(marker, 'const DELIVERY = ' + JSON.stringify(delivery) + ';'));
+}
 const paths = (await walk(stage)).sort();
 const files = [];
 for (const path of paths) {

@@ -350,7 +350,7 @@ try {
     const guideState=await evaluate("({prepare:document.querySelector('#copyPrepare').disabled,setup:document.querySelector('#copySetup').disabled,approved:document.querySelector('#approved').checked,error:document.querySelector('#validation').textContent,base:document.querySelector('#base').value})");
     assert.equal(guideState.prepare||guideState.setup,false,'Guide controls not ready: '+JSON.stringify(guideState));
     assert.equal(await evaluate("document.querySelector('#setup').value.includes('seed --existing-empty')"),true);
-    assert.equal(await evaluate("document.querySelector('#zip').value===DELIVERY.zip && document.querySelector('#prepare').value.includes(DELIVERY.sha256)"),true);
+    assert.equal(await evaluate("document.querySelector('#zip').value===DELIVERY.zip && document.querySelector('#prepare').value.includes(DELIVERY.source) && !document.querySelector('#prepare').value.includes('Get-FileHash')"),true);
     await evaluate("document.querySelector('#ip').value='8.8.8.8';document.querySelector('#ip').dispatchEvent(new Event('input',{bubbles:true}));true");
     assert.equal(await evaluate("document.querySelector('#copySetup').disabled"),true);
     await evaluate("document.querySelector('#dailyTab').click();true");
