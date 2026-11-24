@@ -79,3 +79,7 @@ Owner accepted WP-07 local candidate engineering at `7666598bceb170932f4d5b5abc6
 ### WP-09 authorization (24 November 2026)
 
 Owner accepted WP-08 10/10 (6/6 jobs), Gate II CI package scope, and approved IT handover preparation only. README4IT is the active entry, Direct operator guide covers backup, migration, recovery and rollback. Old proxy kit historical. New docs change archive content; WP-09 candidate must be built from exact new commit with unchanged runtime relative to 7666598, new inner ZIP SHA-256, manifest and independent clean-target E2E. Retain prior verified artifact identity separately. No Factory deploy, real data, release, merge, actual IT handover or Pilot authorization. Gate III/IV NOT TESTED.
+
+### WP-09 documentation correction (24 November 2026)
+
+Owner approved D01/D02 documentation-only increment after prior review 8/10, CI 6/6. Reconcile legacy source precondition, planned cutover ordering and historical checkout/launcher references. New archive identity requires new Build + Independent Clean Target and parallel regression. No runtime changes; WP-09 not closed until review. All subsequent gates HOLD.

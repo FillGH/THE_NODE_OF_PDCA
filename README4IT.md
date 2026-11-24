@@ -37,7 +37,7 @@ node tools\prebuilt\verify.mjs .
 tools\direct\setup.cmd "C:\PDCA\config\host.env" 192.168.1.50 4175 "D:\PDCA\data"
 ~~~
 
-Setup สร้าง host.env และ IT/Phil keys ครั้งเดียว ไม่สร้าง DB; IT เก็บคีย์อย่างจำกัดสิทธิ์ ห้ามส่งใน chat/screenshots. หาก setup ซ้ำ ใช้เฉพาะ path config เพื่อ preview ไม่เขียนทับ. หากมีฐานเดิม **ห้าม Seed**; อ่าน [Migration](deployment/DIRECT_PRIVATE_IP_CANDIDATE.md#4-migration--laptop-to-dedicated-server).
+Setup สร้าง host.env และ IT/Phil keys ครั้งเดียว ไม่สร้าง DB; IT เก็บคีย์อย่างจำกัดสิทธิ์ ห้ามส่งใน chat/screenshots. หาก setup ซ้ำ ใช้เฉพาะ path config เพื่อ preview ไม่เขียนทับ. หากมีฐานเดิม **ห้าม Seed**; อ่าน [Migration](deployment/DIRECT_PRIVATE_IP_CANDIDATE.md#4-migration--laptop-to-dedicated-server) และแยก Managed Source ที่มี Pointer ออกจาก pre-witness Legacy ที่ไม่มี Pointer. ห้ามใช้ Legacy migration เพื่อข้าม Missing/Corrupt Pointer ของฐาน Managed.
 
 ใน CMD แยก (ไม่ load host.env) ที่ app:
 
@@ -59,7 +59,7 @@ tools\direct\diagnose.cmd "C:\PDCA\config\host.env"
 tools\direct\start.cmd "C:\PDCA\config\host.env"
 ~~~
 
-Diagnose ตรวจ path ไม่ใช่ full integrity; Status เป็น integrity check. เปิด URL ที่ Start แสดงใน Edge ของ Host และเครื่องที่ IT อนุญาตหลัง IT ยืนยัน network scope. ตัวอย่าง http://192.168.1.50:4175. ใช้ข้อมูลสมมติ. Ctrl+C เพื่อหยุดและยืนยัน process จบก่อน maintenance; ไม่เปิด Host ซ้ำ. สำหรับ service/task scheduler ให้ IT ใช้ Start CMD กับ absolute host.env, working directory app, บัญชีบริการ ACL และทดสอบ reboot/backup; ไม่เปิด auto-restart ระหว่าง recovery.
+Diagnose ตรวจ path ไม่ใช่ full integrity; Status เป็น integrity check. เปิด URL ที่ Start แสดงใน Edge ของ Host และเครื่องที่ IT อนุญาตหลัง IT ยืนยัน network scope. ตัวอย่าง http://192.168.1.50:4175. ใช้ข้อมูลสมมติ. สำหรับ planned maintenance แจ้งผู้ใช้ให้บันทึกและยืนยัน Committed Data ก่อนปิด access; จัดการ Draft ที่ยังไม่บันทึกแยกตาม IT. Ctrl+C เพื่อหยุดและยืนยัน process จบก่อน maintenance; ไม่เปิด Host ซ้ำ. สำหรับ service/task scheduler ให้ IT ใช้ Start CMD กับ absolute host.env, working directory app, บัญชีบริการ ACL และทดสอบ reboot/backup; ไม่เปิด auto-restart ระหว่าง recovery.
 
 ## 4. งานประจำและเหตุขัดข้อง
 

@@ -2,7 +2,11 @@ name: WP-09 Direct-IP verified candidate (not release)
 on:
   push:
     branches: [codex/direct-private-ip-implementation]
-    paths: ['.github/workflows/wp09-direct-handover.yml']
+    paths:
+      - '.github/workflows/wp09-direct-handover.yml'
+      - 'README4IT.md'
+      - 'deployment/DIRECT_PRIVATE_IP_CANDIDATE.md'
+      - 'design/PILOT_VERIFY.md'
   workflow_dispatch:
 permissions:
   contents: read

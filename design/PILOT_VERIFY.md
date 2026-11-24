@@ -1,29 +1,14 @@
 # THE NODE OF PDCA · VERIFY และ LAN Test
 
-> **เอกสารนี้เป็น Test Plan/Evidence Matrix ไม่ใช่คู่มือติดตั้งล่าสุด** สำหรับการส่งมอบ **Prebuilt ZIP** ให้ IT เริ่มที่ **[README4IT.md](../README4IT.md)** ก่อน คำสั่ง `git clone` / `npm.cmd ci` ด้านล่างเป็นวิธี Development Source Checkout ย้อนหลังเท่านั้น **ไม่จำเป็นบน Factory Server** หลัง ADOPT เข้าสู่ Managed Mode ให้เปิดด้วย `src/server.js` ไม่ใช่ Demo Launcher
+> **เอกสารนี้เป็น Test Plan/Evidence Matrix ไม่ใช่คู่มือติดตั้ง** สำหรับ Direct-IP Prebuilt ZIP ให้เริ่มที่ [README4IT.md](../README4IT.md); หลัง ADOPT ให้ใช้ `tools\direct\start.cmd` พร้อม external host.env เท่านั้นตามคู่มือ IT. ไม่ใช้ Developer/Demo Launcher บน Managed Host.
 
-วันที่ส่งมอบ 10 พฤศจิกายน 2026 · สาขา `codex/build-increment-4`
+Baseline ประวัติ BUILD 4: 10 พฤศจิกายน 2026 · ปัจจุบัน WP-09 Handover Candidate รอตรวจรับ; ไม่มีการส่งมอบหรือเปิด LAN จริงจากเอกสารนี้
 
-เจ้าของโครงการรับ BUILD 4 และให้ส่งแพ็กเกจเพื่อเริ่ม LAN Test ด้วยข้อมูลสมมติ ใช้ชุดนี้เก็บหลักฐานบน Laptop บริษัทและเครื่องลูกข่ายที่ IT อนุญาต ก่อนพิจารณา Official Pilot และก่อนนำข้อมูลจริงเข้าระบบ [ข้อกำหนดและเกณฑ์ตัดสิน](../PROJECT.md)
+เจ้าของโครงการรับ BUILD 4 แล้ว; การเริ่ม Factory LAN Test ต้องมี Owner/IT approval แยกและใช้ข้อมูลสมมติ ใช้ชุดนี้เก็บหลักฐานบน Laptop บริษัทและเครื่องลูกข่ายที่ IT อนุญาต ก่อนพิจารณา Official Pilot และก่อนนำข้อมูลจริงเข้าระบบ [ข้อกำหนดและเกณฑ์ตัดสิน](../PROJECT.md)
 
-## 1. ทางเลือก Developer Source Checkout (Historical) และชุด Demo ทดสอบ
+## 1. ชุด Demo ทดสอบ — Verified Prebuilt ZIP เท่านั้น
 
-วิธีนี้สำหรับผู้พัฒนาเท่านั้น ไม่ใช่ขั้นตอนที่ IT ต้องทำเมื่อได้รับ Verified ZIP. ใช้ Git และ Node.js 24 ตาม `package.json` ตั้งพื้นที่ทดสอบบนดิสก์ภายในเครื่อง เช่น `C:\PDCA-LAN-Test` ภายใต้สิทธิ์ที่ IT จัดให้ เก็บ SQLite, Audit และ Backup บน volume เดียวกันในโฟลเดอร์ที่ผู้ใช้ LAN เข้าถึงผ่านแอปเท่านั้น
-
-```powershell
-git clone --branch codex/build-increment-4 --single-branch https://github.com/FillGH/THE_NODE_OF_PDCA.git
-Set-Location THE_NODE_OF_PDCA
-git rev-parse HEAD
-node --version
-npm.cmd ci
-npm.cmd test
-npm.cmd run demo:seed
-npm.cmd run demo:start
-```
-
-เปิด [Demo บน Laptop](http://127.0.0.1:4175) ด้วย Edge ใช้ Display Name สมมติ เก็บ SHA จาก `git rev-parse HEAD` ไว้กับผลทดสอบ หาก LAN Test แยกจากอินเทอร์เน็ต ให้ IT clone และติดตั้ง dependency ตาม `package-lock.json` ในพื้นที่ที่องค์กรอนุญาตก่อนย้ายเข้าเครือข่าย
-
-คำสั่ง `demo:seed` สร้างฐานและ Audit ใหม่ใน `.pdca-dev/pilot-demo` และปฏิเสธเมื่อไดเรกทอรีมีอยู่แล้ว หลังหยุดด้วย `Ctrl+C` ใช้ `demo:start` เพื่อเปิดชุดเดิมได้ หากต้องการชุดตั้งต้นอีกชุดหรือเปลี่ยน URL ให้ตั้ง `PDCA_DEMO_DIR` เป็นโฟลเดอร์ใหม่แล้ว seed ด้วย URL ที่จะใช้
+สำหรับ Factory synthetic verification ให้ IT ใช้ Candidate ZIP ที่ผ่านตรวจรับและได้รับอนุมัติแยกตาม [README4IT.md](../README4IT.md) เท่านั้น: ตรวจ SHA-256/Manifest, Setup, Seed ใน data root ว่าง, ADOPT, Status, Diagnose และ Start CMD. ไม่ต้อง clone, npm หรือ Registry บน Target. ห้าม seed ซ้ำหรือใช้ Demo Launcher เปิด Managed Host. ขั้นตอน Developer Source Checkout เดิมเก็บไว้ใน Git history และ README ส่วน Developer Local Test เท่านั้น ไม่ใช่ทางเลือกสำหรับ Factory IT. เปิด URL Direct HTTP ที่ Host แสดงจาก Edge ที่ได้รับอนุญาต และบันทึก Source/ZIP SHA ตาม Manifest และ Approval Record.
 
 | ผังตั้งต้น | สิ่งที่ใช้ตรวจ |
 | --- | --- |
@@ -58,7 +43,7 @@ npm.cmd run demo:start
 
 ## 4. ซ้อมกู้และวัด RPO/RTO
 
-ใช้ [Managed recovery / migration](../deployment/DIRECT_PRIVATE_IP_CANDIDATE.md) บนชุดสมมติแยกที่ IT อนุมัติเท่านั้น. หยุดและ disable ทุก writer ก่อน maintenance; preserve verified current Workspace/Audit, pointer and backups; use Menu 4/5 then reviewed ACTIVATE or explicitly approved ACTIVATE-RECOVERY. ทดสอบ oldSnapshot/Audit replay และ held หาก Audit หายหรือไม่ครบใน isolated copy; ห้ามเปิด Preview คู่ Live Audit หรือแก้ Pointer. ตรวจ ID, revision, graph, images, Action, history, Trash, inventory, restart และ verified backup; ทำ rollback drill ตามข้อจำกัด. RPO = เวลาเริ่มเหตุ − capturedAt ของ recovery point ที่กู้ได้จริง ≤4 ชั่วโมง; RTO = เวลาเริ่มเหตุถึง authorized user ตรวจบริการที่กู้แล้วได้ ≤1 วันทำการภายใต้ backup/infrastructure ที่พร้อม. จดเวลาจริงและข้อจำกัด; CI ไม่แทน Factory. ถ้าไม่ผ่าน STOP.
+ใช้ [Managed recovery / migration](../deployment/DIRECT_PRIVATE_IP_CANDIDATE.md) บนชุดสมมติแยกที่ IT อนุมัติเท่านั้น. สำหรับ planned maintenance ให้ settle/verify committed saves ก่อนปิด access ตามคู่มือ migration 4.1; incident ให้ contain ทันทีตามความเสี่ยง. หยุดและ disable ทุก writer ก่อน maintenance; preserve verified current Workspace/Audit, pointer and backups; use Menu 4/5 then reviewed ACTIVATE or explicitly approved ACTIVATE-RECOVERY. ทดสอบ oldSnapshot/Audit replay และ held หาก Audit หายหรือไม่ครบใน isolated copy; ห้ามเปิด Preview คู่ Live Audit หรือแก้ Pointer. ตรวจ ID, revision, graph, images, Action, history, Trash, inventory, restart และ verified backup; ทำ rollback drill ตามข้อจำกัด. RPO = เวลาเริ่มเหตุ − capturedAt ของ recovery point ที่กู้ได้จริง ≤4 ชั่วโมง; RTO = เวลาเริ่มเหตุถึง authorized user ตรวจบริการที่กู้แล้วได้ ≤1 วันทำการภายใต้ backup/infrastructure ที่พร้อม. จดเวลาจริงและข้อจำกัด; CI ไม่แทน Factory. ถ้าไม่ผ่าน STOP.
 
 ## 5. บันทึกผลและตัดสินใจ
 
