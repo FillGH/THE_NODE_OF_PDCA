@@ -126,6 +126,19 @@ async function withStoppedServer(env, task) {
   finally { try { await new Promise(done => server.close(done)); } finally { release(); } }
 }
 
+// Preserve IT-only deletion Audit access without sending an operator key over HTTP.
+export async function readDeletionAudit(env, role) {
+  env = normalizeEnv(env);
+  requireState(role === 'IT', 'IT authorization required to view deletion Audit');
+  return withStoppedServer(env, async () => {
+    const { state } = readActiveState(env);
+    inspectActivePair(state.current.workspace, state.current.audit);
+    const db = new DatabaseSync(state.current.audit, { readOnly: true });
+    try { return { events: db.prepare('SELECT * FROM events ORDER BY seq DESC').all() }; }
+    finally { db.close(); }
+  });
+}
+
 export async function adoptActive(env, role, confirmation) {
   env = normalizeEnv(env);
   requireState(role === 'IT' && confirmation === 'ADOPT', 'IT authorization and ADOPT confirmation required');

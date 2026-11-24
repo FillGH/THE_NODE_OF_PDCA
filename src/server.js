@@ -11,7 +11,7 @@ import { operationsConfig, secretMatches } from './ops.js';
 import { runRecovery, startBackups } from './recovery.js';
 import { inspectActivePair } from './active-db.js';
 import { normalizeEnv } from './network-config.js';
-import { acquireManagedLease } from './host-exclusion.js';
+import { acquireManagedLease, rejectUnmanagedManagedRoot } from './host-exclusion.js';
 
 const files = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
@@ -251,6 +251,7 @@ export async function startHost(env = process.env, { demoEvidence = false } = {}
   let store, server;
   try {
   const { file, auditFile, root, recoveryRoot, origin, ingress, authorize, direct, bind, port } = operationsConfig(env);
+  if (!env.PDCA_ACTIVE_DB_POINTER) rejectUnmanagedManagedRoot(file, auditFile);
   const log = resolve(env.PDCA_OPS_LOG || resolve(dirname(file), 'operations.jsonl'));
   const lowSpaceBytes = Number(env.PDCA_LOW_SPACE_BYTES ?? 1024 ** 3);
   if (!Number.isSafeInteger(lowSpaceBytes) || lowSpaceBytes < 0) throw new Error('Invalid low-space threshold');

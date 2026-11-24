@@ -48,6 +48,8 @@ export function normalizeEnv(input) {
     if (!isAbsolute(env[key])) throw new Error('Managed database paths must be absolute: ' + key);
     pathUnderRoot(root,env[key]);
   }
+  const distinct = Object.keys(names).map(k=>resolve(env[k]).toLowerCase());
+  if (new Set(distinct).size !== distinct.length) throw new Error('Managed paths must be distinct');
   return env;
 }
 

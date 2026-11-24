@@ -10,7 +10,7 @@ import { webcrypto } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { networkConfig, normalizeEnv, privateIPv4, pathUnderRoot } from '../src/network-config.js';
 import { acquireManagedLease } from '../src/host-exclusion.js';
-import { adoptActive, rollbackActive } from '../src/active-db.js';
+import { adoptActive, rollbackActive, readDeletionAudit } from '../src/active-db.js';
 import { operationsConfig } from '../src/ops.js';
 import { openStore } from '../src/store.js';
 import { startHost } from '../src/server.js';
@@ -136,4 +136,18 @@ test('DIRECT-08 Windows launcher contracts do not invoke npm, change firewall or
   }
   const s=readFileSync(join(cwd,'tools/direct/host.mjs'),'utf8');
   assert.match(s,/flag:'wx'/);assert.match(s,/randomBytes\(32\)/);
+});
+
+test('DIRECT-09 local IT audit preserved and unmanaged bypass blocked',async t=>{
+  const f=await fixture(t);
+  const host=await startHost(f.env);
+  try {
+    const unmanaged={...f.env};delete unmanaged.PDCA_ACTIVE_DB_POINTER;
+    await assert.rejects(startHost(unmanaged),/managed data root/);
+    await assert.rejects(readDeletionAudit(f.env,'IT'),/occupied|exclusion/);
+  }finally{await host.stop();}
+  await assert.rejects(readDeletionAudit(f.env,'Phil'),/IT authorization/);
+  assert.deepEqual((await readDeletionAudit(f.env,'IT')).events,[]);
+  const wrong=spawnSync(process.execPath,['src/ops.js','deletion-audit'],{cwd,env:{...process.env,...f.env,PDCA_OPERATOR_KEY:phil},encoding:'utf8',timeout:15000});
+  assert.equal(wrong.status,1);assert.match(wrong.stderr,/IT authorization/);
 });

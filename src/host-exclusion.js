@@ -1,6 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
 import { existsSync, realpathSync, statSync, lstatSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { join, resolve, dirname } from 'node:path';
 
 // Persistent lock database is infrastructure, not the PDCA Workspace/Audit.
 // Never remove/replace it. OS-backed SQLite locks release on process death.
@@ -10,8 +10,11 @@ export function acquireManagedLease(env) {
   const root = realpathSync(resolve(env.PDCA_DATA_ROOT));
   if (!statSync(root).isDirectory()) throw new Error('Invalid managed root');
   const file = join(root, '.pdca-host-exclusion.sqlite');
-  if (existsSync(file) && (!lstatSync(file).isFile() || lstatSync(file).nlink !== 1 || realpathSync(file) !== file))
-    throw new Error('STOP: ambiguous managed exclusion file');
+  try {
+    const st = lstatSync(file);
+    if (!st.isFile() || st.nlink !== 1 || realpathSync(file) !== file)
+      throw new Error('STOP: ambiguous managed exclusion file');
+  } catch (error) { if (error.code !== 'ENOENT') throw error; }
   let db;
   try {
     db = new DatabaseSync(file);
@@ -27,4 +30,18 @@ export function acquireManagedLease(env) {
     released = true;
     try { db.exec('ROLLBACK'); } finally { db.close(); }
   };
+}
+
+// An accidental unmanaged launch of the new binary must not bypass a managed root lease.
+export function rejectUnmanagedManagedRoot(file, auditFile) {
+  for (const candidate of [file, auditFile]) {
+    let current = dirname(resolve(candidate));
+    while (true) {
+      if (existsSync(join(current,'.pdca-host-exclusion.sqlite')))
+        throw new Error('STOP: managed data root requires Active DB Pointer; unmanaged launch refused');
+      const parent=dirname(current);
+      if (parent===current) break;
+      current=parent;
+    }
+  }
 }
