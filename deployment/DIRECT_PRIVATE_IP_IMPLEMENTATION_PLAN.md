@@ -69,3 +69,5 @@ Owner command: "อนุมัติ ADR-001 revision 2 และแผน Dire
 ### WP-07 authorization (24 November 2026)
 
 Owner accepted F-10 (CI 45330657130, 3/3 fresh installs, 8/8 criteria) and approved WP-07 only. Gate II is not yet accepted. Reuse previous evidence only where the implementation is unchanged and the check maps to the requirement. Keep F-07 synthetic and Factory evidence separate. WP-08/09, Release, Merge, Deploy and real data/Pilot remain HOLD. Historical EACCES OS cause not established; retain bind/lease guards.
+
+WP-07 evidence is tracked in [WP07_ENGINEERING_EVIDENCE.md](WP07_ENGINEERING_EVIDENCE.md). Gate II remains pending; no later work package is authorized.

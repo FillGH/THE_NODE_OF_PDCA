@@ -186,6 +186,15 @@ try {
       assert.equal(r.status,403);
     }
   }
+  const {request:httpRequest}=await import('node:http');
+  const rawStatus=(path,headers={})=>new Promise((ok,fail)=>{
+    const req=httpRequest(config.origin+path,{headers},res=>{res.resume();res.on('end',()=>ok(res.statusCode));});
+    req.on('error',fail);req.setTimeout(5000,()=>req.destroy(Error('Raw HTTP check timeout')));req.end();
+  });
+  for(const h of [{Host:'unapproved.invalid'},{Origin:'http://unapproved.invalid'},{'Sec-Fetch-Site':'cross-site'},{Forwarded:'for=127.0.0.1'},{'X-Forwarded-Host':'localhost'}])
+    assert.equal(await rawStatus('/',h),403);
+  assert.equal(await rawStatus('/api/pdca'),403);
+  console.log('WP07 SECURITY PASS: raw unexpected Host/Origin, cross-site/forwarded requests, and unauthenticated API denied');
   await selectCard(second.id);
   await until('Selected node for trash',()=>evaluate("document.querySelector('#nodeTitle')?.value==='WP07 edited node'"));
   await cdp('Page.enable');
@@ -200,8 +209,118 @@ try {
   await evaluate("Array.from(document.querySelectorAll('#recordList article')).find(a=>a.innerText.includes('WP07 edited node')).querySelector('button').click();true");
   await until('Trash restored',async()=> (await graph()).nodes.some(n=>n.id===second.id&&n.images.some(i=>i.id===attached.id)));
   await click('#closeRecords');
-  await click('#sessionEnd');
-  await until('Browser session ended',()=>evaluate("document.querySelector('#identityDialog').open"));
+  // WP-07 remaining browser coverage: actual sibling tab, transport failure, explicit draft review.
+  const workspaceSelector='[data-pdca="'+pdca.id+'"]';
+  await ready(workspaceSelector);await click(workspaceSelector);
+  await until('Primary reopened workspace',()=>evaluate("!document.querySelector('#canvasPanel').hidden"));
+  const tabResponse=await fetch('http://127.0.0.1:'+debug+'/json/new?about:blank',{method:'PUT'});
+  assert.equal(tabResponse.status,200);
+  const peerTarget=await tabResponse.json();
+  const peerSocket=new WebSocket(peerTarget.webSocketDebuggerUrl);
+  const peerPending=new Map();let peerSeq=0;
+  try{
+    await new Promise((ok,fail)=>{
+      const timer=setTimeout(()=>fail(Error('Peer CDP open timeout')),12000);
+      peerSocket.addEventListener('open',()=>{clearTimeout(timer);ok();},{once:true});
+      peerSocket.addEventListener('error',()=>{clearTimeout(timer);fail(Error('Peer CDP open error'));},{once:true});
+    });
+    peerSocket.addEventListener('message',e=>{
+      const m=JSON.parse(e.data);
+      if(m.id&&peerPending.has(m.id)){const p=peerPending.get(m.id);peerPending.delete(m.id);clearTimeout(p.timer);m.error?p.fail(Error(m.error.message)):p.ok(m.result);}
+      if(m.method==='Runtime.exceptionThrown')errors.push('Peer: '+(m.params.exceptionDetails.exception?.description||m.params.exceptionDetails.text));
+    });
+    const peerCdp=(method,params={})=>new Promise((ok,fail)=>{
+      const id=++peerSeq;
+      const timer=setTimeout(()=>{peerPending.delete(id);fail(Error('Peer CDP timeout '+method));},12000);
+      peerPending.set(id,{ok,fail,timer});peerSocket.send(JSON.stringify({id,method,params}));
+    });
+    const peerEval=async expression=>{
+      const r=await peerCdp('Runtime.evaluate',{expression,returnByValue:true,awaitPromise:true});
+      if(r.exceptionDetails)throw Error('Peer evaluate: '+(r.exceptionDetails.exception?.description||r.exceptionDetails.text));
+      return r.result.value;
+    };
+    const peerClick=selector=>peerEval('document.querySelector('+JSON.stringify(selector)+').click();true');
+    const peerCard=()=>peerEval('document.querySelector('+JSON.stringify('[data-node-id="'+second.id+'"]')+').dispatchEvent(new KeyboardEvent("keydown",{key:"Enter",bubbles:true}));true');
+    await peerCdp('Runtime.enable');await peerCdp('Page.enable');
+    await peerCdp('Page.navigate',{url:config.origin+'/'});
+    const primaryIdentity=await evaluate("document.querySelector('#editorName').textContent");
+    await until('Sibling joined same live session',()=>peerEval("!document.querySelector('#app').hidden && document.querySelector('#editorName').textContent==="+JSON.stringify(primaryIdentity)));
+    await until('Sibling workspace list',()=>peerEval('!!document.querySelector('+JSON.stringify(workspaceSelector)+')'));
+    await peerClick(workspaceSelector);
+    await until('Sibling canvas',()=>peerEval("!document.querySelector('#canvasPanel').hidden"));
+    await peerCard();
+    await until('Sibling inspector',()=>peerEval("document.querySelector('#nodeTitle')?.value==='WP07 edited node'"));
+    await cdp('Page.bringToFront');
+    await selectCard(second.id);
+    await until('Primary inspector',()=>evaluate("document.querySelector('#nodeTitle')?.value==='WP07 edited node'"));
+    await click('#sideNote');
+    await until('Primary editor lease',()=>evaluate("document.querySelector('#sideNote')&&!document.querySelector('#sideNote').readOnly"));
+    await until('Sibling read-only lock indicator',()=>peerEval("document.querySelector('#sideNote')?.readOnly && !document.querySelector('#nodeLockLabel')?.hidden"));
+    const conflict=await fetch(base+'/edit/'+second.id,{method:'POST',headers:{...headers,'Content-Type':'application/json'},body:JSON.stringify({tabId:saved.id})});
+    assert.equal(conflict.status,409);
+    assert.equal((await conflict.json()).code,'NODE_LOCKED');
+    await setField('#sideNote','WP07 committed across tabs');
+    await until('First cross-tab save',async()=> (await graph()).nodes.find(n=>n.id===second.id)?.sideNote==='WP07 committed across tabs');
+    await until('Sibling receives committed revision',()=>peerEval("document.querySelector('#sideNote')?.value==='WP07 committed across tabs'"));
+    await until('Primary save acknowledged',()=>evaluate("document.querySelector('#saveStatus').dataset.state==='saved'"));
+    const beforeDraft=await graph();
+    const draftText='WP07 offline draft must require review';
+    let blockedWrites=0;let interceptError;
+    const onPaused=e=>{
+      const m=JSON.parse(e.data);
+      if(m.method!=='Fetch.requestPaused')return;
+      const p=m.params;
+      const isWrite=p.request.method==='PUT'&&p.request.url===base;
+      if(isWrite)blockedWrites++;
+      cdp(isWrite?'Fetch.failRequest':'Fetch.continueRequest',
+        isWrite?{requestId:p.requestId,errorReason:'InternetDisconnected'}:{requestId:p.requestId})
+        .catch(error=>{interceptError=error;});
+    };
+    ws.addEventListener('message',onPaused);
+    try{
+      await cdp('Fetch.enable',{patterns:[{urlPattern:base,requestStage:'Request'}]});
+      await setField('#sideNote',draftText);
+      await until('Transport failure retains draft',()=>evaluate("document.querySelector('#saveStatus').dataset.state==='error'&&!document.querySelector('#retrySave').hidden"));
+      assert.equal(blockedWrites,1,'Expected exactly one deliberately failed save');
+      assert.equal(interceptError,undefined);
+    }finally{
+      await cdp('Fetch.disable');ws.removeEventListener('message',onPaused);
+    }
+    // Actual Edge offline emulation after the deterministic failed write. No request replay.
+    await cdp('Network.enable');
+    try{
+      await cdp('Network.emulateNetworkConditions',{offline:true,latency:0,downloadThroughput:0,uploadThroughput:0});
+      await until('Offline disables editing',()=>evaluate("!navigator.onLine && document.querySelector('#sideNote')?.readOnly && document.querySelector('#retrySave').disabled"));
+      assert.equal((await graph()).revision,beforeDraft.revision);
+    }finally{
+      await cdp('Network.emulateNetworkConditions',{offline:false,latency:0,downloadThroughput:-1,uploadThroughput:-1});
+    }
+    await until('Reconnect allows explicit draft review',()=>evaluate("navigator.onLine && !document.querySelector('#retrySave').hidden && !document.querySelector('#retrySave').disabled"));
+    // Wait for multiple normal polling cycles; neither the server nor reader may see the draft.
+    await delay(2200);
+    const afterReconnect=await graph();
+    assert.equal(afterReconnect.revision,beforeDraft.revision,'Reconnect must not auto-submit draft');
+    assert.equal(afterReconnect.nodes.find(n=>n.id===second.id).sideNote,'WP07 committed across tabs');
+    assert.equal(await peerEval("document.querySelector('#sideNote')?.value"),'WP07 committed across tabs');
+    await click('#retrySave');
+    await until('Review shows authoritative and local draft',()=>evaluate("document.querySelector('#draftDialog').open && document.querySelector('#reviewLatest').textContent.includes('WP07 committed across tabs') && document.querySelector('#reviewLocal').textContent.includes("+JSON.stringify(draftText)+") && !document.querySelector('#confirmDraft').disabled"));
+    assert.equal((await graph()).revision,beforeDraft.revision);
+    await click('#confirmDraft');
+    await until('Explicitly confirmed draft persisted once',async()=>{
+      const g=await graph();return g.revision===beforeDraft.revision+1&&g.nodes.find(n=>n.id===second.id).sideNote===draftText;
+    });
+    await until('Peer sees confirmed revision',()=>peerEval("document.querySelector('#sideNote')?.value==="+JSON.stringify(draftText)));
+    await until('Primary settled review',()=>evaluate("!document.querySelector('#draftDialog').open && document.querySelector('#retrySave').hidden && document.querySelector('#saveStatus').dataset.state==='saved'"));
+    await delay(1200);
+    assert.equal((await graph()).revision,beforeDraft.revision+1);
+    await click('#sessionEnd');
+    await until('Browser session ended',()=>evaluate("document.querySelector('#identityDialog').open"));
+    await until('Sibling session ends and clears graph',()=>peerEval("document.querySelector('#identityDialog').open && document.querySelector('#app').hidden && !document.querySelector('#cards').children.length && !document.querySelector('#reviewLocal').textContent"));
+    console.log('WP07 COLLABORATION PASS: real sibling Edge tab joined session, read-only lock, independent session conflict denied, committed revision propagated, failed PUT retained draft, offline editing blocked, reconnect did not auto-submit, explicit review saved once, sibling session ended and cleared graph');
+  }finally{
+    peerSocket.close();
+    await cdp('Target.closeTarget',{targetId:peerTarget.id}).catch(()=>{});
+  }
   // Verify saved state after abrupt Host exit and independent CLI integrity check, then restart.
   kill(host);
   const status=spawnSync(process.execPath,['--env-file='+file,join(stage,'src/ops.js'),'status'],{env:{...process.env,PDCA_OPERATOR_KEY:env.PDCA_IT_KEY},encoding:'utf8',timeout:20000});
