@@ -1,0 +1,161 @@
+name: WP-09 Direct-IP verified candidate (not release)
+on:
+  push:
+    branches: [codex/direct-private-ip-implementation]
+    paths: ['.github/workflows/wp09-direct-handover.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+env:
+  ACCEPTED_SOURCE: ${{ github.sha }}
+jobs:
+  build-candidate:
+    runs-on: windows-2022
+    timeout-minutes: 30
+    outputs:
+      archive_sha256: ${{ steps.package.outputs.archive_sha256 }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.ACCEPTED_SOURCE }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.0'
+      - name: Verify exact accepted source and locked dependency regression
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ((git rev-parse HEAD).Trim() -ne $env:ACCEPTED_SOURCE) { throw 'Wrong source SHA' }
+          if ((node --version).Trim() -ne 'v24.11.0') { throw 'Wrong Node version' }
+          npm.cmd ci --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { throw 'npm ci failed' }
+          npm.cmd test
+          if ($LASTEXITCODE -ne 0) { throw 'Full regression failed' }
+      - name: Build pinned source archive and separately prepare QA harness
+        id: package
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $stage = Join-Path $env:RUNNER_TEMP 'wp09-stage'
+          $dist = Join-Path $env:RUNNER_TEMP 'wp09-dist'
+          $qa = Join-Path $env:RUNNER_TEMP 'wp09-qa'
+          New-Item -ItemType Directory -Path $dist,(Join-Path $qa 'tools/qa'),(Join-Path $qa 'src') | Out-Null
+          node tools/prebuilt/package.mjs $stage $env:ACCEPTED_SOURCE
+          if ($LASTEXITCODE -ne 0) { throw 'Stage failed' }
+          node tools/prebuilt/verify.mjs $stage
+          if ($LASTEXITCODE -ne 0) { throw 'Stage manifest failed' }
+          $manifest = Get-Content (Join-Path $stage 'DEPLOYMENT_MANIFEST.json') -Raw | ConvertFrom-Json
+          if ($manifest.sourceCommit -ne $env:ACCEPTED_SOURCE) { throw 'Wrong manifest source' }
+          $bad = Get-ChildItem $stage -Recurse -Force -File | Where-Object { $_.Name -match '(^host\.env$|^\.env($|\.)|\.sqlite($|-)|\.db$|^active-db\.json$|^operations\.jsonl$|\.pem$|\.pfx$|\.key$)' -and $_.FullName -notlike '*\node_modules\*' }
+          if ($bad) { throw 'Unexpected runtime state or key file in package' }
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $zip = Join-Path $dist ('PDCA-Direct-Windows-CANDIDATE-' + $env:ACCEPTED_SOURCE.Substring(0,12) + '.zip')
+          [System.IO.Compression.ZipFile]::CreateFromDirectory($stage,$zip,[System.IO.Compression.CompressionLevel]::Optimal,$false)
+          $sha = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content -LiteralPath ($zip+'.sha256') -Value ($sha+'  '+(Split-Path $zip -Leaf)) -NoNewline
+          "archive_sha256=$sha" >> $env:GITHUB_OUTPUT
+          Write-Host ("WP09 ARCHIVE BUILT: source="+$env:ACCEPTED_SOURCE+" sha256="+$sha+" bytes="+(Get-Item $zip).Length+" files="+$manifest.files.Count)
+          Copy-Item tools/qa/direct-edge.mjs,tools/qa/direct-endpoint-preflight.mjs (Join-Path $qa 'tools/qa')
+          Copy-Item src/network-config.js (Join-Path $qa 'src')
+          Copy-Item package.json (Join-Path $qa 'package.json')
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WP09-Direct-Candidate-NOT-RELEASE
+          path: ${{ runner.temp }}/wp09-dist/*
+          retention-days: 14
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WP09-QA-harness
+          path: ${{ runner.temp }}/wp09-qa
+          retention-days: 7
+          if-no-files-found: error
+  clean-target:
+    needs: build-candidate
+    runs-on: windows-2022
+    timeout-minutes: 30
+    steps:
+      - name: Provision prerequisite Node only (no checkout)
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24.11.0'
+      - uses: actions/download-artifact@v4
+        with:
+          name: WP09-Direct-Candidate-NOT-RELEASE
+          path: ${{ runner.temp }}/wp09-download
+      - uses: actions/download-artifact@v4
+        with:
+          name: WP09-QA-harness
+          path: ${{ runner.temp }}/wp09-qa
+      - name: Verify archive and run clean target from isolated Node PATH
+        shell: pwsh
+        env:
+          EXPECTED_ARCHIVE_SHA: ${{ needs.build-candidate.outputs.archive_sha256 }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $download = Join-Path $env:RUNNER_TEMP 'wp09-download'
+          $qa = Join-Path $env:RUNNER_TEMP 'wp09-qa'
+          $zips = @(Get-ChildItem -LiteralPath $download -Filter '*.zip')
+          if ($zips.Count -ne 1) { throw 'Expected exactly one candidate ZIP' }
+          $zip = $zips[0].FullName
+          $actual = (Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant()
+          $sidecar = ((Get-Content -LiteralPath ($zip+'.sha256') -Raw).Trim() -split '\s+')
+          if ($sidecar.Count -ne 2 -or $sidecar[0] -ne $actual -or $sidecar[1] -ne $zips[0].Name -or $actual -ne $env:EXPECTED_ARCHIVE_SHA) { throw 'Archive checksum/provenance mismatch' }
+          $extract = Join-Path $env:RUNNER_TEMP 'wp09-clean extract'
+          if (Test-Path $extract) { throw 'Target is not clean' }
+          Expand-Archive -LiteralPath $zip -DestinationPath $extract
+          $manifest = Get-Content (Join-Path $extract 'DEPLOYMENT_MANIFEST.json') -Raw | ConvertFrom-Json
+          if ($manifest.sourceCommit -ne $env:ACCEPTED_SOURCE -or $manifest.build.nodeVersion -ne 'v24.11.0') { throw 'Unexpected manifest provenance' }
+          $nodeOnly = Join-Path $env:RUNNER_TEMP 'wp09-node-only'
+          New-Item -ItemType Directory -Path $nodeOnly | Out-Null
+          Copy-Item (Get-Command node.exe -ErrorAction Stop).Source (Join-Path $nodeOnly 'node.exe')
+          $env:PATH = "$nodeOnly;$env:SystemRoot\System32;$env:SystemRoot;$env:SystemRoot\System32\WindowsPowerShell\v1.0"
+          foreach ($key in @('NODE_PATH','NODE_OPTIONS','npm_execpath','npm_node_execpath','NPM_CONFIG_USERCONFIG')) { Remove-Item "Env:$key" -ErrorAction SilentlyContinue }
+          $env:npm_config_offline = 'true'
+          $env:npm_config_registry = 'http://127.0.0.1:1/'
+          $env:npm_config_cache = Join-Path $env:RUNNER_TEMP 'wp09-empty-npm-cache'
+          Set-Location -LiteralPath $extract
+          if (Get-Command npm,npm.cmd,npx,npx.cmd,corepack,corepack.cmd -ErrorAction SilentlyContinue) { throw 'Package manager available on isolated PATH' }
+          if ((Get-Command node.exe).Source -ne (Join-Path $nodeOnly 'node.exe')) { throw 'Unexpected Node executable' }
+          if ((node --version).Trim() -ne 'v24.11.0') { throw 'Wrong isolated runtime' }
+          Write-Host ("WP09 ARCHIVE VERIFIED: sha256="+$actual+" source="+$manifest.sourceCommit+" files="+$manifest.files.Count)
+          Write-Host 'WP09 TARGET ISOLATION: no checkout; node.exe only; no npm/npx/corepack on PATH; offline npm config and loopback dead registry'
+          # CI-only egress control on isolated Node executable, never on Factory.
+          $ruleName = 'WP09-Block-Node-Internet-' + $env:GITHUB_RUN_ID
+          New-NetFirewallRule -Name $ruleName -DisplayName $ruleName -Direction Outbound -Action Block -Program (Join-Path $nodeOnly 'node.exe') -RemoteAddress Internet -Profile Any -Enabled True | Out-Null
+          try {
+            $effective = Get-NetFirewallRule -PolicyStore ActiveStore -Name $ruleName -ErrorAction Stop
+            if ($effective.Enabled -ne 'True' -or $effective.Action -ne 'Block') { throw 'CI egress rule is not active' }
+            if (Get-NetFirewallProfile -PolicyStore ActiveStore | Where-Object Enabled -ne True) { throw 'CI firewall profile not enabled; egress control not verified' }
+            Write-Host 'WP09 CI EGRESS CONTROL: isolated Node executable blocked from Internet by active Windows firewall rule; local/private HTTP required'
+            node tools/prebuilt/verify.mjs $extract
+            if ($LASTEXITCODE -ne 0) { throw 'Extracted package manifest failed' }
+            node --test test/direct-lan.test.js test/recovery-operator.test.js test/laptop-lan.test.js
+            if ($LASTEXITCODE -ne 0) { throw 'Extracted regression failed' }
+            $root = Join-Path $env:RUNNER_TEMP 'wp09 external data'
+            $configDir = Join-Path $env:RUNNER_TEMP 'wp09 external config'
+            New-Item -ItemType Directory -Path $root,$configDir | Out-Null
+            $file = Join-Path $configDir 'host.env'
+            $acl = (Get-Acl -LiteralPath $root).Sddl
+            $selected = node (Join-Path $qa 'tools/qa/direct-endpoint-preflight.mjs')
+            if ($LASTEXITCODE -ne 0) { throw 'Endpoint preflight failed' }
+            $endpoint = $selected | ConvertFrom-Json
+            & (Join-Path $extract 'tools/direct/setup.cmd') $file $endpoint.ip ([string]$endpoint.port) $root
+            if ($LASTEXITCODE -ne 0) { throw 'First Setup failed' }
+            $hash = (Get-FileHash -LiteralPath $file).Hash
+            & (Join-Path $extract 'tools/direct/setup.cmd') $file
+            if ($LASTEXITCODE -ne 0 -or (Get-FileHash -LiteralPath $file).Hash -ne $hash) { throw 'Repeat Setup altered config' }
+            & (Join-Path $extract 'tools/direct/diagnose.cmd') $file
+            if ($LASTEXITCODE -ne 1 -or (Get-ChildItem -LiteralPath $root -Force)) { throw 'Pre-ADOPT guard failed' }
+            node (Join-Path $qa 'tools/qa/direct-edge.mjs') $extract $file
+            if ($LASTEXITCODE -ne 0) { throw 'Actual extracted Edge/installation failed' }
+            if ((Get-Acl -LiteralPath $root).Sddl -ne $acl) { throw 'Root ACL changed' }
+            node tools/prebuilt/verify.mjs $extract
+            if ($LASTEXITCODE -ne 0) { throw 'Extracted package changed during runtime' }
+            if ((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLowerInvariant() -ne $actual) { throw 'Archive changed' }
+            if (Test-Path $env:npm_config_cache) { throw 'Unexpected npm cache created' }
+            Write-Host 'WP09 CLEAN TARGET PASS: exact archive and manifest, isolated Node runtime, extracted Direct/Recovery/LAN regression, Setup/Seed/ADOPT/Diagnose/Start/Edge, restart, ACL and unchanged package; no npm command in target'
+          } finally {
+            Remove-NetFirewallRule -Name $ruleName -ErrorAction Stop
+          }

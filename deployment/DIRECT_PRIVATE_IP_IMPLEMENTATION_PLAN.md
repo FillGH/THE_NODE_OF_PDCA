@@ -1,6 +1,6 @@
 # Direct Private-IP LAN — Implementation Plan
 
-**Status: WP-07 LOCAL ENGINEERING ACCEPTED; WP-08 AUTHORIZED; WP-09 / RELEASE / MERGE / DEPLOY HOLD.** Date 2026-11-24. Owner explicitly approved ADR-001 rev2 and WP-02–06 with regression tests on 24 November 2026. ADR-001 revision 2 selects Direct HTTP/no proxy as planning direction. Runtime baseline `428885c44dda6aef7dd0bfbc8bd9cce13922388f`. Draft PR #1 remains untouched; planning-only PR #2. No time, budget or named IT assignee is assumed.
+**Status: WP-01–08 ACCEPTED IN CI CANDIDATE SCOPE; WP-09 AUTHORIZED; RELEASE / MERGE / DEPLOY HOLD.** Date 2026-11-24. Owner explicitly approved ADR-001 rev2 and WP-02–06 with regression tests on 24 November 2026. ADR-001 revision 2 selects Direct HTTP/no proxy as planning direction. Runtime baseline `428885c44dda6aef7dd0bfbc8bd9cce13922388f`. Draft PR #1 remains untouched; planning-only PR #2. No time, budget or named IT assignee is assumed.
 
 ## 1. Definition of Done
 
@@ -75,3 +75,7 @@ WP-07 evidence is tracked in [WP07_ENGINEERING_EVIDENCE.md](WP07_ENGINEERING_EVI
 ### WP-08 authorization (24 November 2026)
 
 Owner accepted WP-07 local candidate engineering at `7666598bceb170932f4d5b5abc6e1a71c868c8f8` ([run 45332235054](https://github.com/FillGH/THE_NODE_OF_PDCA/actions/runs/45332235054)), deferring final package acceptance to WP-08. Package the pinned accepted source, not the subsequent CI/documentation commit. Independent runner receives archive/checksum and separate QA harness from same source, no repository checkout, exact Node 24.11.0; isolate node.exe from npm/npx and caches, no npm/registry commands, synthetic data outside archive, verify hash, manifest, Direct/Recovery tests, documented Setup/Seed/ADOPT/Diagnose/Start/Edge/restart and ACL. Candidate only; no release/merge/deploy/real data. WP-09 handover and IT-facing documentation reconciliation remain HOLD.
+
+### WP-09 authorization (24 November 2026)
+
+Owner accepted WP-08 10/10 (6/6 jobs), Gate II CI package scope, and approved IT handover preparation only. README4IT is the active entry, Direct operator guide covers backup, migration, recovery and rollback. Old proxy kit historical. New docs change archive content; WP-09 candidate must be built from exact new commit with unchanged runtime relative to 7666598, new inner ZIP SHA-256, manifest and independent clean-target E2E. Retain prior verified artifact identity separately. No Factory deploy, real data, release, merge, actual IT handover or Pilot authorization. Gate III/IV NOT TESTED.

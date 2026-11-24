@@ -1,4 +1,6 @@
-# BUILD 4 · คู่มือสำรอง กู้คืน และย้าย Host
+# HISTORICAL BUILD 4 · คู่มือสำรอง กู้คืน และย้าย Host
+
+> Direct-IP operational instructions supersede this legacy source/proxy runbook: [README4IT](../README4IT.md) and [Managed Backup/Migration/Recovery](../deployment/DIRECT_PRIVATE_IP_CANDIDATE.md). Do not execute older path-switch/preview/source rollback steps on a managed Direct dataset.
 
 > **IT Quick Start:** [README4IT.md](../README4IT.md) เป็นจุดเริ่มติดตั้ง/ตรวจ Package/ใช้งาน Recovery Menu; เอกสารนี้อธิบายการกู้เชิงลึก, Audit Reconciliation และ Host Migration ขั้นตอนที่ใช้ `npm.cmd` ด้านล่างเป็น DEV/Historical Source Checkout เท่านั้น ไม่ใช่ข้อบังคับของ Prebuilt Factory Server
 

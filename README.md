@@ -4,7 +4,7 @@
 
 ระบบจัดการ PDCA แบบ Node และความสัมพันธ์เชื่อมโยง (หลายต่อหลาย) แทนการเก็บข้อมูลหลายประเด็นในเซลล์ Excel เดียว รองรับการไล่เหตุผลจาก Result กลับไปยัง Action, Hypothesis, Fact และ Problem ตลอดจนการทำงานร่วมกันบนข้อมูลชุดเดียวกัน
 
-**สถานะ:** BUILD 4 ผ่านการรับรองด้านฟังก์ชันโดย Project Owner แล้ว; Prebuilt Windows Packaging และ Managed Recovery Operator อยู่ใน Draft PR เพื่อให้ตรวจรับก่อนส่ง IT. **Factory LAN Verification, Factory Recovery Drill และ Official Pilot ยังไม่ผ่าน/ยังไม่เริ่มตามลำดับ** — ผล CI ไม่ใช่การอนุมัติใช้งานจริง
+**สถานะ:** BUILD 4 ผ่านการรับรองด้านฟังก์ชันโดย Project Owner แล้ว; WP-08 Windows CI Candidate ผ่านตรวจรับแล้ว; WP-09 IT Handover candidate อยู่ใน Draft PR รอตรวจรับ. **Factory LAN Verification, Factory Recovery Drill และ Official Pilot ยังไม่ผ่าน/ยังไม่เริ่มตามลำดับ** — ผล CI ไม่ใช่การอนุมัติใช้งานจริง
 
 ## ใช้งานอะไรได้บ้าง
 
@@ -14,7 +14,7 @@
 - Export JSON, Excel (.xlsx) และ PDF จากข้อมูลที่บันทึกแล้ว
 - SQLite Workspace + Audit แยกไฟล์, Backup อัตโนมัติทุก 2 ชั่วโมงบน Host พร้อม Restore แบบตรวจสอบก่อนสลับ Active DB
 
-การเข้าถึงจากเครื่องอื่น **ต้องผ่าน IT-approved HTTPS Reverse Proxy และ Access Control**; การเปิด `127.0.0.1` เป็นการทดสอบบน Host ไม่ใช่หลักฐานว่า Factory LAN พร้อมใช้งาน
+การเข้าถึงจากเครื่องอื่นใช้ **Direct HTTP บน assigned private IPv4 และ fixed port ที่ IT อนุมัติ** ตาม ADR-001 revision 2; ไม่ใช้ reverse proxy. HTTP ไม่เข้ารหัส; IT ต้องควบคุม network admission และ data scope ก่อนเปิด LAN. `127.0.0.1` เป็น local test เท่านั้น.
 
 ## เริ่มต้นที่เอกสารไหน
 
@@ -25,7 +25,7 @@
 | Engineering Baseline / Acceptance / Requirements | [PROJECT.md](PROJECT.md) — **Source of Truth** |
 | Developer / AI Working Rules | [AGENTS.md](AGENTS.md) |
 | รายละเอียดการสร้าง ZIP และ Recovery Safeguards | [deployment/PREBUILT_WINDOWS.md](deployment/PREBUILT_WINDOWS.md) |
-| Recovery Engine / Host Migration แบบเชิงลึก | [design/BUILD4_HOST_RUNBOOK.md](design/BUILD4_HOST_RUNBOOK.md) |
+| Recovery Engine / Host Migration แบบเชิงลึก | [deployment/DIRECT_PRIVATE_IP_CANDIDATE.md](deployment/DIRECT_PRIVATE_IP_CANDIDATE.md) |
 
 **ผู้รับมอบระบบจาก IT:** เปิด **README4IT.md** ไม่ต้องอ่านประวัติ BUILD 1–4 หรือเริ่มจากคำสั่ง npm
 

@@ -35,32 +35,9 @@ npm.cmd run demo:start
 
 `demo.json` ในโฟลเดอร์ข้อมูลระบุ ID ของผัง จำนวน Node/เส้น รูป และ `oldSnapshot` สำหรับซ้อมการเทียบ Audit ผลซ้อมเบื้องต้นอยู่ใน `restore/<stageId>/restore.json` ชุดเก่านี้ตั้งเวลาให้จำลองการ purge ได้ จึงใช้ตรวจการคืนสถานะตาม Audit และใช้ snapshot ใหม่จากรอบ Backup จริงสำหรับวัด RPO
 
-## 2. ต่อ LAN ภายใต้การควบคุมของ IT
+## 2. ต่อ LAN ภายใต้การควบคุมของ IT — Direct Private-IP (ADR-001 rev 2)
 
-1. IT ระบุผู้ดูแลหลัก ผู้ดูแลสำรอง คนรับแจ้งเมื่อ Backup มีปัญหา และคนที่มีสิทธิ์เริ่ม Restore รวมถึงบัญชีบริการ โฟลเดอร์ที่เขียนได้ เครื่องลูกข่ายที่อนุญาต และหน้าต่างเวลาสำหรับซ้อมกู้
-2. IT ให้ URL แบบ HTTPS ที่มีชื่อ DNS และใบรับรองที่เครื่องบริษัทเชื่อถือ แล้วใช้ reverse proxy ที่ IT ดูแลเป็นทางเข้าเดียว Proxy ตรวจสิทธิ์เครื่องหรือผู้ใช้ตามนโยบายก่อนส่ง request ไปยังแอปที่ `http://127.0.0.1:4175` บน Host เดียวกัน
-3. ตั้งค่า proxy ให้คง **Host** จาก HTTPS origin ที่อนุญาตและส่ง **Origin** ของเบราว์เซอร์ตามจริง ลบ `x-pdca-ingress-key` และ `x-pdca-operator-key` ที่มากับ client ทุกครั้ง แล้วให้ proxy ใส่ `x-pdca-ingress-key` จากค่าที่เก็บฝั่ง IT เท่านั้น ใช้ CLI บน Host สำหรับ Restore ในการทดสอบรอบแรก หากต้องเปิด API ผู้ดูแลผ่าน proxy ให้ IT ยืนยันตัวตนและบทบาทก่อนใส่ operator key ของบทบาทนั้น ให้ G-11 ครอบคลุม route หน้าแรก ไฟล์ static และ API ด้วย
-4. ใช้ไฟล์ env แยกนอก repo ให้บัญชีบริการและ IT อ่านได้ ค่า URL ตัวอย่างด้านล่างให้แทนด้วยชื่อทดสอบจริง และตั้งคีย์สามค่าที่ต่างกัน สร้างแต่ละค่าด้วย `node -e "console.log(require('node:crypto').randomBytes(32).toString('base64url'))"` ในสภาพแวดล้อมที่ IT ควบคุม
-
-```dotenv
-PDCA_DEMO_DIR=C:\PDCA-LAN-Test\data\lan-01
-PDCA_PORT=4175
-PDCA_ORIGIN=https://pdca-test.example.invalid
-PDCA_INGRESS_KEY=<ใส่คีย์ ingress ที่สร้างใหม่>
-PDCA_IT_KEY=<ใส่คีย์ IT ที่สร้างใหม่>
-PDCA_PHIL_KEY=<ใส่คีย์ Phil ที่สร้างใหม่>
-```
-
-5. เปิด PowerShell ใหม่ที่โฟลเดอร์ repo แล้วรันคำสั่งจากไฟล์ env เดียวกัน Node จะให้ค่าที่ตั้งไว้แล้วใน process environment มาก่อนค่าในไฟล์ env จึงควรใช้ shell สำหรับ LAN Test แยกต่างหาก
-
-```powershell
-$pilotEnv = 'C:\PDCA-LAN-Test\config\demo.env'
-node --env-file="$pilotEnv" demo/demo.mjs seed
-node --env-file="$pilotEnv" demo/demo.mjs serve
-```
-
-6. เปิด URL HTTPS จากเครื่องที่อนุญาต ตรวจรูป ลิงก์เอกสาร ฟอนต์ การบันทึก และ Auto-save จากนั้นทดสอบเครื่องที่ไม่ได้รับสิทธิ์ เครื่องที่ถูกถอนสิทธิ์ Internet ตรง และ Company VPN ตามแผน IT เมื่อเข้าตรงที่พอร์ต Node จากเครื่องอื่นให้เชื่อมต่อไม่ได้ เมื่อไม่ผ่านสิทธิ์ที่ proxy ให้เข้าไม่ถึงข้อมูลหรือคำสั่งของแอป และชื่อที่กรอกในแอปไม่มีผลกับผลอนุญาต
-7. สำหรับทดสอบเปิดเครื่องก่อนล็อกอิน ให้ IT ตั้ง Task Scheduler และ ACL ตามคู่มือ BUILD 4 เปลี่ยน script ใน action เป็น `demo/demo.mjs serve` พร้อมไฟล์ env เดิม หยุดโปรเซสที่เปิดด้วยมือก่อนเริ่ม task แล้วเก็บเวลาเปิดบริการและเวลา Backup รอบแรกจาก `operations.jsonl` หลังบูตจริง [คู่มือ BUILD 4](BUILD4_HOST_RUNBOOK.md#งานตั้งค่าที่-it-ต้องยืนยัน) · [รายการ IT-01–IT-06](IT_HANDOFF.md)
+ใช้ [README4IT](../README4IT.md) และ [Direct operator guide](../deployment/DIRECT_PRIVATE_IP_CANDIDATE.md) เป็นขั้นตอนติดตั้งและ Recovery เท่านั้น. ไม่ใช้ proxy, DNS, certificate หรือ npm บน Target. หลัง Owner/IT อนุมัติ synthetic test ให้ IT ยืนยัน assigned IP/port, local NTFS/ACL, account/backup owners, HTTP risk and allowed data scope ตาม [IT-N01–N14](../deployment/IT_NETWORK_ACCEPTANCE_PHASE0.md). Host และ approved peer PC เปิด URL Direct เดียวกัน; ทดสอบ denied clients/guest/VPN/Internet/revocation กับหลักฐาน enforcement. ห้ามเปิด LAN หรือใช้ข้อมูลจริงจากผล CI เพียงอย่างเดียว. Task Scheduler ใช้ direct Start CMD + absolute external host.env; หยุด task/manual writer เดิมก่อน maintenance; ตรวจ reboot และ startup backup. HTTP ไม่เข้ารหัส; Display Name ไม่ใช่ authentication.
 
 ## 3. ตารางตรวจรับ VERIFY
 
@@ -68,8 +45,8 @@ node --env-file="$pilotEnv" demo/demo.mjs serve
 
 | ตรวจ | วิธีและเกณฑ์ผ่าน | หลักฐาน |
 | --- | --- | --- |
-| V-01 Host และการตั้งค่า | บันทึก commit SHA, Node, Edge และ Laptop/Windows รุ่นที่ใช้ ทดสอบ HTTPS จากเครื่องลูกข่าย Full HD 1920×1080 เปิดแอปได้ก่อนล็อกอินที่ Host และเกิด Backup ตรวจแล้วหลังบูต ทดสอบการกลับมาหลังรีสตาร์ตโดยข้อมูลที่บันทึกแล้วอยู่ครบ | เวลา, task result, log `backup-verified`, snapshot ID |
-| V-02 สิทธิ์และเครือข่าย · G-07/G-11 | อนุญาตเฉพาะเครื่องหรือผู้ใช้ที่ IT กำหนด ทดสอบจากเครื่องไม่มีสิทธิ์ LAN, VPN, Internet, พอร์ตตรง และหลังถอนสิทธิ์ขณะที่แท็บเปิดอยู่ ลองชื่อซ้ำและลองส่ง header ปลอมผ่าน proxy ตรวจว่าคำขอไปหน้าแรก ไฟล์รูป และ API ไม่ผ่านตามสิทธิ์ | ต้นทางทดสอบที่ระบุด้วยรหัส, URL/HTTP status, บันทึก proxy ที่ปิดคีย์และข้อมูลบริษัท |
+| V-01 Host และการตั้งค่า | บันทึก commit SHA, Node, Edge และ Laptop/Windows รุ่นที่ใช้ ทดสอบ Direct HTTP จากเครื่องลูกข่าย Full HD 1920×1080 เปิดแอปได้ก่อนล็อกอินที่ Host และเกิด Backup ตรวจแล้วหลังบูต ทดสอบการกลับมาหลังรีสตาร์ตโดยข้อมูลที่บันทึกแล้วอยู่ครบ | เวลา, task result, log `backup-verified`, snapshot ID |
+| V-02 สิทธิ์และเครือข่าย · G-07/G-11 | อนุญาตเฉพาะเครื่องหรือผู้ใช้ที่ IT กำหนด ทดสอบจากเครื่องไม่มีสิทธิ์ LAN, guest, VPN, Internet และหลังถอนสิทธิ์ขณะที่แท็บเปิดอยู่ ลองชื่อซ้ำและ header ปลอมที่ Direct endpoint; ตรวจหน้าแรก ไฟล์รูป API และ remote audit/restore denial | ต้นทางทดสอบที่ระบุด้วยรหัส, URL/HTTP status, หลักฐาน IT enforcement ที่ปิดคีย์และข้อมูลบริษัท |
 | V-03 ฟังก์ชันและข้อมูล · G-01–G-04/G-12 | สร้างผังเปล่าและทดสอบชื่อซ้ำแต่ ID ต่างกัน สร้างครบเจ็ดประเภท แก้ชื่อบน Card ค้นชื่อและเนื้อหา เปลี่ยนหมวด ทดสอบเส้นทางเดียวและย้อนกลับ ปฏิเสธเส้นซ้ำ/เข้าตัวเอง/ข้ามผัง ติดภาพ เปิดเอกสาร และยืนยันบันทึกจากอีกเครื่อง ทดสอบ Snap/Free Float, ล็อกขนาด, Auto Arrange, Undo, หมวด Workspace และฟอนต์ | ID ผัง/Node/เส้น, revision, ภาพก่อนและหลัง, ผลเปิดจากเครื่องที่สอง |
 | V-04 Action, ประวัติ และ Export · G-03/G-12 | ใช้ DEMO 02 ตรวจเลข Action คงเดิม PIC และ Due Date ว่างได้ เลือกหลายสถานะและตรวจ Overdue ตามเวลาไทย ทดสอบ History/Restore ข้อความ ประเภท และเส้น ดาวน์โหลด PDF, Excel, JSON ด้วยผู้ใช้ที่ IT อนุญาต ตรวจว่ามีเฉพาะผังที่เลือก รูปปรากฏตามแบบรายงานและ JSON อ้างอิงรูป | ID, รายการ History, สรุปไฟล์และผลเทียบ [Export contract](BUILD3_EXPORT_CONTRACT.md) |
 | V-05 แก้พร้อมกัน · G-05/G-12 | ใช้ DEMO 03 ให้ผู้ทดสอบราว 10 คนจากเครื่องหรือโปรไฟล์แยกกันแก้ Node คนละใบด้วยข้อความระบุรอบ แล้วเทียบทั้ง 10 รายการจากเครื่องที่สอง ทดสอบแย่งแก้ Node เดียว การสลับแท็บ และการเปลี่ยนเส้นหรือ layout ชนกัน | ตารางผู้ทดสอบ/Node/ข้อความ/เวลา, revision, History และหลักฐานไม่มีการเขียนทับ |
@@ -81,26 +58,7 @@ node --env-file="$pilotEnv" demo/demo.mjs serve
 
 ## 4. ซ้อมกู้และวัด RPO/RTO
 
-- ทดสอบ **Audit replay** ด้วย `oldSnapshot` จาก `demo.json` เริ่มจากชุด Demo ที่เพิ่งสร้าง และบันทึกว่า Node ใดถูกกู้กลับ อยู่ใน Trash หรือถูก purge ใช้ `restore` ให้ระบบสร้าง staging ใหม่ ตรวจ `restore.json` ว่าจุดตัดและผลการเทียบตรงกับ Audit รวมถึงวันหมดอายุเดิม ซ้อมกรณี Audit หายหรือไม่ครบจากสำเนาแยกและตรวจว่าได้ `held`
-- ทดสอบ **เวลาในการกู้** ด้วย snapshot ใหม่ที่ผ่านการตรวจ บันทึกข้อความสมมติที่รู้เวลาบันทึกก่อนและหลัง snapshot แล้วเริ่มซ้อมเหตุขัดข้องที่กู้ได้ เก็บเวลาเริ่มเหตุและ `capturedAt` ของ snapshot ที่กู้ได้จริง คำนวณ **RPO = เวลาเริ่มเหตุ − capturedAt** เป้าหมาย ≤4 ชั่วโมง วัด **RTO = เวลาที่ผู้ใช้ทดสอบซึ่งได้รับสิทธิ์เปิดและตรวจข้อมูลบนบริการที่กู้แล้วได้ − เวลาเริ่มเหตุ** เป้าหมาย ≤1 วันทำการเมื่อ Backup และเครื่องกู้พร้อม ระบุเวลาทำการตามที่ IT ยืนยันและใช้บริการกู้แยกสำหรับการซ้อม
-- เริ่มด้วย snapshot ต้นฉบับและ Audit ล่าสุด จัด role ทดสอบ IT กับ Phil และทดสอบผู้ไม่มีคีย์ถูกปฏิเสธ ใช้ IT ตรวจจุดตัดกับ checksum ก่อน `prepare` แล้วเปิด candidate กับสำเนา Audit ที่ตรงกันผ่าน loopback พอร์ตแยก ตรวจชื่อ/ID, จำนวน Node/เส้น, รูป, ลิงก์, Action, หมวด Workspace, History และ Trash เทียบจุดที่ตั้งไว้ หยุดเขียนในฐาน LAN Test ระหว่างจับคู่ Audit กับ candidate
-- หากสิทธิ์ LAN ผิดพลาด พบการบันทึกทับ หรือ Restore ยังตรวจไม่ครบ ให้ IT ปิดทางเข้าของ LAN Test และเก็บหลักฐานกับชุด staging ใช้ Backup และ Audit ที่ตรวจแล้วในการกู้หรือย้อนเครื่องตาม runbook แล้วทดสอบข้อที่กระทบซ้ำ [ขั้นตอน Restore, ย้าย Host และย้อนกลับ](BUILD4_HOST_RUNBOOK.md#ซ้อมกู้และย้าย-laptop-ไป-server)
-
-ตัวอย่างคำสั่งกู้จาก PowerShell บน Host กำหนดฐานตรงกับ `PDCA_DEMO_DIR` ที่ใช้จริง กรอกคีย์ตามบทบาทที่ IT อนุญาตจาก prompt แบบซ่อนข้อความ
-
-```powershell
-$pilotEnv = 'C:\PDCA-LAN-Test\config\demo.env'
-$pilotData = 'C:\PDCA-LAN-Test\data\lan-01'
-$env:PDCA_DB = Join-Path $pilotData 'workspace.sqlite'
-$manifest = Get-Content (Join-Path $pilotData 'demo.json') -Raw | ConvertFrom-Json
-$pilotKey = Read-Host 'Operator key' -AsSecureString
-$env:PDCA_OPERATOR_KEY = [System.Net.NetworkCredential]::new('', $pilotKey).Password
-try {
-    node --env-file="$pilotEnv" src/ops.js restore $manifest.oldSnapshot
-} finally {
-    Remove-Item Env:PDCA_OPERATOR_KEY -ErrorAction SilentlyContinue
-}
-```
+ใช้ [Managed recovery / migration](../deployment/DIRECT_PRIVATE_IP_CANDIDATE.md) บนชุดสมมติแยกที่ IT อนุมัติเท่านั้น. หยุดและ disable ทุก writer ก่อน maintenance; preserve verified current Workspace/Audit, pointer and backups; use Menu 4/5 then reviewed ACTIVATE or explicitly approved ACTIVATE-RECOVERY. ทดสอบ oldSnapshot/Audit replay และ held หาก Audit หายหรือไม่ครบใน isolated copy; ห้ามเปิด Preview คู่ Live Audit หรือแก้ Pointer. ตรวจ ID, revision, graph, images, Action, history, Trash, inventory, restart และ verified backup; ทำ rollback drill ตามข้อจำกัด. RPO = เวลาเริ่มเหตุ − capturedAt ของ recovery point ที่กู้ได้จริง ≤4 ชั่วโมง; RTO = เวลาเริ่มเหตุถึง authorized user ตรวจบริการที่กู้แล้วได้ ≤1 วันทำการภายใต้ backup/infrastructure ที่พร้อม. จดเวลาจริงและข้อจำกัด; CI ไม่แทน Factory. ถ้าไม่ผ่าน STOP.
 
 ## 5. บันทึกผลและตัดสินใจ
 
