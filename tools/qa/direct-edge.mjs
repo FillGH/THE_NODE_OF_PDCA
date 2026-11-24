@@ -208,7 +208,9 @@ try {
   // Preview from thumbnail, keyboard zoom and native Escape. Preserve inspector.
   await ready(cardPreview);await click(cardPreview);await state('normal');
   await evaluate("document.querySelector('#figureZoom').focus();true");
-  await cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
+  // CDP needs the Enter character to emit keypress and native button activation.
+  assert.equal(await evaluate("document.activeElement.id"),'figureZoom');
+  await cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Enter',code:'Enter',windowsVirtualKeyCode:13,text:'\r',unmodifiedText:'\r'});
   await cdp('Input.dispatchKeyEvent',{type:'keyUp',key:'Enter',code:'Enter',windowsVirtualKeyCode:13});
   await state('fit');
   await cdp('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});
