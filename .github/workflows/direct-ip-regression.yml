@@ -7,6 +7,11 @@ permissions:
   contents: read
 jobs:
   windows-regression:
+    name: windows-regression (fresh ${{ matrix.installation }})
+    strategy:
+      fail-fast: false
+      matrix:
+        installation: [1, 2, 3]
     runs-on: windows-2022
     timeout-minutes: 25
     steps:
