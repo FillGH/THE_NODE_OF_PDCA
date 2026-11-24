@@ -35,7 +35,7 @@
 <p>เปิด <strong>Windows PowerShell</strong> ปกติ (ไม่ต้อง Run as Administrator เว้นแต่ IT กำหนด) แล้วคัดลอกคำสั่งทีละขั้น กด Enter และตรวจผลก่อนขั้นถัดไป</p>
 <div class="steps">
 <div class="step"><h3><span class="num">1</span>ตรวจ ZIP และแตกไฟล์</h3><p>ต้องมี Node.js <strong>24.11.0</strong> ที่ IT อนุมัติแล้ว คำสั่งตรวจ Node, SHA-256, sidecar, Manifest และไม่เขียนทับ Folder เดิม</p><div class="actions"><button id="copyPrepare" type="button" disabled>คัดลอกคำสั่ง 1</button><small>รอข้อความ PACKAGE READY</small></div><details><summary>ดูคำสั่ง</summary><textarea readonly class="cmd" id="prepare" aria-label="คำสั่งตรวจและแตก ZIP"></textarea></details></div>
-<div class="step"><h3><span class="num">2</span>เตรียม Config และข้อมูลสมมติ</h3><p>คำสั่งสร้าง Folder แยก ตรวจว่า IP/Port bind ได้ และหยุดให้ IT ตรวจสิทธิ์ NTFS ก่อนสร้าง Key/DB จากนั้นใช้ Setup และ Seed เดิม ไม่เขียนทับข้อมูล</p><div class="actions"><button id="copySetup" type="button" disabled>คัดลอกคำสั่ง 2</button><small>รอข้อความ SYNTHETIC SEED READY</small></div><details><summary>ดูคำสั่ง</summary><textarea readonly class="cmd" id="setup" aria-label="คำสั่ง Setup และ Seed"></textarea></details><p class="notice">ถ้ามี Config หรือ Data เดิม หรือขั้นตอนล้มเหลว ให้หยุด ห้ามลบ Folder / Seed ซ้ำ / แก้ Pointer เอง ใช้คู่มือ Migration หรือให้ IT ตรวจ</p></div>
+<div class="step"><h3><span class="num">2</span>เตรียม Config และข้อมูลสมมติ</h3><p>คำสั่งสร้าง Folder แยก ตรวจว่า IP/Port bind ได้ และหยุดถาม 2 ครั้ง ให้พิมพ์ GO เมื่อ IT ยืนยัน Endpoint/ข้อมูลสมมติ และตรวจสิทธิ์ NTFS จริงแล้ว จากนั้นใช้ Setup และ Seed เดิม ไม่เขียนทับข้อมูล</p><div class="actions"><button id="copySetup" type="button" disabled>คัดลอกคำสั่ง 2</button><small>รอข้อความ SYNTHETIC SEED READY</small></div><details><summary>ดูคำสั่ง</summary><textarea readonly class="cmd" id="setup" aria-label="คำสั่ง Setup และ Seed"></textarea></details><p class="notice">ถ้ามี Config หรือ Data เดิม หรือขั้นตอนล้มเหลว ให้หยุด ห้ามลบ Folder / Seed ซ้ำ / แก้ Pointer เอง ใช้คู่มือ Migration หรือให้ IT ตรวจ</p></div>
 <div class="step"><h3><span class="num">3</span>ยืนยันฐานข้อมูลครั้งแรก (ADOPT)</h3><p>ให้ผู้ดูแล IT เปิด <code id="keyFile">config\host.env</code> ด้วย Notepad เฉพาะในเครื่องนี้ เพื่ออ่านค่า PDCA_IT_KEY (ไม่รวมเครื่องหมายคำพูด) ปิดไฟล์โดยไม่บันทึก ห้ามส่ง Key หรือภาพหน้าจอที่มี Key</p><div class="actions"><button id="copyRecovery" type="button" disabled>คัดลอกคำสั่ง 3</button></div><details><summary>ดูคำสั่ง</summary><textarea readonly class="cmd" id="recovery" aria-label="คำสั่ง Recovery Menu"></textarea></details>
 <ol><li>กรอก IT Key ในช่องที่ไม่แสดงตัวอักษร</li><li>เลือก <strong>3</strong> แล้วพิมพ์ <strong>ADOPT</strong></li><li>เลือก <strong>1</strong> ตรวจ Status ต้องสำเร็จ ไม่มี Warning/Blocked/Busy และคู่ฐานถูกต้อง</li><li>เลือก <strong>0</strong> ออกจากเมนู แล้วไปเปิดโปรแกรมด้านล่าง</li></ol></div>
 </div>
@@ -136,10 +136,12 @@ if(typeof document!=="undefined"){
     feedback("Browser ไม่อนุญาต Clipboard: เลือกคำสั่งที่แสดงแล้วกด Ctrl+C");
   }
   for(const id of ["base","zip","hash","ip","port","approved"])$(id).addEventListener("input",refresh);
+  $("approved").addEventListener("change",refresh);
   $("pick").addEventListener("change",()=>{if($("pick").files.length){$("zip").value=$("pick").files[0].name;refresh();}});
   $("firstTab").addEventListener("click",()=>{daily=false;refresh();});$("dailyTab").addEventListener("click",()=>{daily=true;refresh();});
   for(const [id,key] of [["Prepare","prepare"],["Setup","setup"],["Recovery","recovery"],["Start","start"]])$("copy"+id).addEventListener("click",()=>copy(key));
   refresh();
+  document.body.dataset.guideReady='true';
 }
 </script>
 </body></html>

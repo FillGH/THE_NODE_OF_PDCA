@@ -343,11 +343,12 @@ try {
   const guide=join(stage,'README4IT.html');
   if(existsSync(guide)){
     await cdp('Page.navigate',{url:pathToFileURL(guide).href});
-    await until('Offline HTML guide loaded',()=>evaluate("location.protocol==='file:' && !!document.querySelector('#copyPrepare')"));
+    await until('Offline HTML guide initialized',()=>evaluate("location.protocol==='file:' && document.readyState==='complete' && document.body.dataset.guideReady==='true'"));
     assert.equal(await evaluate("document.querySelector('#copyPrepare').disabled"),true);
-    const fields={base:join(tmpdir(),'PDCA Guide Test (Offline)'),zip:'PDCA-Direct-Windows-CANDIDATE-0123456789ab.zip',hash:'a'.repeat(64),ip:'192.168.1.50',port:'4175'};
+    const fields={base:join(stage,'..','PDCA Guide Test (Offline)'),zip:'PDCA-Direct-Windows-CANDIDATE-0123456789ab.zip',hash:'a'.repeat(64),ip:'192.168.1.50',port:'4175'};
     await evaluate("Object.entries("+JSON.stringify(fields)+").forEach(([id,value])=>{const el=document.getElementById(id);el.value=value;el.dispatchEvent(new Event('input',{bubbles:true}));});document.querySelector('#approved').click();true");
-    assert.equal(await evaluate("document.querySelector('#copyPrepare').disabled || document.querySelector('#copySetup').disabled"),false);
+    const guideState=await evaluate("({prepare:document.querySelector('#copyPrepare').disabled,setup:document.querySelector('#copySetup').disabled,approved:document.querySelector('#approved').checked,error:document.querySelector('#validation').textContent,base:document.querySelector('#base').value})");
+    assert.equal(guideState.prepare||guideState.setup,false,'Guide controls not ready: '+JSON.stringify(guideState));
     assert.equal(await evaluate("document.querySelector('#setup').value.includes('seed --existing-empty')"),true);
     await evaluate("document.querySelector('#ip').value='8.8.8.8';document.querySelector('#ip').dispatchEvent(new Event('input',{bubbles:true}));true");
     assert.equal(await evaluate("document.querySelector('#copySetup').disabled"),true);
