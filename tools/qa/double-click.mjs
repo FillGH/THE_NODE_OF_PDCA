@@ -57,6 +57,14 @@ try{
   renameSync(join(delivery,'PDCA.zip'),join(delivery,'PDCA Test.zip'));
   const first=await launch('SETUP','\r\n'+ip+'\r\n'+port+'\r\nGO\r\n');
   assert.match(first,/SETUP READY/);assert.ok(existsSync(join(data,'active-db.json')));
+  const prompts=['First-time Setup','You will choose an install folder','[1/4] Choose where','Press Enter to use the recommended folder.','OR type or paste a full Windows folder path','must already exist','Install folder (Enter = recommended):','Selected folder:','[2/4] Enter the IP address','There is no default IP.','IP address:','[3/4] Enter the network port','ONLY if IT has approved','Port (Enter = 4175):','[4/4] Review and confirm installation','Application URL: '+url,'Type GO and press Enter','Press Enter without GO to cancel','Confirm installation (GO = install):','Installing the application.','SETUP READY:'];
+  let previous=-1;
+  for(const message of prompts){
+    const pos=first.indexOf(message,previous+1);
+    assert.ok(pos>previous,'Missing or out-of-order guidance: '+message);
+    previous=pos;
+  }
+  console.log('GUIDED SETUP PASS: overview and all four instructions precede their inputs; selected path/URL and cancellation guidance displayed.');
   const env=parseEnv(readFileSync(cfg,'utf8'));
   assert.ok(!first.includes(env.PDCA_IT_KEY)&&!first.includes(env.PDCA_PHIL_KEY));
   assert.deepEqual(readdirSync(root).sort(),['Application','Configuration','Data','Maintenance','START.cmd'].sort());

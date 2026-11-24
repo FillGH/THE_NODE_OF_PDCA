@@ -91,22 +91,50 @@ async function setup(){
   let ip,port;
   try{
     const suggested=join(dirname(deliveryRoot),'THE NODE OF PDCA');
-    const destination=localPath((await ask('Install folder ['+suggested+']: '))||suggested);
+    console.log('\n========================================');
+    console.log(' THE NODE OF PDCA - First-time Setup');
+    console.log('========================================');
+    console.log('You will choose an install folder, enter an IP address and port,');
+    console.log('then confirm with GO. Setup will create a new synthetic dataset');
+    console.log('and start the application. Do not use Setup to update existing data.');
+    console.log('\n[1/4] Choose where to install the application');
+    console.log('  Recommended folder: '+suggested);
+    console.log('  Press Enter to use the recommended folder.');
+    console.log('  OR type or paste a full Windows folder path, then press Enter.');
+    console.log('  Example: D:\\Apps\\THE NODE OF PDCA');
+    console.log('  In this example D:\\Apps must already exist; Setup creates THE NODE OF PDCA.');
+    console.log('  Use a new or empty folder outside the delivery folder. Do not add quotes.');
+    const destination=localPath((await ask('Install folder (Enter = recommended): '))||suggested);
     if(within(deliveryRoot,destination)||within(destination,deliveryRoot))fail('Install outside the delivery folder.');
     directory(dirname(destination));
     paths(destination);
     if(present(root))freshRoot();
-    ip=await ask('IT-approved private IPv4: ');
-    const raw=await ask('IT-approved port [4175]: ');port=Number(raw||'4175');
+    console.log('  Selected folder: '+destination);
+    console.log('\n[2/4] Enter the IP address of this computer');
+    console.log('  Use the private IPv4 assigned and approved by IT for this Host.');
+    console.log('  Example: 192.168.1.100 (example only; use your actual approved IP).');
+    console.log('  Type the IP address and press Enter. There is no default IP.');
+    ip=await ask('IP address: ');
+    console.log('\n[3/4] Enter the network port');
+    console.log('  Press Enter to use 4175 ONLY if IT has approved that port.');
+    console.log('  OR type another IT-approved port (1024-65535), then press Enter.');
+    const raw=await ask('Port (Enter = 4175): ');port=Number(raw||'4175');
     if(!privateIp(ip)||!/^\d+$/.test(raw||'4175')||!Number.isInteger(port)||port<1024||port>65535)fail('Invalid endpoint.');
     await bindCheck(ip,port);
     if(!present(root))mkdirSync(root);
     freshRoot();
     for(const path of [cfg,data]){if(!present(path))mkdirSync(path);directory(path,true);}
+    console.log('\n[4/4] Review and confirm installation');
+    console.log('  Install folder: '+root);
+    console.log('  Application URL: http://'+ip+':'+port);
+    console.log('  Data: new synthetic data only (no existing or real data).');
     console.log('IT must verify restricted NTFS permissions on:\n'+root+'\n'+cfg+'\n'+data);
-    console.log('Synthetic data only. Confirm approved endpoint/network, restricted ACL, stopped writers and fresh ADOPT authorization.');
-    if(await ask('Type GO to install: ')!=='GO')fail('Cancelled before config/data creation.');
+    console.log('Confirm IT-approved endpoint/network, restricted ACL, stopped writers and fresh ADOPT authorization.');
+    console.log('  Type GO and press Enter to install and start the application.');
+    console.log('  Press Enter without GO to cancel before config/data creation.');
+    if(await ask('Confirm installation (GO = install): ')!=='GO')fail('Cancelled before config/data creation.');
   }finally{rl.close();}
+  console.log('\nInstalling the application. Please keep this window open.');
   freshRoot();
   let zip=join(deliveryRoot,DELIVERY.zip);
   if(!present(zip)){

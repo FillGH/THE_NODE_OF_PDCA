@@ -29,3 +29,13 @@ test('Recovery still uses authenticated existing menu; daily launch contains no 
   assert.doesNotMatch(read('tools/onboarding/START.cmd'),/seed|adopt|setup/);
   assert.match(read('tools/onboarding/RECOVERY.cmd'),/recovery-menu\.cmd/);
 });
+
+test('Setup instructions explain defaults and choices before inputs without extra prompts',()=>{
+  const messages=['You will choose an install folder','[1/4] Choose where','Press Enter to use the recommended folder.','OR type or paste a full Windows folder path','must already exist','Install folder (Enter = recommended):','[2/4] Enter the IP address','There is no default IP.','IP address:','[3/4] Enter the network port','ONLY if IT has approved','Port (Enter = 4175):','[4/4] Review and confirm installation','Type GO and press Enter','Press Enter without GO to cancel','Confirm installation (GO = install):'];
+  let previous=-1;
+  for(const message of messages){
+    const pos=launcher.indexOf(message,previous+1);assert.ok(pos>previous,message);previous=pos;
+  }
+  assert.equal((launcher.match(/await ask\(/g)||[]).length,4);
+  assert.match(html,/\[1\/4\] Install folder:[\s\S]+\[2\/4\] IP address:[\s\S]+\[3\/4\] Port:[\s\S]+\[4\/4\] Confirm installation:/);
+});
